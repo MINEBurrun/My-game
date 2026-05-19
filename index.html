@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
   <title>极简几何 · 动态进化</title>
   
-  <!-- 官方标准 CDN -->
+  <!-- 换回你最开始提供的官方标准 CDN，最稳定！ -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
@@ -130,7 +130,7 @@
 
   <script>
     // ==========================================
-    // Supabase 数据库集成 (单人最高分机制)
+    // Supabase 数据库集成
     // ==========================================
     const SUPABASE_URL = 'https://zjjcudrgaavabuffyfrk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqamN1ZHJnYWF2YWJ1ZmZ5ZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTA0NzQsImV4cCI6MjA5NDc4NjQ3NH0.G_3vxAjML1tLWi7cSobnGZ21ACQ5Ucyb-BeAT3uKmpE';               
@@ -152,38 +152,10 @@
     async function submitScore(name, score) {
       const db = getDB();
       if (!db) { alert('由于网络原因，未连接到数据库，分数仅在本地生效。'); return; }
-      
       try {
-        // 1. 查询数据库中是否已有该玩家
-        const { data: existingRecords } = await db
-          .from('leaderboard')
-          .select('id, score')
-          .eq('player_name', name)
-          .order('score', { ascending: false })
-          .limit(1);
-
-        if (existingRecords && existingRecords.length > 0) {
-          // 2. 如果存在记录，对比最高分
-          const bestRecord = existingRecords[0];
-          if (score > bestRecord.score) {
-            // 打破记录，更新该玩家所有同名行的分数为最高分（或者直接覆盖那一行）
-            const { error } = await db.from('leaderboard').update({ score: score }).eq('player_name', name);
-            if (error) throw error;
-            console.log('打破个人纪录！');
-            alert(`太棒了！你以 ${score} 分打破了你之前的最高分 ${bestRecord.score}！`);
-          } else {
-            console.log('未超越个人历史最高分');
-            alert(`你的历史最高分是 ${bestRecord.score}，这次没有打破记录哦，继续加油！`);
-          }
-        } else {
-          // 3. 如果是新名字，直接插入新行
-          const { error } = await db.from('leaderboard').insert([{ player_name: name, score: score }]);
-          if (error) throw error;
-          console.log('新账号分数已上传');
-        }
-      } catch (err) {
-        console.error('提交或更新分数异常:', err);
-      }
+        const { error } = await db.from('leaderboard').insert([{ player_name: name, score: score }]);
+        if (error) { console.error('提交失败:', error); alert('上传失败，请确保后台已创建 leaderboard 表并关闭 RLS 策略！'); }
+      } catch (err) { console.error('网络异常:', err); }
     }
 
     async function getLeaderboard() {
@@ -230,18 +202,9 @@
 
     async function handleGameEnd(finalScore) {
       setTimeout(async () => {
-        // 读取本地缓存的账号
-        let savedName = localStorage.getItem('geo_game_account');
-        let promptMsg = savedName 
-          ? `本次得分: ${finalScore}\n\n已检测到本地账号【${savedName}】\n点“确定”使用此账号上传，或直接修改输入框更换账号：`
-          : `本次得分: ${finalScore}\n\n请输入你的名字（将作为你的专属账号记录）：`;
-
-        const playerName = prompt(promptMsg, savedName || '匿名玩家');
-
+        const playerName = prompt(`你的最终得分是: ${finalScore}\n请输入你的名字记录到排行榜：`, '匿名玩家');
         if (playerName && playerName.trim() !== '') {
-          const finalName = playerName.trim().substring(0, 10);
-          localStorage.setItem('geo_game_account', finalName); // 保存到本地
-          await submitScore(finalName, finalScore);
+          await submitScore(playerName.substring(0, 10), finalScore);
           await renderLeaderboard();
         }
       }, 300);
@@ -758,7 +721,7 @@
       for(let p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; } particles = particles.filter(p=>p.life>0);
       for(let tp of textParticles){ tp.y+=tp.vy*dt; tp.life-=dt; } textParticles = textParticles.filter(t=>t.life>0);
 
-      // 渲染阶段
+      // 渲染阶段：只要不是初始状态，始终进行绘制
       if (player && player.x !== undefined) { 
           const cam = getCamera();
           ctx.clearRect(0,0,VIEW_W,VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0,0,VIEW_W,VIEW_H);
