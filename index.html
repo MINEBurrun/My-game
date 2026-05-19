@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
   <title>极简几何 · 动态进化</title>
+  <!-- 引入 Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #faf9f6; font-family: system-ui, sans-serif; position: fixed; }
@@ -12,7 +15,8 @@
     #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
     
     /* 极简顶部信息重构 */
-    .hud-top { position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 20; }
+    .hud-top { position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 20; opacity: 0; transition: opacity 0.3s; }
+    .hud-top.visible { opacity: 1; }
     #hp-text { font-size: 18px; font-weight: 900; color: #2a1d13; letter-spacing: 1px; }
     .hp-label { font-size: 10px; color: #7a6b5d; font-weight: bold; letter-spacing: 2px; }
     #hp-bar-container { width: 180px; height: 6px; background: rgba(42,29,19,0.15); border-radius: 3px; margin-top: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
@@ -23,33 +27,45 @@
     .event-item { font-size: 13px; color: #2a1d13; background: rgba(250,249,246,0.85); padding: 8px 12px; border-left: 4px solid #d9381e; border-radius: 2px 6px 6px 2px; box-shadow: 0 4px 10px rgba(42,29,19,0.1); animation: slideIn 0.3s ease-out; backdrop-filter: blur(2px); line-height: 1.4; }
     @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     
-    /* 经验条更加纤细内敛 */
-    #xp-bar-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 300px; display: flex; align-items: center; gap: 12px; }
+    /* 经验条 */
+    #xp-bar-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 300px; display: flex; align-items: center; gap: 12px; opacity: 0; transition: opacity 0.3s; }
+    #xp-bar-container.visible { opacity: 1; }
     #xp-bar-bg { flex: 1; height: 4px; background: rgba(42,29,19,0.1); border-radius: 2px; overflow: hidden; }
     #xp-bar-fill { height: 100%; background: #2a1d13; width: 0%; transition: width 0.3s cubic-bezier(0.2,0.8,0.2,1); }
     #level-text { font-size: 14px; font-weight: bold; color: #2a1d13; font-style: italic; }
     
-    /* 动态摇杆：全屏感应区与隐藏基础 */
-    #joystick-zone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; }
+    /* 动态摇杆 */
+    #joystick-zone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; display: none; }
     #joystick-base { position: absolute; width: 110px; height: 110px; border-radius: 50%; background: rgba(250,249,246,0.7); border: 2px solid rgba(42,29,19,0.15); transform: translate(-50%, -50%); opacity: 0; pointer-events: none; z-index: 20; transition: opacity 0.2s ease-out; backdrop-filter: blur(2px); }
     #joystick-thumb { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; border-radius: 50%; background: #2a1d13; box-shadow: 0 4px 10px rgba(42,29,19,0.3); }
     
-    /* 升级与结算面板 */
+    /* 升级与面板体系 */
     .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(250,249,246,0.9); display: flex; align-items: center; justify-content: center; z-index: 60; pointer-events: auto; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px); }
     .overlay.active { opacity: 1; visibility: visible; }
-    .panel { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 30px; width: 85%; max-width: 400px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); }
+    .panel { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 30px; width: 85%; max-width: 400px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); max-height: 90vh; }
     .overlay.active .panel { transform: scale(1) translateY(0); }
     
     .section-title { color: #2a1d13; font-size: 20px; font-weight: 900; letter-spacing: 4px; margin-bottom: 16px; text-transform: uppercase; }
+    
     .upgrade-btn { display:flex; flex-direction:column; background: #faf9f6; border: 2px solid rgba(42,29,19,0.2); padding: 14px; cursor: pointer; transition: 0.15s; position: relative; overflow: hidden; align-items: flex-start; text-align: left; }
     .upgrade-btn:active { background: #f0eee8; transform: scale(0.98); border-color: #2a1d13; }
     .opt-name { font-size: 16px; font-weight: 900; margin-bottom: 6px; color: #2a1d13; }
     .opt-desc { font-size: 13px; font-weight: bold; color: #7a6b5d; }
     
-    #refresh-btn { background: transparent; border: none; color: #7a6b5d; text-decoration: underline; padding: 8px; font-size: 13px; cursor: pointer; margin-top: 8px; }
+    .primary-btn { background: #2a1d13; border: none; color: #fff; padding: 16px 32px; font-size: 18px; margin-top: 10px; cursor: pointer; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; transition: transform 0.1s; }
+    .primary-btn:active { background: #111; transform: scale(0.96); }
     
-    #restart-btn { background: #2a1d13; border: none; color: #fff; padding: 16px 32px; font-size: 18px; margin-top: 20px; cursor: pointer; font-weight: 900; letter-spacing: 2px; }
-    #restart-btn:active { background: #111; transform: scale(0.96); }
+    .secondary-btn { background: transparent; border: 2px solid #2a1d13; color: #2a1d13; padding: 12px 32px; font-size: 16px; margin-top: 5px; cursor: pointer; font-weight: 900; letter-spacing: 1px; }
+    .secondary-btn:active { background: #f0eee8; transform: scale(0.96); }
+
+    /* 排行榜样式 */
+    .leaderboard-container { margin-top: 10px; text-align: left; border-top: 2px dashed rgba(42,29,19,0.2); padding-top: 15px; }
+    .leaderboard-container h3 { font-size: 18px; color: #2a1d13; margin-bottom: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #leaderboard-list { list-style: none; font-size: 14px; color: #555; max-height: 180px; overflow-y: auto; padding-right: 5px; font-weight: bold; }
+    #leaderboard-list li { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    #leaderboard-list li span:last-child { color: #d9381e; font-family: monospace; font-size: 16px; }
+    #leaderboard-list::-webkit-scrollbar { width: 4px; }
+    #leaderboard-list::-webkit-scrollbar-thumb { background: rgba(42,29,19,0.3); border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -60,14 +76,13 @@
     <div id="joystick-base"><div id="joystick-thumb"></div></div>
 
     <div id="ui-layer">
-      <!-- 重构的HP UI -->
-      <div class="hud-top">
+      <!-- 游戏进行时UI -->
+      <div class="hud-top" id="hud-top">
         <div class="hp-label">INTEGRITY (系统完整度)</div>
         <div id="hp-text">1000 / 1000</div>
         <div id="hp-bar-container"><div id="hp-bar-fill"></div></div>
       </div>
       
-      <!-- 事件日志系统 -->
       <div id="event-log"></div>
 
       <div id="xp-bar-container">
@@ -75,30 +90,103 @@
         <span id="level-text">Lv.1</span>
       </div>
       
+      <!-- 主菜单面板 -->
+      <div class="overlay active" id="main-menu">
+        <div class="panel">
+          <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">动态进化</span></div>
+          <button class="primary-btn" id="start-game-btn">启 动 核 心</button>
+          
+          <div class="leaderboard-container">
+            <h3>🏆 高分记录</h3>
+            <ul id="leaderboard-list">
+              <li style="justify-content: center; color: #999;">正在连接数据库...</li>
+            </ul>
+            <button id="refresh-lb-btn" class="secondary-btn" style="width: 100%; padding: 8px; font-size: 13px;">刷 新 排 行</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 升级面板 -->
       <div class="overlay" id="upgrade-overlay">
         <div class="panel">
           <div class="section-title">基 因 进 化</div>
           <button class="upgrade-btn" id="base-opt1"></button>
           <button class="upgrade-btn" id="base-opt2"></button>
           <button class="upgrade-btn" id="base-opt3"></button>
-          <button id="refresh-btn">重组序列</button>
+          <button class="secondary-btn" id="refresh-btn" style="padding: 8px; font-size: 13px; margin-top: 10px; width: 100%;">重 组 序 列</button>
         </div>
       </div>
       
+      <!-- 结算面板 -->
       <div class="overlay" id="end-modal">
         <div class="panel">
           <div class="section-title" style="font-size:28px;">系 统 停 机</div>
-          <div style="color:#555; margin: 15px 0; font-size: 16px; font-weight: bold;">
-            存活时间: <span id="final-time">0</span>s<br><br>
-            同化碎片: <span id="final-score">0</span>
+          <div style="color:#555; margin: 10px 0; font-size: 16px; font-weight: bold; background: #faf9f6; padding: 15px; border-radius: 4px;">
+            存活时间: <span id="final-time" style="color: #2a1d13;">0</span>s<br><br>
+            同化碎片: <span id="final-score" style="color: #d9381e; font-size: 20px;">0</span>
           </div>
-          <button id="restart-btn">重 启 核 心</button>
+          <button class="primary-btn" id="restart-btn">重 启 核 心</button>
+          <button class="secondary-btn" id="return-menu-btn">返回主菜单</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    // ==========================================
+    // Supabase 数据库排行榜集成
+    // ==========================================
+    const SUPABASE_URL = 'https://zjjcudrgaavabuffyfrk.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_3T9UySVa2magjB2OMPBTVQ_e82xesy0';               
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function submitScore(name, score) {
+      const { error } = await supabase.from('leaderboard').insert([{ player_name: name, score: score }]);
+      if (error) {
+        console.error('提交失败:', error);
+        alert('提交分数失败，请检查网络！');
+      } else {
+        console.log('分数已上传！');
+      }
+    }
+
+    async function getLeaderboard() {
+      const { data, error } = await supabase.from('leaderboard').select('player_name, score').order('score', { ascending: false }).limit(10);
+      if (error) { console.error('获取排行榜失败:', error); return []; }
+      return data;
+    }
+
+    async function renderLeaderboard() {
+      const list = document.getElementById('leaderboard-list');
+      if (!list) return;
+      list.innerHTML = `<li style="justify-content: center; color: #999;">加载中...</li>`;
+      const top10 = await getLeaderboard();
+      if(top10.length === 0) {
+        list.innerHTML = `<li style="justify-content: center; color: #999;">暂无数据</li>`;
+      } else {
+        list.innerHTML = top10.map((item, i) => {
+          let crown = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+          return `<li><span>${crown} ${item.player_name}</span> <span>${item.score}</span></li>`;
+        }).join('');
+      }
+    }
+
+    async function handleGameEnd(finalScore) {
+      setTimeout(async () => {
+        const playerName = prompt(`你的最终得分是: ${finalScore}\n请输入你的名字记录到排行榜：`, '匿名玩家');
+        if (playerName && playerName.trim() !== '') {
+          await submitScore(playerName.substring(0, 10), finalScore); // 限制名字长度
+          await renderLeaderboard();
+        }
+      }, 300); // 稍微延迟以防页面卡顿
+    }
+
+    // 绑定刷新按钮
+    document.getElementById('refresh-lb-btn').addEventListener('click', renderLeaderboard);
+
+    // ==========================================
+    // 游戏核心脚本
+    // ==========================================
     (function() {
       const canvas = document.getElementById('gameCanvas');
       const ctx = canvas.getContext('2d');
@@ -107,19 +195,20 @@
       const levelText = document.getElementById('level-text');
       const upgradeOverlay = document.getElementById('upgrade-overlay');
       const endModal = document.getElementById('end-modal');
+      const mainMenu = document.getElementById('main-menu');
       
       const THEME = { bg: '#faf9f6', main: '#2a1d13', damage: '#d9381e', grid: 'rgba(42,29,19,0.04)', xp: '#7a6b5d' };
 
       let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
       const WORLD_W = 4000, WORLD_H = 4000;
-      let gameRunning = true, gameTime = 0;
-      let level = 1, xp = 0, xpToNext = 100, score = 0;
+      
+      // 状态控制
+      let gameRunning = false, isGameOver = false;
+      let gameTime = 0, level = 1, xp = 0, xpToNext = 100, score = 0;
       let enemyIdCounter = 0;
       
-      // 事件系统变量
       let eventsTriggered = { 30:false, 60:false, 120:false, 180:false, 240:false, 300:false };
-      let activeEvent = null; 
-      let eventTimer = 0;
+      let activeEvent = null; let eventTimer = 0;
       
       let player = {};
       let enemies = [], bullets = [], particles = [], textParticles = [], expOrbs = [], trails = [];
@@ -162,7 +251,7 @@
       }
 
       // ==========================================
-      // 玩家核心
+      // 初始化与调整
       // ==========================================
       function initPlayer() {
         player = {
@@ -172,13 +261,11 @@
           shootCooldown: 0, shootDelay: 0.35,
           bulletSpeed: 700, bulletRadius: 4, bulletPenetration: 0, scatter: 0,
           invincibleTimer: 0, flashTimer: 0, regen: 0, magnetRange: 90,
-          // 技能层级记录
           skills: { pulse: 0, blades: 0, armor: 0, core: 0 },
           activeCount: 0, passiveCount: 0,
           pulseTimer: 0, bladeTimer: 0
         };
       }
-      initPlayer();
 
       function resize() {
         VIEW_W = window.innerWidth; VIEW_H = window.innerHeight;
@@ -188,6 +275,53 @@
       window.addEventListener('resize', resize); resize();
       function getCamera() { return { x: Math.max(0, Math.min(WORLD_W-VIEW_W, player.x - VIEW_W/2)), y: Math.max(0, Math.min(WORLD_H-VIEW_H, player.y - VIEW_H/2)) }; }
       function isInView(x, y, margin = 20) { const cam = getCamera(); return x > cam.x - margin && x < cam.x + VIEW_W + margin && y > cam.y - margin && y < cam.y + VIEW_H + margin; }
+
+      // ==========================================
+      // 流程控制 (开始/结束)
+      // ==========================================
+      function startGame() {
+        initAudio();
+        initPlayer();
+        enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[];
+        score=0; level=1; xp=0; xpToNext=100; gameTime=0; spawnTimer=0; enemyIdCounter = 0;
+        eventsTriggered = {30:false, 60:false, 120:false, 180:false, 240:false, 300:false};
+        activeEvent = null; eventTimer = 0; document.getElementById('event-log').innerHTML = '';
+        
+        mainMenu.classList.remove('active');
+        endModal.classList.remove('active');
+        
+        // 显示游戏UI
+        document.getElementById('hud-top').classList.add('visible');
+        document.getElementById('xp-bar-container').classList.add('visible');
+        document.getElementById('joystick-zone').style.display = 'block';
+
+        updateHPUI(); updateXPUI();
+        gameRunning = true; isGameOver = false;
+      }
+
+      function endGame() { 
+        gameRunning = false; isGameOver = true;
+        document.getElementById('joystick-zone').style.display = 'none';
+        
+        endModal.classList.add('active'); 
+        document.getElementById('final-score').textContent = score; 
+        document.getElementById('final-time').textContent = Math.floor(gameTime); 
+        
+        // 触发排行榜提交逻辑
+        handleGameEnd(score);
+      }
+
+      document.getElementById('start-game-btn').onclick = startGame;
+      document.getElementById('restart-btn').onclick = startGame;
+      document.getElementById('return-menu-btn').onclick = () => {
+         endModal.classList.remove('active');
+         mainMenu.classList.add('active');
+         document.getElementById('hud-top').classList.remove('visible');
+         document.getElementById('xp-bar-container').classList.remove('visible');
+      };
+
+      // 启动加载一次排行榜
+      window.addEventListener('load', renderLeaderboard);
 
       // ==========================================
       // 事件系统
@@ -262,7 +396,7 @@
       window.addEventListener('keyup', e => { keys[e.key] = false; });
 
       // ==========================================
-      // 游戏逻辑
+      // 核心战斗与判定
       // ==========================================
       let spawnTimer = 0;
       function spawnEnemyLogic(dt) {
@@ -291,7 +425,6 @@
                if (rand < 0.3) type = 'triangle';
             }
 
-            // 新的数值设计，放大10倍
             let stats = { 
                square: {s: 20, spd: 80, hp: 20, xp: 10, dmg: 100}, 
                triangle: {s: 18, spd: 140, hp: 40, xp: 20, dmg: 150}, 
@@ -380,9 +513,7 @@
         enemies.splice(index,1); score += Math.floor(e.maxHp / 10); playSound('hit');
       }
 
-      // ==========================================
-      // UI更新与技能体系
-      // ==========================================
+      // UI与升级
       function updateHPUI() { 
          let currentHp = Math.ceil(Math.max(0, player.hp));
          hpText.textContent = `${currentHp} / ${player.maxHP}`;
@@ -475,7 +606,7 @@
         currentBaseOptions[index].apply(player);
         upgradeOverlay.classList.remove('active');
         gameRunning = true; updateHPUI();
-        if (xp >= xpToNext) setTimeout(triggerLevelUp, 100); // 连续升级判断
+        if (xp >= xpToNext) setTimeout(triggerLevelUp, 100);
       }
 
       document.getElementById('refresh-btn').onclick = () => { 
@@ -483,21 +614,10 @@
       };
       [1,2,3].forEach(i => document.getElementById(`base-opt${i}`).onclick = ()=> applyBaseUpgrade(i-1));
       
-      function endGame() { 
-        gameRunning = false; endModal.classList.add('active'); 
-        document.getElementById('final-score').textContent = score; 
-        document.getElementById('final-time').textContent = Math.floor(gameTime); 
-      }
-      
-      document.getElementById('restart-btn').onclick = () => {
-        initPlayer(); enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[];
-        score=0; level=1; xp=0; xpToNext=100; gameTime=0; spawnTimer=0; enemyIdCounter = 0;
-        eventsTriggered = {30:false, 60:false, 120:false, 180:false, 240:false, 300:false};
-        activeEvent = null; eventTimer = 0; document.getElementById('event-log').innerHTML = '';
-        gameRunning=true; updateHPUI(); updateXPUI(); endModal.classList.remove('active');
-      };
 
-      // 几何绘制辅助
+      // ==========================================
+      // 绘制辅助
+      // ==========================================
       function drawPoly(cx, cy, radius, sides, color) {
         ctx.fillStyle = color; ctx.beginPath();
         for (let i = 0; i < sides; i++) {
@@ -517,14 +637,14 @@
       }
 
       // ==========================================
-      // 主循环
+      // 引擎循环
       // ==========================================
       let lastTime = performance.now(), frameCount = 0;
       function loop(now){
         const dt = Math.min(0.05, (now - lastTime) / 1000); 
         lastTime = now; frameCount++;
 
-        if (gameRunning) {
+        if (gameRunning && !isGameOver) {
           gameTime += dt;
           updateEvents(dt);
           
@@ -544,10 +664,8 @@
           if(player.shootCooldown>0) player.shootCooldown-=dt;
           if(player.shootCooldown<=0) { shoot(); player.shootCooldown=player.shootDelay; }
 
-          // 主动技能检测
           if (player.skills.pulse > 0) {
-             let pLv = player.skills.pulse;
-             player.pulseTimer -= dt;
+             let pLv = player.skills.pulse; player.pulseTimer -= dt;
              if (player.pulseTimer <= 0) {
                 player.pulseTimer = [3, 2.5, 2, 1.5, 1][pLv - 1];
                 let range = [120, 150, 180, 220, 280][pLv - 1];
@@ -555,10 +673,8 @@
                 triggerPulse(range, dmg);
              }
           }
-
           if (player.skills.blades > 0) {
-             let bLv = player.skills.blades;
-             player.bladeTimer -= dt;
+             let bLv = player.skills.blades; player.bladeTimer -= dt;
              if (player.bladeTimer <= 0) {
                 player.bladeTimer = [4, 3.5, 3, 2.5, 1.5][bLv - 1];
                 let count = [2, 3, 4, 5, 8][bLv - 1];
@@ -627,79 +743,81 @@
           expOrbs = expOrbs.filter(o => !o.collected && o.life > 0);
         }
 
-        // 残影与粒子更新
+        // 残影与粒子始终更新（让死亡后的画面看起来更平滑）
         for(let i=trails.length-1; i>=0; i--){ trails[i].alpha -= dt * 1.5; if(trails[i].alpha <= 0) trails.splice(i,1); }
         for(let p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; } particles = particles.filter(p=>p.life>0);
         for(let tp of textParticles){ tp.y+=tp.vy*dt; tp.life-=dt; } textParticles = textParticles.filter(t=>t.life>0);
 
-        // ==========================================
-        // 渲染
-        // ==========================================
-        const cam = getCamera();
-        ctx.clearRect(0,0,VIEW_W,VIEW_H);
-        ctx.fillStyle = THEME.bg; ctx.fillRect(0,0,VIEW_W,VIEW_H);
-        ctx.save(); ctx.translate(-cam.x,-cam.y);
-        
-        ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1;
-        const grid=100, sx=-((cam.x%grid)|0), sy=-((cam.y%grid)|0);
-        ctx.beginPath();
-        for(let x=sx; x<VIEW_W+grid; x+=grid){ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y+VIEW_H);}
-        for(let y=sy; y<VIEW_H+grid; y+=grid){ctx.moveTo(cam.x, y); ctx.lineTo(cam.x+VIEW_W, y);}
-        ctx.stroke();
+        // 渲染阶段
+        if (player.x) { // 仅当玩家已经初始化后绘制
+            const cam = getCamera();
+            ctx.clearRect(0,0,VIEW_W,VIEW_H);
+            ctx.fillStyle = THEME.bg; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+            ctx.save(); ctx.translate(-cam.x,-cam.y);
+            
+            ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1;
+            const grid=100, sx=-((cam.x%grid)|0), sy=-((cam.y%grid)|0);
+            ctx.beginPath();
+            for(let x=sx; x<VIEW_W+grid; x+=grid){ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y+VIEW_H);}
+            for(let y=sy; y<VIEW_H+grid; y+=grid){ctx.moveTo(cam.x, y); ctx.lineTo(cam.x+VIEW_W, y);}
+            ctx.stroke();
 
-        for(let t of trails) {
-          ctx.beginPath(); ctx.arc(t.x, t.y, player.radius, 0, Math.PI*2);
-          ctx.strokeStyle = `rgba(42,29,19,${t.alpha})`; ctx.lineWidth = 2; ctx.stroke();
+            for(let t of trails) {
+              ctx.beginPath(); ctx.arc(t.x, t.y, player.radius, 0, Math.PI*2);
+              ctx.strokeStyle = `rgba(42,29,19,${t.alpha})`; ctx.lineWidth = 2; ctx.stroke();
+            }
+
+            ctx.fillStyle = THEME.xp;
+            for (let orb of expOrbs) ctx.fillRect(orb.x-3, orb.y-3, 6, 6);
+
+            for(let e of enemies){
+              const col = e.hitTimer>0 ? THEME.damage : THEME.main;
+              if(e.type==='square') { ctx.fillStyle = col; ctx.fillRect(e.x-e.half, e.y-e.half, e.size, e.size); } 
+              else if(e.type==='triangle') drawPoly(e.x, e.y, e.half+2, 3, col);
+              else if(e.type==='star') drawStar(e.x, e.y, e.half+4, col);
+              else if(e.type==='pentagon') drawPoly(e.x, e.y, e.half+4, 5, col);
+              else if(e.type==='hexagon') drawPoly(e.x, e.y, e.half+2, 6, col);
+            }
+
+            for(let b of bullets){ 
+               if (b.homing) {
+                   ctx.fillStyle = '#d9381e'; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
+                   ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, 4); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill(); ctx.restore();
+               } else {
+                   ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, 2*Math.PI); ctx.fill(); 
+               }
+            }
+
+            for(let p of particles){ 
+               if (p.type === 'pulse') {
+                   ctx.globalAlpha = p.life / p.maxLife; ctx.beginPath();
+                   ctx.arc(p.x, p.y, p.radius * (1 - p.life / p.maxLife), 0, Math.PI*2);
+                   ctx.strokeStyle = THEME.main; ctx.lineWidth = 4; ctx.stroke(); ctx.globalAlpha = 1;
+               } else {
+                   ctx.globalAlpha = p.life/p.maxLife; ctx.fillStyle = p.color || THEME.main; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; 
+               }
+            }
+
+            for(let tp of textParticles){ ctx.globalAlpha = tp.life/0.5; ctx.fillStyle = tp.color || THEME.damage; ctx.font=`bold ${tp.size||14}px system-ui`; ctx.fillText(tp.text, tp.x-8, tp.y); }
+            ctx.globalAlpha=1;
+
+            if (!isGameOver) {
+               ctx.strokeStyle = (player.flashTimer>0 && Math.floor(player.flashTimer*20)%2===0) ? THEME.damage : THEME.main;
+               ctx.lineWidth = 4;
+               ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.stroke();
+               
+               if (player.damageReduction > 0) {
+                   ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI*2);
+                   ctx.strokeStyle = `rgba(42,150,250, 0.4)`; ctx.lineWidth = 2; ctx.stroke();
+               }
+            }
+            ctx.restore();
         }
 
-        ctx.fillStyle = THEME.xp;
-        for (let orb of expOrbs) ctx.fillRect(orb.x-3, orb.y-3, 6, 6);
-
-        for(let e of enemies){
-          const col = e.hitTimer>0 ? THEME.damage : THEME.main;
-          if(e.type==='square') { ctx.fillStyle = col; ctx.fillRect(e.x-e.half, e.y-e.half, e.size, e.size); } 
-          else if(e.type==='triangle') drawPoly(e.x, e.y, e.half+2, 3, col);
-          else if(e.type==='star') drawStar(e.x, e.y, e.half+4, col);
-          else if(e.type==='pentagon') drawPoly(e.x, e.y, e.half+4, 5, col);
-          else if(e.type==='hexagon') drawPoly(e.x, e.y, e.half+2, 6, col);
-        }
-
-        for(let b of bullets){ 
-           if (b.homing) {
-               ctx.fillStyle = '#d9381e'; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
-               ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, 4); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill(); ctx.restore();
-           } else {
-               ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, 2*Math.PI); ctx.fill(); 
-           }
-        }
-
-        for(let p of particles){ 
-           if (p.type === 'pulse') {
-               ctx.globalAlpha = p.life / p.maxLife; ctx.beginPath();
-               ctx.arc(p.x, p.y, p.radius * (1 - p.life / p.maxLife), 0, Math.PI*2);
-               ctx.strokeStyle = THEME.main; ctx.lineWidth = 4; ctx.stroke(); ctx.globalAlpha = 1;
-           } else {
-               ctx.globalAlpha = p.life/p.maxLife; ctx.fillStyle = p.color || THEME.main; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; 
-           }
-        }
-
-        for(let tp of textParticles){ ctx.globalAlpha = tp.life/0.5; ctx.fillStyle = tp.color || THEME.damage; ctx.font=`bold ${tp.size||14}px system-ui`; ctx.fillText(tp.text, tp.x-8, tp.y); }
-        ctx.globalAlpha=1;
-
-        // 玩家实体
-        ctx.strokeStyle = (player.flashTimer>0 && Math.floor(player.flashTimer*20)%2===0) ? THEME.damage : THEME.main;
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.stroke();
-        
-        // 纳米护甲外圈特效
-        if (player.damageReduction > 0) {
-            ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI*2);
-            ctx.strokeStyle = `rgba(42,150,250, 0.4)`; ctx.lineWidth = 2; ctx.stroke();
-        }
-
-        ctx.restore();
         requestAnimationFrame(loop);
       }
+      
+      // 不管游戏是否开始，都启动渲染循环来处理初始化和动画平滑过渡
       requestAnimationFrame(loop);
     })();
   </script>
