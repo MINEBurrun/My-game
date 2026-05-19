@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
   <title>极简几何 · 动态进化</title>
-  <!-- 引入 Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 使用国内更稳定的 CDN 加载 Supabase SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -14,7 +15,7 @@
     canvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; }
     #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
     
-    /* 极简顶部信息重构 */
+    /* 极简顶部信息 */
     .hud-top { position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 20; opacity: 0; transition: opacity 0.3s; }
     .hud-top.visible { opacity: 1; }
     #hp-text { font-size: 18px; font-weight: 900; color: #2a1d13; letter-spacing: 1px; }
@@ -134,35 +135,71 @@
 
   <script>
     // ==========================================
-    // Supabase 数据库排行榜集成
+    // Supabase 数据库排行榜集成 (带防崩溃保护)
     // ==========================================
     const SUPABASE_URL = 'https://zjjcudrgaavabuffyfrk.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_3T9UySVa2magjB2OMPBTVQ_e82xesy0';               
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqamN1ZHJnYWF2YWJ1ZmZ5ZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTA0NzQsImV4cCI6MjA5NDc4NjQ3NH0.G_3vxAjML1tLWi7cSobnGZ21ACQ5Ucyb-BeAT3uKmpE';               
+
+    let supabase = null;
+    try {
+      if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } else {
+        console.warn("Supabase SDK 尚未加载或加载失败");
+      }
+    } catch (e) {
+      console.error("数据库初始化错误:", e);
+    }
 
     async function submitScore(name, score) {
-      const { error } = await supabase.from('leaderboard').insert([{ player_name: name, score: score }]);
-      if (error) {
-        console.error('提交失败:', error);
-        alert('提交分数失败，请检查网络！');
-      } else {
-        console.log('分数已上传！');
+      if (!supabase) {
+        alert('由于网络原因，未连接到数据库，分数无法上传。');
+        return;
+      }
+      try {
+        const { error } = await supabase.from('leaderboard').insert([{ player_name: name, score: score }]);
+        if (error) {
+          console.error('提交失败 (可能是表不存在或没有关闭 RLS 权限):', error);
+          alert('上传失败，请检查数据库配置（表名或 RLS 设置）。');
+        } else {
+          console.log('分数已成功上传！');
+        }
+      } catch (err) {
+        console.error('提交网络异常:', err);
       }
     }
 
     async function getLeaderboard() {
-      const { data, error } = await supabase.from('leaderboard').select('player_name, score').order('score', { ascending: false }).limit(10);
-      if (error) { console.error('获取排行榜失败:', error); return []; }
-      return data;
+      if (!supabase) return null;
+      try {
+        const { data, error } = await supabase.from('leaderboard').select('player_name, score').order('score', { ascending: false }).limit(10);
+        if (error) {
+          console.error('获取排行榜失败 (可能表未创建):', error);
+          return null; // 返回 null 表示获取出错
+        }
+        return data;
+      } catch (err) {
+        console.error('网络请求错误:', err);
+        return null;
+      }
     }
 
     async function renderLeaderboard() {
       const list = document.getElementById('leaderboard-list');
       if (!list) return;
-      list.innerHTML = `<li style="justify-content: center; color: #999;">加载中...</li>`;
+      
+      if (!supabase) {
+        list.innerHTML = `<li style="justify-content: center; color: #d9381e;">网络限制，排行榜服务不可用</li>`;
+        return;
+      }
+
+      list.innerHTML = `<li style="justify-content: center; color: #999;">正在同步数据...</li>`;
       const top10 = await getLeaderboard();
-      if(top10.length === 0) {
-        list.innerHTML = `<li style="justify-content: center; color: #999;">暂无数据</li>`;
+      
+      if (top10 === null) {
+        list.innerHTML = `<li style="justify-content: center; color: #d9381e; font-size:12px;">无法拉取数据<br>(提示:去后台建好表并关闭RLS)</li>`;
+      } else if (top10.length === 0) {
+        list.innerHTML = `<li style="justify-content: center; color: #999;">暂无排名记录，快来抢第一！</li>`;
       } else {
         list.innerHTML = top10.map((item, i) => {
           let crown = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
@@ -175,10 +212,10 @@
       setTimeout(async () => {
         const playerName = prompt(`你的最终得分是: ${finalScore}\n请输入你的名字记录到排行榜：`, '匿名玩家');
         if (playerName && playerName.trim() !== '') {
-          await submitScore(playerName.substring(0, 10), finalScore); // 限制名字长度
+          await submitScore(playerName.substring(0, 10), finalScore); // 限制名字长度10个字符
           await renderLeaderboard();
         }
-      }, 300); // 稍微延迟以防页面卡顿
+      }, 300);
     }
 
     // 绑定刷新按钮
@@ -215,9 +252,6 @@
       let joystickActive = false, moveX = 0, moveY = 0, keys = {};
       let refreshUsed = false, currentBaseOptions = [];
 
-      // ==========================================
-      // 音效引擎
-      // ==========================================
       let audioCtx = null;
       function initAudio() {
         if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -250,9 +284,6 @@
         }
       }
 
-      // ==========================================
-      // 初始化与调整
-      // ==========================================
       function initPlayer() {
         player = {
           x: WORLD_W/2, y: WORLD_H/2, radius: 14,
@@ -290,7 +321,6 @@
         mainMenu.classList.remove('active');
         endModal.classList.remove('active');
         
-        // 显示游戏UI
         document.getElementById('hud-top').classList.add('visible');
         document.getElementById('xp-bar-container').classList.add('visible');
         document.getElementById('joystick-zone').style.display = 'block';
@@ -307,7 +337,6 @@
         document.getElementById('final-score').textContent = score; 
         document.getElementById('final-time').textContent = Math.floor(gameTime); 
         
-        // 触发排行榜提交逻辑
         handleGameEnd(score);
       }
 
@@ -320,8 +349,8 @@
          document.getElementById('xp-bar-container').classList.remove('visible');
       };
 
-      // 启动加载一次排行榜
-      window.addEventListener('load', renderLeaderboard);
+      // 启动时延迟一下去加载排行榜数据
+      setTimeout(renderLeaderboard, 500);
 
       // ==========================================
       // 事件系统
@@ -817,7 +846,6 @@
         requestAnimationFrame(loop);
       }
       
-      // 不管游戏是否开始，都启动渲染循环来处理初始化和动画平滑过渡
       requestAnimationFrame(loop);
     })();
   </script>
