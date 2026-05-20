@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
-  <title>极简几何 · 动态进化</title>
+  <title>极简几何 · 维度暴走</title>
   
-  <!-- 换回你最开始提供的官方标准 CDN，最稳定！ -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
@@ -36,27 +35,32 @@
     #joystick-base { position: absolute; width: 110px; height: 110px; border-radius: 50%; background: rgba(250,249,246,0.7); border: 2px solid rgba(42,29,19,0.15); transform: translate(-50%, -50%); opacity: 0; pointer-events: none; z-index: 20; transition: opacity 0.2s ease-out; backdrop-filter: blur(2px); }
     #joystick-thumb { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; border-radius: 50%; background: #2a1d13; box-shadow: 0 4px 10px rgba(42,29,19,0.3); }
     
-    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(250,249,246,0.9); display: flex; align-items: center; justify-content: center; z-index: 60; pointer-events: auto; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px); }
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(250,249,246,0.95); display: flex; align-items: center; justify-content: center; z-index: 60; pointer-events: auto; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px); }
     .overlay.active { opacity: 1; visibility: visible; }
-    .panel { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 30px; width: 85%; max-width: 400px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); max-height: 90vh; }
+    .panel { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 25px; width: 90%; max-width: 480px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); max-height: 95vh; }
     .overlay.active .panel { transform: scale(1) translateY(0); }
     
-    .section-title { color: #2a1d13; font-size: 20px; font-weight: 900; letter-spacing: 4px; margin-bottom: 16px; text-transform: uppercase; }
+    .section-title { color: #2a1d13; font-size: 22px; font-weight: 900; letter-spacing: 4px; margin-bottom: 10px; text-transform: uppercase; }
     
-    .upgrade-btn { display:flex; flex-direction:column; background: #faf9f6; border: 2px solid rgba(42,29,19,0.2); padding: 14px; cursor: pointer; transition: 0.15s; position: relative; overflow: hidden; align-items: flex-start; text-align: left; }
-    .upgrade-btn:active { background: #f0eee8; transform: scale(0.98); border-color: #2a1d13; }
-    .opt-name { font-size: 16px; font-weight: 900; margin-bottom: 6px; color: #2a1d13; }
-    .opt-desc { font-size: 13px; font-weight: bold; color: #7a6b5d; }
+    .slot-machine { display: flex; gap: 8px; height: 220px; overflow: hidden; background: #faf9f6; border: 3px solid #2a1d13; border-radius: 6px; padding: 5px; position: relative; box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); }
+    .slot-col { flex: 1; height: 100%; overflow: hidden; position: relative; background: #fff; border: 2px solid rgba(42,29,19,0.1); border-radius: 4px; }
+    .slot-strip { position: absolute; top: 0; left: 0; width: 100%; }
+    .slot-item { height: 206px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; border-bottom: 1px dashed rgba(0,0,0,0.1); transition: background 0.2s; }
+    .slot-item.clickable { cursor: pointer; }
+    .slot-item.clickable:hover { background: #f9f5f0; }
+    .slot-item.active-choice { background: #e8f0fe; box-shadow: inset 0 0 0 3px #4285f4; }
+    .opt-name { font-size: 15px; font-weight: 900; color: #2a1d13; margin-bottom: 8px; line-height: 1.2; word-break: break-all; }
+    .opt-desc { font-size: 12px; font-weight: bold; color: #7a6b5d; line-height: 1.4; }
     
     .primary-btn { background: #2a1d13; border: none; color: #fff; padding: 16px 32px; font-size: 18px; margin-top: 10px; cursor: pointer; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; transition: transform 0.1s; }
     .primary-btn:active { background: #111; transform: scale(0.96); }
-    
-    .secondary-btn { background: transparent; border: 2px solid #2a1d13; color: #2a1d13; padding: 12px 32px; font-size: 16px; margin-top: 5px; cursor: pointer; font-weight: 900; letter-spacing: 1px; }
+    .secondary-btn { background: transparent; border: 2px solid #2a1d13; color: #2a1d13; padding: 12px 32px; font-size: 15px; margin-top: 5px; cursor: pointer; font-weight: 900; letter-spacing: 1px; transition: 0.1s; }
     .secondary-btn:active { background: #f0eee8; transform: scale(0.96); }
+    .secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .leaderboard-container { margin-top: 10px; text-align: left; border-top: 2px dashed rgba(42,29,19,0.2); padding-top: 15px; }
     .leaderboard-container h3 { font-size: 18px; color: #2a1d13; margin-bottom: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    #leaderboard-list { list-style: none; font-size: 14px; color: #555; max-height: 180px; overflow-y: auto; padding-right: 5px; font-weight: bold; }
+    #leaderboard-list { list-style: none; font-size: 14px; color: #555; max-height: 160px; overflow-y: auto; padding-right: 5px; font-weight: bold; }
     #leaderboard-list li { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     #leaderboard-list li span:last-child { color: #d9381e; font-family: monospace; font-size: 16px; }
     #leaderboard-list::-webkit-scrollbar { width: 4px; }
@@ -66,12 +70,10 @@
 <body>
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
-    
     <div id="joystick-zone"></div>
     <div id="joystick-base"><div id="joystick-thumb"></div></div>
 
     <div id="ui-layer">
-      <!-- 游戏进行时UI -->
       <div class="hud-top" id="hud-top">
         <div class="hp-label">INTEGRITY (系统完整度)</div>
         <div id="hp-text">1000 / 1000</div>
@@ -85,35 +87,33 @@
         <span id="level-text">Lv.1</span>
       </div>
       
-      <!-- 主菜单面板 -->
       <div class="overlay active" id="main-menu">
         <div class="panel">
-          <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">动态进化</span></div>
-          <!-- 核心启动按钮 -->
+          <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">维度暴走版</span></div>
           <button class="primary-btn" id="start-game-btn">启 动 核 心</button>
           
           <div class="leaderboard-container">
-            <h3>🏆 高分记录</h3>
+            <h3>🏆 维度主宰记录</h3>
             <ul id="leaderboard-list">
-              <li style="justify-content: center; color: #999;">正在连接数据库...</li>
+              <li style="justify-content: center; color: #999;">正在加载数据库...</li>
             </ul>
             <button id="refresh-lb-btn" class="secondary-btn" style="width: 100%; padding: 8px; font-size: 13px;">刷 新 排 行</button>
           </div>
         </div>
       </div>
 
-      <!-- 升级面板 -->
       <div class="overlay" id="upgrade-overlay">
         <div class="panel">
-          <div class="section-title">基 因 进 化</div>
-          <button class="upgrade-btn" id="base-opt1"></button>
-          <button class="upgrade-btn" id="base-opt2"></button>
-          <button class="upgrade-btn" id="base-opt3"></button>
-          <button class="secondary-btn" id="refresh-btn" style="padding: 8px; font-size: 13px; margin-top: 10px; width: 100%;">重 组 序 列</button>
+          <div class="section-title">基 因 抽 取</div>
+          <div class="slot-machine">
+            <div class="slot-col"><div class="slot-strip" id="slot-strip-0"></div></div>
+            <div class="slot-col"><div class="slot-strip" id="slot-strip-1"></div></div>
+            <div class="slot-col"><div class="slot-strip" id="slot-strip-2"></div></div>
+          </div>
+          <button class="secondary-btn" id="reroll-btn" style="width: 100%; margin-top: 15px;">重 组 序 列 (剩1次)</button>
         </div>
       </div>
       
-      <!-- 结算面板 -->
       <div class="overlay" id="end-modal">
         <div class="panel">
           <div class="section-title" style="font-size:28px;">系 统 停 机</div>
@@ -130,661 +130,295 @@
 
   <script>
     // ==========================================
-    // Supabase 数据库集成
+    // 第一部分：数据库与全局状态
     // ==========================================
     const SUPABASE_URL = 'https://zjjcudrgaavabuffyfrk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqamN1ZHJnYWF2YWJ1ZmZ5ZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTA0NzQsImV4cCI6MjA5NDc4NjQ3NH0.G_3vxAjML1tLWi7cSobnGZ21ACQ5Ucyb-BeAT3uKmpE';               
-
     let supabaseClient = null;
 
-    // 动态获取数据库实例
     function getDB() {
       if (supabaseClient) return supabaseClient;
       if (typeof window.supabase !== 'undefined') {
-        try {
-          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-          return supabaseClient;
-        } catch(e) { console.error("数据库初始化异常", e); }
+        try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supabaseClient; } catch(e) {}
       }
       return null;
     }
 
     async function submitScore(name, score) {
-      const db = getDB();
-      if (!db) { alert('由于网络原因，未连接到数据库，分数仅在本地生效。'); return; }
+      const db = getDB(); if (!db) return;
       try {
-        const { error } = await db.from('leaderboard').insert([{ player_name: name, score: score }]);
-        if (error) { console.error('提交失败:', error); alert('上传失败，请确保后台已创建 leaderboard 表并关闭 RLS 策略！'); }
-      } catch (err) { console.error('网络异常:', err); }
+        const { data: exist } = await db.from('leaderboard').select('id, score').eq('player_name', name).order('score', { ascending: false }).limit(1);
+        if (exist && exist.length > 0) {
+          if (score > exist[0].score) await db.from('leaderboard').update({ score: score }).eq('player_name', name);
+        } else {
+          await db.from('leaderboard').insert([{ player_name: name, score: score }]);
+        }
+      } catch (err) {}
     }
 
     async function getLeaderboard() {
-      const db = getDB();
-      if (!db) return null;
+      const db = getDB(); if (!db) return null;
       try {
         const { data, error } = await db.from('leaderboard').select('player_name, score').order('score', { ascending: false }).limit(10);
-        if (error) { console.error('获取榜单失败:', error); return null; }
-        return data;
+        if (error) return null; return data;
       } catch (err) { return null; }
     }
 
-    let retryCount = 0;
     async function renderLeaderboard() {
-      const list = document.getElementById('leaderboard-list');
-      if (!list) return;
-      
+      const list = document.getElementById('leaderboard-list'); if (!list) return;
       const db = getDB();
-      if (!db) {
-        if (retryCount < 3) {
-           list.innerHTML = `<li style="justify-content: center; color: #999;">正在加载网络组件中...</li>`;
-           retryCount++;
-           setTimeout(renderLeaderboard, 1000);
-        } else {
-           list.innerHTML = `<li style="justify-content: center; color: #d9381e;">网络组件加载失败，请检查网络</li>`;
-        }
-        return;
-      }
-
-      list.innerHTML = `<li style="justify-content: center; color: #999;">同步数据中...</li>`;
+      if (!db) { list.innerHTML = `<li style="justify-content: center; color: #999;">正在连接...</li>`; setTimeout(renderLeaderboard, 1000); return; }
       const top10 = await getLeaderboard();
-      
-      if (top10 === null) {
-        list.innerHTML = `<li style="justify-content: center; color: #d9381e; font-size:12px; text-align:center;">数据库拒绝访问<br>请去 Supabase 后台新建表并关闭 RLS</li>`;
-      } else if (top10.length === 0) {
-        list.innerHTML = `<li style="justify-content: center; color: #999;">暂无排名记录，快来抢第一！</li>`;
-      } else {
-        list.innerHTML = top10.map((item, i) => {
-          let crown = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
-          return `<li><span>${crown} ${item.player_name}</span> <span>${item.score}</span></li>`;
-        }).join('');
-      }
+      if (!top10) { list.innerHTML = `<li style="justify-content: center; color: #d9381e; font-size:12px;">拉取数据失败，请检查建表与安全规则</li>`; return; }
+      if (top10.length === 0) { list.innerHTML = `<li style="justify-content: center; color: #999;">暂无排名记录</li>`; return; }
+      list.innerHTML = top10.map((item, i) => { let c = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`; return `<li><span>${c} ${item.player_name}</span> <span>${item.score}</span></li>`; }).join('');
     }
 
-    async function handleGameEnd(finalScore) {
-      setTimeout(async () => {
-        const playerName = prompt(`你的最终得分是: ${finalScore}\n请输入你的名字记录到排行榜：`, '匿名玩家');
-        if (playerName && playerName.trim() !== '') {
-          await submitScore(playerName.substring(0, 10), finalScore);
-          await renderLeaderboard();
-        }
-      }, 300);
-    }
-
-    // ==========================================
-    // 游戏核心脚本
-    // ==========================================
+    // --- 核心全局变量 ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const hpText = document.getElementById('hp-text');
-    const xpFill = document.getElementById('xp-bar-fill');
-    const levelText = document.getElementById('level-text');
-    const upgradeOverlay = document.getElementById('upgrade-overlay');
-    const endModal = document.getElementById('end-modal');
-    const mainMenu = document.getElementById('main-menu');
-    
     const THEME = { bg: '#faf9f6', main: '#2a1d13', damage: '#d9381e', grid: 'rgba(42,29,19,0.04)', xp: '#7a6b5d' };
 
     let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
     const WORLD_W = 4000, WORLD_H = 4000;
     
-    let gameRunning = false, isGameOver = false;
-    let gameTime = 0, level = 1, xp = 0, xpToNext = 100, score = 0;
-    let enemyIdCounter = 0;
-    let eventsTriggered = { 30:false, 60:false, 120:false, 180:false, 240:false, 300:false };
-    let activeEvent = null; let eventTimer = 0;
+    // 【重要】：彻底修复变量遗漏问题
+    let gameRunning = false, isGameOver = false, screenShake = 0;
+    let gameTime = 0, level = 1, xp = 0, xpToNext = 50, score = 0, enemyIdCounter = 0, spawnTimer = 0;
+    let activeEvent = null, eventTimer = 0, eventsTriggered = {};
     
-    // 初始化空对象，防止报错
-    let player = { skills: {} }; 
+    let player = null;
     let enemies = [], bullets = [], particles = [], textParticles = [], expOrbs = [], trails = [];
-    let joystickActive = false, moveX = 0, moveY = 0, keys = {};
-    let refreshUsed = false, currentBaseOptions = [];
+    let lasers = [], bombs = [], blackholes = [], downgradeRings = [], floorTexts = [];
+    
+    let moveX = 0, moveY = 0, keys = {}, joystickActive = false;
+    let rerollsLeft = 1, currentUpgradeChoices = [];
 
-    // 音效引擎
+    // ==========================================
+    // 第二部分：音效与属性计算
+    // ==========================================
     let audioCtx = null;
     function initAudio() {
       try {
-        if (!audioCtx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (AC) audioCtx = new AC();
-        }
+        if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) audioCtx = new AC(); }
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      } catch(e) { console.warn("系统不支持音频，静音运行"); }
+      } catch(e) {}
     }
 
     function playSound(type) {
       if (!audioCtx) return;
       try {
-        const t = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const t = audioCtx.currentTime; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-
         if (type === 'shoot') {
           osc.type = 'square'; osc.frequency.setValueAtTime(600, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
-          gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-          osc.start(t); osc.stop(t + 0.1);
+          gain.gain.setValueAtTime(0.015, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); osc.start(t); osc.stop(t + 0.1);
         } else if (type === 'hit') {
           osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
-          gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-          osc.start(t); osc.stop(t + 0.1);
+          gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1); osc.start(t); osc.stop(t + 0.1);
         } else if (type === 'xp') {
           osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(1600, t + 0.08);
-          gain.gain.setValueAtTime(0.02, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-          osc.start(t); osc.stop(t + 0.08);
-        } else if (type === 'hurt') {
-          osc.type = 'square'; osc.frequency.setValueAtTime(200, t); osc.frequency.linearRampToValueAtTime(50, t + 0.4);
-          gain.gain.setValueAtTime(0.1, t); gain.gain.linearRampToValueAtTime(0.001, t + 0.4);
-          osc.start(t); osc.stop(t + 0.4);
+          gain.gain.setValueAtTime(0.02, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); osc.start(t); osc.stop(t + 0.08);
+        } else if (type === 'laser') {
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(50, t + 0.3);
+          gain.gain.setValueAtTime(0.08, t); gain.gain.linearRampToValueAtTime(0.001, t + 0.3); osc.start(t); osc.stop(t + 0.3);
+        } else if (type === 'bomb') {
+          osc.type = 'square'; osc.frequency.setValueAtTime(100, t); osc.frequency.exponentialRampToValueAtTime(20, t + 0.4);
+          gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4); osc.start(t); osc.stop(t + 0.4);
+        } else if (type === 'downgrade') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(1000, t); osc.frequency.linearRampToValueAtTime(100, t + 0.8);
+          gain.gain.setValueAtTime(0.05, t); gain.gain.linearRampToValueAtTime(0.001, t + 0.8); osc.start(t); osc.stop(t + 0.8);
         }
       } catch(e) {}
     }
 
     function initPlayer() {
       player = {
-        x: WORLD_W/2, y: WORLD_H/2, radius: 14, speed: 190, maxHP: 1000, hp: 1000,
-        atk: 20, atkMultiplier: 1, damageReduction: 0, shootCooldown: 0, shootDelay: 0.35,
-        bulletSpeed: 700, bulletRadius: 4, bulletPenetration: 0, scatter: 0,
-        invincibleTimer: 0, flashTimer: 0, regen: 0, magnetRange: 90,
-        skills: { pulse: 0, blades: 0, armor: 0, core: 0 },
-        activeCount: 0, passiveCount: 0, pulseTimer: 0, bladeTimer: 0
+        x: WORLD_W/2, y: WORLD_H/2, radius: 14, speed: 200, maxHP: 1000, hp: 1000,
+        baseAtk: 25, shootCooldown: 0, shootDelay: 0.35, bulletSpeed: 800, bulletRadius: 4,
+        invincibleTimer: 0, flashTimer: 0,
+        skills: { expansion: 0, refinement: 0, gravity: 0, drawSpeed: 0, splitShot: 0, isincos: 0, bomb: 0, blackhole: 0, downgrade: 1 },
+        timers: { isincos: 15, bomb: 8, blackhole: 20, downgrade: 60 }
       };
     }
 
-    function resize() {
-      VIEW_W = window.innerWidth; VIEW_H = window.innerHeight;
-      canvas.width = VIEW_W * window.devicePixelRatio; canvas.height = VIEW_H * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
+    function getExpMulti() { return player ? (1 + [0, 0.2, 0.25, 0.3, 0.35, 0.4][player.skills.refinement || 0]) : 1; }
+    function getPickupRange() { return player ? (100 * (1 + [0, 0.3, 0.4, 0.5, 0.6, 0.7][player.skills.gravity || 0])) : 100; }
+    function getRangeMulti() { return player ? (1 + [0, 0.1, 0.2, 0.3, 0.4, 0.5][player.skills.expansion || 0]) : 1; }
+    function getCdMulti() { return player ? (1 - [0, 0.1, 0.15, 0.2, 0.25, 0.3][player.skills.drawSpeed || 0]) : 1; }
+
+    function resize() { VIEW_W = window.innerWidth; VIEW_H = window.innerHeight; canvas.width = VIEW_W * window.devicePixelRatio; canvas.height = VIEW_H * window.devicePixelRatio; ctx.scale(window.devicePixelRatio, window.devicePixelRatio); }
     window.addEventListener('resize', resize); resize();
-    function getCamera() { return { x: Math.max(0, Math.min(WORLD_W-VIEW_W, player.x - VIEW_W/2)), y: Math.max(0, Math.min(WORLD_H-VIEW_H, player.y - VIEW_H/2)) }; }
-    function isInView(x, y, margin = 20) { const cam = getCamera(); return x > cam.x - margin && x < cam.x + VIEW_W + margin && y > cam.y - margin && y < cam.y + VIEW_H + margin; }
+    function getCamera() { return player ? { x: Math.max(0, Math.min(WORLD_W-VIEW_W, player.x - VIEW_W/2)), y: Math.max(0, Math.min(WORLD_H-VIEW_H, player.y - VIEW_H/2)) } : {x:0, y:0}; }
+    function isInView(x, y, margin = 80) { const cam = getCamera(); return x > cam.x - margin && x < cam.x + VIEW_W + margin && y > cam.y - margin && y < cam.y + VIEW_H + margin; }
 
     // ==========================================
-    // 【核心开始游戏入口】
+    // 第三部分：游戏流程与UI管控
     // ==========================================
+    document.getElementById('start-game-btn').addEventListener('click', startGame);
+    document.getElementById('restart-btn').addEventListener('click', startGame);
+    document.getElementById('return-menu-btn').addEventListener('click', () => { document.getElementById('end-modal').classList.remove('active'); document.getElementById('main-menu').classList.add('active'); document.getElementById('hud-top').classList.remove('visible'); document.getElementById('xp-bar-container').classList.remove('visible'); });
+    document.getElementById('refresh-lb-btn').addEventListener('click', renderLeaderboard);
+    setTimeout(renderLeaderboard, 500);
+
     function startGame() {
-      initAudio();
-      initPlayer();
-      enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[];
-      score=0; level=1; xp=0; xpToNext=100; gameTime=0; spawnTimer=0; enemyIdCounter = 0;
-      eventsTriggered = {30:false, 60:false, 120:false, 180:false, 240:false, 300:false};
-      activeEvent = null; eventTimer = 0; document.getElementById('event-log').innerHTML = '';
-      
-      mainMenu.classList.remove('active');
-      endModal.classList.remove('active');
-      
-      document.getElementById('hud-top').classList.add('visible');
-      document.getElementById('xp-bar-container').classList.add('visible');
+      initAudio(); initPlayer();
+      enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[]; lasers=[]; bombs=[]; blackholes=[]; downgradeRings=[]; floorTexts=[];
+      score=0; level=1; xp=0; xpToNext=50; gameTime=0; enemyIdCounter=0; screenShake=0; spawnTimer=0;
+      eventsTriggered = {60:false, 120:false, 180:false, 240:false, 300:false}; activeEvent = null; eventTimer = 0;
+      document.getElementById('event-log').innerHTML = '';
+      document.getElementById('main-menu').classList.remove('active'); document.getElementById('end-modal').classList.remove('active');
+      document.getElementById('hud-top').classList.add('visible'); document.getElementById('xp-bar-container').classList.add('visible');
       document.getElementById('joystick-zone').style.display = 'block';
-
-      updateHPUI(); updateXPUI();
-      gameRunning = true; isGameOver = false;
+      updateHPUI(); updateXPUI(); gameRunning = true; isGameOver = false;
     }
 
     function endGame() { 
-      gameRunning = false; isGameOver = true;
-      document.getElementById('joystick-zone').style.display = 'none';
-      
-      endModal.classList.add('active'); 
-      document.getElementById('final-score').textContent = score; 
-      document.getElementById('final-time').textContent = Math.floor(gameTime); 
-      
-      handleGameEnd(score);
-    }
-
-    // 绑定按键
-    document.getElementById('start-game-btn').addEventListener('click', startGame);
-    document.getElementById('restart-btn').addEventListener('click', startGame);
-    document.getElementById('return-menu-btn').addEventListener('click', () => {
-       endModal.classList.remove('active');
-       mainMenu.classList.add('active');
-       document.getElementById('hud-top').classList.remove('visible');
-       document.getElementById('xp-bar-container').classList.remove('visible');
-    });
-    document.getElementById('refresh-lb-btn').addEventListener('click', renderLeaderboard);
-
-    // 启动时延迟触发排行榜渲染
-    setTimeout(renderLeaderboard, 500);
-
-    // ==========================================
-    // 事件与互动逻辑
-    // ==========================================
-    function updateEvents(dt) {
-       let sec = Math.floor(gameTime);
-       if (sec === 30 && !eventsTriggered[30]) { eventsTriggered[30]=true; triggerEvent("异常波动：全体敌怪移速提升！", "speed_up", 20); }
-       if (sec === 60 && !eventsTriggered[60]) { eventsTriggered[60]=true; triggerEvent("警告：一波几何怪物潮正在接近！", "horde", 15); }
-       if (sec === 120 && !eventsTriggered[120]) { eventsTriggered[120]=true; triggerEvent("空间碎裂：多边形进化，强敌加入战场！", "elite", 20); }
-       if (sec === 180 && !eventsTriggered[180]) { eventsTriggered[180]=true; triggerEvent("能量潮汐：经验核心掉落限时翻倍！", "double_xp", 20); }
-       if (sec === 240 && !eventsTriggered[240]) { eventsTriggered[240]=true; triggerEvent("致命警告：超级怪物潮降临！", "horde_massive", 20); }
-       if (sec === 300 && !eventsTriggered[300]) { eventsTriggered[300]=true; triggerEvent("系统崩溃：无尽深渊协议启动...", "endgame", 9999); }
-
-       if (activeEvent) {
-          eventTimer -= dt;
-          if (eventTimer <= 0) {
-             activeEvent = null; triggerEvent("异常消除，系统逐渐稳定。", "normal", 0);
-          }
-       }
+      gameRunning = false; isGameOver = true; document.getElementById('joystick-zone').style.display = 'none';
+      document.getElementById('end-modal').classList.add('active'); document.getElementById('final-score').textContent = score; document.getElementById('final-time').textContent = Math.floor(gameTime); 
+      setTimeout(async () => {
+        let savedName = localStorage.getItem('geo_game_account');
+        let promptMsg = savedName ? `本次得分: ${score}\n\n已检测到本地账号【${savedName}】\n点“确定”使用此账号上传，或输入新名字：` : `本次得分: ${score}\n\n请输入名字记录成绩：`;
+        const playerName = prompt(promptMsg, savedName || '匿名玩家');
+        if (playerName && playerName.trim() !== '') {
+          const finalName = playerName.trim().substring(0, 10);
+          localStorage.setItem('geo_game_account', finalName); 
+          await submitScore(finalName, score); await renderLeaderboard();
+        }
+      }, 300);
     }
 
     function triggerEvent(msg, type, duration) {
        if (type !== 'normal') { activeEvent = type; eventTimer = duration; }
-       let logBox = document.getElementById('event-log');
-       let item = document.createElement('div');
-       item.className = 'event-item';
-       let min = Math.floor(gameTime/60).toString().padStart(2,'0');
-       let sec = Math.floor(gameTime%60).toString().padStart(2,'0');
+       let logBox = document.getElementById('event-log'); let item = document.createElement('div'); item.className = 'event-item';
+       let min = Math.floor(gameTime/60).toString().padStart(2,'0'), sec = Math.floor(gameTime%60).toString().padStart(2,'0');
        item.innerHTML = `<span style="color:#d9381e; font-weight:bold;">[${min}:${sec}]</span> ${msg}`;
-       logBox.prepend(item);
-       if (logBox.children.length > 5) logBox.removeChild(logBox.lastChild);
+       logBox.prepend(item); if (logBox.children.length > 5) logBox.removeChild(logBox.lastChild);
        playSound('xp');
     }
 
-    const joystickZone = document.getElementById('joystick-zone');
-    const joystickBase = document.getElementById('joystick-base');
-    const joystickThumb = document.getElementById('joystick-thumb');
+    // --- 摇杆控制 ---
     let touchStartX = 0, touchStartY = 0;
+    const jZone = document.getElementById('joystick-zone'), jBase = document.getElementById('joystick-base'), jThumb = document.getElementById('joystick-thumb');
+    jZone.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); joystickActive = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; jBase.style.left = touchStartX+'px'; jBase.style.top = touchStartY+'px'; jBase.style.opacity = '1'; });
+    jZone.addEventListener('touchmove', e => { e.preventDefault(); if(!joystickActive) return; let dx = e.touches[0].clientX - touchStartX, dy = e.touches[0].clientY - touchStartY, dist = Math.sqrt(dx*dx + dy*dy), ratio = Math.min(dist, 55) / 55; moveX = dist > 5 ? (dx / dist) * ratio : 0; moveY = dist > 5 ? (dy / dist) * ratio : 0; let clamped = Math.min(dist, 55); jThumb.style.transform = `translate(calc(-50% + ${dist>0 ? (dx/dist)*clamped : 0}px), calc(-50% + ${dist>0 ? (dy/dist)*clamped : 0}px))`; });
+    jZone.addEventListener('touchend', e => { joystickActive = false; moveX = 0; moveY = 0; jBase.style.opacity = '0'; jThumb.style.transform = 'translate(-50%, -50%)'; });
+    window.addEventListener('keydown', e => { initAudio(); keys[e.key] = true; }); window.addEventListener('keyup', e => { keys[e.key] = false; });
 
-    function startJoystick(e) {
-      initAudio(); joystickActive = true;
-      const touch = e.touches[0];
-      touchStartX = touch.clientX; touchStartY = touch.clientY;
-      joystickBase.style.left = touchStartX + 'px'; joystickBase.style.top = touchStartY + 'px';
-      joystickBase.style.opacity = '1'; updateJoystick(e);
+    // ==========================================
+    // 第四部分：老虎机抽奖系统
+    // ==========================================
+    const ALL_UPGRADES = [
+      { id: 'splitShot', name: '分裂弹', descs: ['命中分裂1弹(30%伤害)','命中分裂1弹(40%伤害)','命中分裂2弹(40%伤害)','命中分裂2弹(50%伤害)','命中分裂2弹(70%伤害)'] },
+      { id: 'expansion', name: '常驻-扩张', descs: ['全技能范围+10%','全技能范围+20%','全技能范围+30%','全技能范围+40%','全技能范围+50%'] },
+      { id: 'refinement', name: '常驻-精炼', descs: ['EXP获取+20%','EXP获取+25%','EXP获取+30%','EXP获取+35%','EXP获取+40%'] },
+      { id: 'gravity', name: '常驻-引力', descs: ['晶体吸附范围+30%','晶体吸附范围+40%','晶体吸附范围+50%','晶体吸附范围+60%','晶体吸附范围+70%'] },
+      { id: 'drawSpeed', name: '常驻-加速', descs: ['主技能冷却-10%','主技能冷却-15%','主技能冷却-20%','主技能冷却-25%','主技能冷却-30%'] },
+      { id: 'isincos', name: '主动-isincos', descs: ['极简黑体激光','激光伤害提升,减CD','激光大幅提升','激光伤害提升,减CD','毁灭级激光切割'] },
+      { id: 'bomb', name: '主动-X^x', descs: ['抛出数学炸弹','炸弹抛出量+1','炸弹伤害提升,减CD','炸弹抛出量+1','炸弹伤害毁灭'] },
+      { id: 'blackhole', name: '主动-∞黑洞', descs: ['引力塌缩场','吸引范围提升','持续伤害提升','范围大幅提升','主宰级引力场'] }
+    ];
+
+    function triggerUpgradeUI() {
+        gameRunning = false; rerollsLeft = 1;
+        document.getElementById('reroll-btn').textContent = `重 组 序 列 (剩1次)`; document.getElementById('reroll-btn').disabled = false;
+        document.getElementById('upgrade-overlay').classList.add('active'); rollSlotMachine();
     }
-    function updateJoystick(e) {
-      if(!joystickActive) return;
-      const touch = e.touches[0]; const maxR = 55;
-      let dx = touch.clientX - touchStartX, dy = touch.clientY - touchStartY;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      const ratio = Math.min(dist, maxR) / maxR;
-      moveX = dist > 5 ? (dx / dist) * ratio : 0; moveY = dist > 5 ? (dy / dist) * ratio : 0;
-      const clamped = Math.min(dist, maxR);
-      let drawX = dist>0 ? (dx/dist)*clamped : 0, drawY = dist>0 ? (dy/dist)*clamped : 0;
-      joystickThumb.style.transform = `translate(calc(-50% + ${drawX}px), calc(-50% + ${drawY}px))`;
+
+    function rollSlotMachine() {
+        let available = [];
+        ALL_UPGRADES.forEach(u => { let clv = player.skills[u.id]; if (clv < 5) available.push({ id: u.id, name: u.name, lv: clv + 1, desc: u.descs[clv] }); });
+        let fallbacks = [ { id: 'heal', name: '系统维护', lv: '', desc: '恢复30%系统完整度' }, { id: 'hpup', name: '结构强化', lv: '', desc: '完整度上限+100' } ];
+
+        available.sort(()=>Math.random()-0.5); currentUpgradeChoices = [];
+        for(let i=0; i<3; i++) currentUpgradeChoices.push(available[i] || fallbacks[Math.floor(Math.random()*fallbacks.length)]);
+
+        for(let i=0; i<3; i++) {
+            let strip = document.getElementById(`slot-strip-${i}`);
+            strip.style.transition = 'none'; strip.style.transform = `translateY(0px)`;
+            
+            let html = '';
+            for(let j=0; j<15; j++) { let rItem = available[Math.floor(Math.random()*available.length)] || fallbacks[0]; html += `<div class="slot-item"><div class="opt-name">${rItem.name} ${rItem.lv?'Lv.'+rItem.lv:''}</div><div class="opt-desc" style="opacity:0.5">${rItem.desc}</div></div>`; }
+            let target = currentUpgradeChoices[i];
+            html += `<div class="slot-item clickable" id="opt-btn-${i}"><div class="opt-name" style="color:#d9381e;">${target.name} ${target.lv?'Lv.'+target.lv:''}</div><div class="opt-desc">${target.desc}</div></div>`;
+            strip.innerHTML = html;
+            
+            void strip.offsetWidth; let delay = i * 0.2;
+            strip.style.transition = `transform ${2 + delay}s cubic-bezier(0.15, 0.85, 0.2, 1)`;
+            strip.style.transform = `translateY(-${206 * 15}px)`; 
+
+            setTimeout(() => { let btn = document.getElementById(`opt-btn-${i}`); btn.classList.add('active-choice'); btn.onclick = () => selectUpgrade(i); }, (2 + delay) * 1000);
+        }
+        playSound('xp');
     }
-    function endJoystick() { joystickActive = false; moveX = 0; moveY = 0; joystickBase.style.opacity = '0'; joystickThumb.style.transform = 'translate(-50%, -50%)'; }
 
-    joystickZone.addEventListener('touchstart', e => { e.preventDefault(); startJoystick(e); });
-    joystickZone.addEventListener('touchmove', e => { e.preventDefault(); updateJoystick(e); });
-    joystickZone.addEventListener('touchend', endJoystick);
-    joystickZone.addEventListener('touchcancel', endJoystick);
-    window.addEventListener('keydown', e => { initAudio(); keys[e.key] = true; });
-    window.addEventListener('keyup', e => { keys[e.key] = false; });
+    document.getElementById('reroll-btn').addEventListener('click', () => { if (rerollsLeft > 0) { rerollsLeft--; document.getElementById('reroll-btn').textContent = `已 耗 尽`; document.getElementById('reroll-btn').disabled = true; rollSlotMachine(); } });
 
-    let spawnTimer = 0;
+    function selectUpgrade(index) {
+        let choice = currentUpgradeChoices[index];
+        if (choice.id === 'heal') player.hp = Math.min(player.maxHP, player.hp + player.maxHP*0.3); 
+        else if (choice.id === 'hpup') { player.maxHP+=100; player.hp+=100; } 
+        else player.skills[choice.id]++;
+        
+        document.getElementById('upgrade-overlay').classList.remove('active'); gameRunning = true; updateHPUI(); 
+        if (xp >= xpToNext) setTimeout(() => { triggerLevelUp(); }, 100);
+    }
+
+    function updateHPUI() { let currentHp = Math.ceil(Math.max(0, player.hp || 0)); document.getElementById('hp-text').textContent = `${currentHp} / ${player.maxHP}`; document.getElementById('hp-bar-fill').style.width = Math.min(100, (currentHp / player.maxHP) * 100) + '%'; }
+    function updateXPUI() { document.getElementById('xp-bar-fill').style.width = Math.min(100, (xp/xpToNext)*100) + '%'; document.getElementById('level-text').textContent = `Lv.${level}`; }
+    
+    function gainXP(amount) {
+      let mult = (activeEvent === 'double_xp') ? 2 : 1; xp += amount * mult * getExpMulti(); playSound('xp');
+      if (xp >= xpToNext) triggerLevelUp(); else updateXPUI();
+    }
+    
+    function triggerLevelUp() { xp -= xpToNext; level++; xpToNext = Math.floor(xpToNext * 1.5) + 10; updateXPUI(); triggerUpgradeUI(); }
+
+    // ==========================================
+    // 第五部分：核心战斗逻辑 (绝不遗漏)
+    // ==========================================
     function spawnEnemyLogic(dt) {
-       let baseInterval = Math.max(0.15, 1.2 - (gameTime / 180) * 0.9);
-       let spawnMultiplier = 1;
-       if (activeEvent === 'horde') spawnMultiplier = 3;
-       if (activeEvent === 'horde_massive') spawnMultiplier = 6;
-       if (activeEvent === 'endgame') spawnMultiplier = 8;
-       let currentInterval = baseInterval / spawnMultiplier;
-
+       let baseInterval = Math.max(0.4, 2.5 - (gameTime / 180)); let spawnMultiplier = 1;
+       if (activeEvent === 'horde') spawnMultiplier = 2.5; else if (activeEvent === 'horde_massive') spawnMultiplier = 5; else if (activeEvent === 'endgame') spawnMultiplier = 8;
+       
        spawnTimer += dt;
-       while(spawnTimer >= currentInterval) {
-          spawnTimer -= currentInterval;
-          const cam = getCamera(); const m = 60; let x, y;
-          if (Math.random() < 0.5) { x = Math.random() < 0.5 ? cam.x - m : cam.x + VIEW_W + m; y = cam.y + Math.random() * VIEW_H; } 
-          else { x = cam.x + Math.random() * VIEW_W; y = Math.random() < 0.5 ? cam.y - m : cam.y + VIEW_H + m; }
-          
-          let type = 'square'; let rand = Math.random();
-          if (level >= 15 || activeEvent === 'endgame') {
-             if (rand < 0.1) type = 'hexagon'; else if (rand < 0.2) type = 'pentagon'; else if (rand < 0.4) type = 'star'; else if (rand < 0.6) type = 'triangle';
-          } else if (level >= 10 || activeEvent === 'elite') {
-             if (rand < 0.15) type = 'pentagon'; else if (rand < 0.35) type = 'star'; else if (rand < 0.6) type = 'triangle';
-          } else if (level >= 5) {
-             if (rand < 0.2) type = 'star'; else if (rand < 0.5) type = 'triangle';
-          } else if (level >= 2) {
-             if (rand < 0.3) type = 'triangle';
+       if (spawnTimer >= baseInterval / spawnMultiplier) {
+          spawnTimer = 0; const cam = getCamera(); let ang = Math.random() * Math.PI * 2; let distToSpawn = Math.max(VIEW_W, VIEW_H) * 0.8;
+          let cx = player.x + Math.cos(ang) * distToSpawn, cy = player.y + Math.sin(ang) * distToSpawn;
+          let clusterSize = 2 + Math.floor(Math.random() * 3);
+          let baseTier = 3; 
+          if (level >= 30 || activeEvent === 'endgame') baseTier = 3 + Math.floor(Math.random()*5); 
+          else if (level >= 15 || activeEvent === 'elite') baseTier = 3 + Math.floor(Math.random()*4); 
+          else if (level >= 5) baseTier = 3 + Math.floor(Math.random()*2); 
+
+          for(let i=0; i<clusterSize; i++) {
+             let sides = Math.min(7, Math.max(3, baseTier + (Math.random()>0.85 ? 1 : 0))); 
+             let stats = { 3:{r:16,hp:30,spd:180,exp:10,dmg:80}, 4:{r:20,hp:80,spd:140,exp:20,dmg:120}, 5:{r:24,hp:180,spd:100,exp:40,dmg:180}, 6:{r:30,hp:350,spd:70,exp:80,dmg:250}, 7:{r:38,hp:700,spd:50,exp:150,dmg:400} }[sides];
+             let sizeMult = 0.8 + Math.random() * 1.7; let fRadius = stats.r * sizeMult; let fHp = stats.hp * Math.pow(sizeMult, 1.2); let fSpd = (stats.spd / Math.sqrt(sizeMult)) * (0.9 + Math.random()*0.2); 
+             if (activeEvent === 'speed_up' || activeEvent === 'endgame') fSpd *= 1.5;
+
+             enemies.push({ id: enemyIdCounter++, x: cx + (Math.random()-0.5)*100, y: cy + (Math.random()-0.5)*100, sides: sides, radius: fRadius, sizeMult: sizeMult, speed: fSpd, hp: fHp, maxHp: fHp, exp: stats.exp * sizeMult, atk: stats.dmg, angle: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 4, hitTimer: 0, hitByRing: new Set() });
           }
-
-          let stats = { 
-             square: {s: 20, spd: 80, hp: 20, xp: 10, dmg: 100}, 
-             triangle: {s: 18, spd: 140, hp: 40, xp: 20, dmg: 150}, 
-             star: {s: 24, spd: 60, hp: 100, xp: 50, dmg: 200},
-             pentagon: {s: 30, spd: 45, hp: 300, xp: 150, dmg: 300},
-             hexagon: {s: 22, spd: 190, hp: 150, xp: 100, dmg: 250}
-          }[type];
-
-          let eSpd = stats.spd + Math.random()*20;
-          if (activeEvent === 'speed_up' || activeEvent === 'endgame') eSpd *= 1.5;
-
-          enemies.push({ id: enemyIdCounter++, x, y, type, size: stats.s, half: stats.s/2, speed: eSpd, hp: stats.hp, maxHp: stats.hp, exp: stats.xp, atk: stats.dmg, hitTimer: 0 });
        }
     }
 
-    function shoot() {
-      if (!gameRunning || enemies.length===0) return;
-      const visible = enemies.filter(e => isInView(e.x, e.y, 50));
-      if (visible.length === 0) return;
-      let nearest = null, minDSq = Infinity;
-      for (let e of visible) {
-        const dSq = (e.x-player.x)**2 + (e.y-player.y)**2;
-        if (dSq < minDSq) { minDSq = dSq; nearest = e; }
-      }
-      const dist = Math.sqrt(minDSq) || 1;
-      const baseVx = ((nearest.x - player.x)/dist) * player.bulletSpeed;
-      const baseVy = ((nearest.y - player.y)/dist) * player.bulletSpeed;
-      const bulletCount = 1 + player.scatter;
-      let bDmg = player.atk * player.atkMultiplier;
-
-      for (let i = 0; i < bulletCount; i++) {
-        let offset = bulletCount > 1 ? (i - (bulletCount-1)/2) * 0.15 : 0;
-        bullets.push({ 
-          x: player.x, y: player.y, vx: baseVx * Math.cos(offset) - baseVy * Math.sin(offset), vy: baseVx * Math.sin(offset) + baseVy * Math.cos(offset), 
-          radius: player.bulletRadius, penetration: player.bulletPenetration, hitSet: new Set(), homing: false, dmg: bDmg, life: 5 
-        });
-      }
+    function fireBasicShoot() {
+      let visible = enemies.filter(e => isInView(e.x, e.y, 50)); if (visible.length === 0) return;
+      let nearest = visible.reduce((min, e) => { let d = (e.x-player.x)**2 + (e.y-player.y)**2; return d < min.d ? {e, d} : min; }, {e:null, d:Infinity}).e;
+      let dist = Math.sqrt((nearest.x-player.x)**2 + (nearest.y-player.y)**2) || 1;
+      bullets.push({ x: player.x, y: player.y, vx: ((nearest.x-player.x)/dist)*player.bulletSpeed, vy: ((nearest.y-player.y)/dist)*player.bulletSpeed, radius: player.bulletRadius, life: 3, dmg: player.baseAtk, hitSet: new Set(), isSplit: false });
       playSound('shoot');
     }
 
-    function triggerPulse(range, dmg) {
-       playSound('shoot'); 
-       particles.push({ x: player.x, y: player.y, type: 'pulse', life: 0.3, maxLife: 0.3, radius: range });
-       for(let i=enemies.length-1; i>=0; i--) {
-          let e = enemies[i];
-          let distSq = (e.x - player.x)**2 + (e.y - player.y)**2;
-          if (distSq <= range*range) {
-             damageEnemy(i, dmg, true);
-             let dist = Math.sqrt(distSq);
-             if (dist > 0) { e.x += ((e.x - player.x)/dist) * 40; e.y += ((e.y - player.y)/dist) * 40; }
-          }
-       }
+    function triggerSplit(sourceX, sourceY) {
+        let lv = player.skills.splitShot; if (!lv || lv === 0) return;
+        let count = [0, 1, 1, 2, 2, 2][lv], dmgPct = [0, 0.3, 0.4, 0.4, 0.5, 0.7][lv];
+        for(let i=0; i<count; i++) { let ang = Math.random() * Math.PI * 2; bullets.push({ x: sourceX, y: sourceY, vx: Math.cos(ang)*player.bulletSpeed*0.8, vy: Math.sin(ang)*player.bulletSpeed*0.8, radius: 3, life: 1.5, dmg: player.baseAtk * dmgPct, hitSet: new Set(), isSplit: true }); }
     }
 
-    function fireHomingBlades(count, dmg, pen) {
-        playSound('shoot');
-        for (let i=0; i<count; i++) {
-            let angle = (Math.PI * 2 / count) * i;
-            bullets.push({ x: player.x, y: player.y, vx: Math.cos(angle) * 400, vy: Math.sin(angle) * 400, radius: 6, dmg: dmg, penetration: pen, hitSet: new Set(), homing: true, life: 3 });
-        }
-    }
-
-    function damageEnemy(index, dmg, isCrit=false) {
-        if (!enemies[index]) return;
-        let e = enemies[index];
-        e.hp -= dmg; e.hitTimer = 0.1;
-        let size = isCrit ? 18 : 14;
-        textParticles.push({x: e.x, y: e.y-15, text: `-${Math.ceil(dmg)}`, life: 0.5, vy: -50, size: size, color: isCrit ? '#d9381e' : THEME.damage});
-        if (e.hp <= 0) killEnemy(index);
-    }
-
-    function damagePlayer(amount) {
-      if (!gameRunning || player.invincibleTimer>0) return;
-      let finalDamage = amount * (1 - player.damageReduction);
-      player.hp -= finalDamage;
-      player.invincibleTimer = 0.5; player.flashTimer = 0.2;
-      updateHPUI(); playSound('hurt');
-      for (let i=0; i<10; i++) particles.push({ x: player.x, y: player.y, vx: (Math.random()-0.5)*300, vy: (Math.random()-0.5)*300, life: 0.4, maxLife: 0.4, size: 3, color: THEME.damage });
-      if (player.hp <= 0) { player.hp=0; endGame(); }
-    }
-
-    function killEnemy(index) {
-      const e = enemies[index];
-      expOrbs.push({ x: e.x, y: e.y, value: e.exp, life: 15, vx: (Math.random()-0.5)*150, vy: (Math.random()-0.5)*150 });
-      for (let i=0; i<4; i++) particles.push({ x: e.x, y: e.y, vx: (Math.random()-0.5)*200, vy: (Math.random()-0.5)*200, life: 0.3, maxLife: 0.3, size: 2+Math.random()*3, color: THEME.main });
-      enemies.splice(index,1); score += Math.floor(e.maxHp / 10); playSound('hit');
-    }
-
-    function updateHPUI() { 
-       let currentHp = Math.ceil(Math.max(0, player.hp));
-       hpText.textContent = `${currentHp} / ${player.maxHP}`;
-       document.getElementById('hp-bar-fill').style.width = Math.min(100, (currentHp / player.maxHP) * 100) + '%'; 
-    }
-    function updateXPUI() { xpFill.style.width = Math.min(100, (xp/xpToNext)*100) + '%'; levelText.textContent = `Lv.${level}`; }
-    
-    function gainXP(amount) {
-      let mult = (activeEvent === 'double_xp') ? 2 : 1;
-      xp += amount * mult; playSound('xp');
-      if (xp >= xpToNext) triggerLevelUp();
-      else updateXPUI();
-    }
-
-    function triggerLevelUp() {
-      xp -= xpToNext; level++; xpToNext = Math.floor(100 * Math.pow(level, 1.5)); updateXPUI();
-      gameRunning = false; refreshUsed = false; document.getElementById('refresh-btn').style.opacity = '1';
-      randomizeBaseOptions(); upgradeOverlay.classList.add('active');
-    }
-
-    function applyPassiveUpgrade(type, lv) {
-       if (type === 'armor') {
-           let hpBonuses = [0, 200, 100, 100, 100, 0]; player.maxHP += hpBonuses[lv]; player.hp += hpBonuses[lv];
-           player.damageReduction = [0, 0.1, 0.15, 0.2, 0.25, 0.35][lv]; if(lv===5) player.regen += 5;
-       } else if (type === 'core') {
-           player.atkMultiplier = [1, 1.2, 1.4, 1.6, 1.8, 2.5][lv]; player.speed = 190 * [1, 1.1, 1.15, 1.2, 1.3, 1.4][lv];
-           if(lv===3) player.shootDelay *= 0.8; if(lv===5) player.bulletPenetration += 1;
-       }
-    }
-
-    function randomizeBaseOptions() {
-      let options = [];
-      let bases = [
-        { name: '急救包', desc: '立即恢复50%系统完整度', apply: p => { p.hp = Math.min(p.maxHP, p.hp + p.maxHP*0.5); } },
-        { name: '结构强化', desc: '系统完整度上限+100', apply: p => { p.maxHP+=100; p.hp+=100; } },
-        { name: '引力增强', desc: '能量拾取范围提升30%', apply: p => { p.magnetRange*=1.3; } },
-        { name: '弹道分裂', desc: '基础射击散射数量+1', apply: p => { p.scatter+=1; } },
-      ];
-
-      let skillDefs = [
-        { id: 'pulse', name: '主动: 超载脉冲', type: 'active', descs: ['Lv1 周期释放范围震荡波','Lv2 范围扩大,伤害提升','Lv3 冷却大幅减少','Lv4 范围极大,伤害大幅提升','Lv5 毁灭脉冲,主宰战场'] },
-        { id: 'blades', name: '主动: 追踪飞刃', type: 'active', descs: ['Lv1 周期发射自动索敌飞刃','Lv2 数量增加,伤害提升','Lv3 冷却减少','Lv4 数量增加,穿透+1','Lv5 高频飞刃风暴'] },
-        { id: 'armor', name: '被动: 纳米装甲', type: 'passive', descs: ['Lv1 减伤10%, HP上限+200','Lv2 减伤15%, HP上限+100','Lv3 减伤20%, HP上限+100','Lv4 减伤25%, HP上限+100','Lv5 减伤35%, 获得持续修复机制'] },
-        { id: 'core', name: '被动: 动能核心', type: 'passive', descs: ['Lv1 攻击+20%, 移速+10%','Lv2 攻击+40%, 移速+15%','Lv3 攻击+60%, 射速提升','Lv4 攻击+80%, 移速+30%','Lv5 攻击+150%, 基础穿透+1'] },
-      ];
-
-      for (let s of skillDefs) {
-         let curLv = (player.skills && player.skills[s.id]) ? player.skills[s.id] : 0;
-         if (curLv < 5) {
-            if (curLv === 0) {
-               if (s.type === 'active' && player.activeCount >= 2) continue;
-               if (s.type === 'passive' && player.passiveCount >= 2) continue;
-            }
-            options.push({
-               name: `${s.name} ${curLv>0? 'Lv'+(curLv+1) : '(解锁)'}`, desc: s.descs[curLv],
-               apply: p => {
-                  p.skills[s.id]++;
-                  if (curLv === 0) { if(s.type === 'active') p.activeCount++; else p.passiveCount++; }
-                  if(s.type === 'passive') applyPassiveUpgrade(s.id, p.skills[s.id]);
-               }
-            });
-         }
-      }
-
-      options.sort(() => Math.random() - 0.5); currentBaseOptions = [];
-      if (options.length >= 3) { currentBaseOptions = options.slice(0, 3); } 
-      else {
-         currentBaseOptions = options.slice(); let bOptions = bases.sort(() => Math.random() - 0.5);
-         while (currentBaseOptions.length < 3) currentBaseOptions.push(bOptions.pop() || bases[0]);
-      }
-
-      [1,2,3].forEach(i => {
-         let btn = document.getElementById(`base-opt${i}`); let opt = currentBaseOptions[i-1];
-         btn.innerHTML = `<div class="opt-name">${opt.name}</div><div class="opt-desc">${opt.desc}</div>`;
-      });
-    }
-
-    function applyBaseUpgrade(index) {
-      currentBaseOptions[index].apply(player); upgradeOverlay.classList.remove('active');
-      gameRunning = true; updateHPUI(); if (xp >= xpToNext) setTimeout(triggerLevelUp, 100);
-    }
-
-    document.getElementById('refresh-btn').addEventListener('click', () => { 
-       if (!refreshUsed) { refreshUsed = true; document.getElementById('refresh-btn').style.opacity = '0.5'; randomizeBaseOptions(); } 
-    });
-    [1,2,3].forEach(i => document.getElementById(`base-opt${i}`).addEventListener('click', ()=> applyBaseUpgrade(i-1)));
-    
-    function drawPoly(cx, cy, radius, sides, color) {
-      ctx.fillStyle = color; ctx.beginPath();
-      for (let i = 0; i < sides; i++) { const a = (i * 2 * Math.PI) / sides - Math.PI / 2; ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius); }
-      ctx.closePath(); ctx.fill();
-    }
-    function drawStar(cx, cy, outerR, color) {
-      const innerR = outerR * 0.4; let rot = Math.PI/2*3; const step = Math.PI/5;
-      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(cx, cy - outerR);
-      for(let i=0; i<5; i++){ ctx.lineTo(cx + Math.cos(rot)*outerR, cy + Math.sin(rot)*outerR); rot += step; ctx.lineTo(cx + Math.cos(rot)*innerR, cy + Math.sin(rot)*innerR); rot += step; }
-      ctx.closePath(); ctx.fill();
-    }
-
-    // ==========================================
-    // 引擎循环
-    // ==========================================
-    let lastTime = performance.now(), frameCount = 0;
-    function loop(now){
-      const dt = Math.min(0.05, (now - lastTime) / 1000); 
-      lastTime = now; frameCount++;
-
-      if (gameRunning && !isGameOver) {
-        gameTime += dt; updateEvents(dt);
+    function checkActiveSkills(dt) {
+        if (!player || !player.skills) return;
         
-        let mx = moveX, my = moveY;
-        if (keys['w']||keys['ArrowUp']) my-=1; if (keys['s']||keys['ArrowDown']) my+=1;
-        if (keys['a']||keys['ArrowLeft']) mx-=1; if (keys['d']||keys['ArrowRight']) mx+=1;
-        const mag = Math.sqrt(mx*mx+my*my); if(mag>1){mx/=mag;my/=mag;}
-        
-        player.x = Math.max(player.radius, Math.min(WORLD_W-player.radius, player.x + mx * player.speed * dt));
-        player.y = Math.max(player.radius, Math.min(WORLD_H-player.radius, player.y + my * player.speed * dt));
-
-        if (mag > 0.1 && frameCount % 3 === 0) trails.push({ x: player.x, y: player.y, alpha: 0.35 });
-
-        if(player.regen>0 && player.hp<player.maxHP) { player.hp=Math.min(player.maxHP, player.hp+player.regen*dt); updateHPUI(); }
-        if(player.invincibleTimer>0) player.invincibleTimer-=dt;
-        if(player.flashTimer>0) player.flashTimer-=dt;
-        if(player.shootCooldown>0) player.shootCooldown-=dt;
-        if(player.shootCooldown<=0) { shoot(); player.shootCooldown=player.shootDelay; }
-
-        if (player.skills.pulse > 0) {
-           let pLv = player.skills.pulse; player.pulseTimer -= dt;
-           if (player.pulseTimer <= 0) {
-              player.pulseTimer = [3, 2.5, 2, 1.5, 1][pLv - 1]; let range = [120, 150, 180, 220, 280][pLv - 1];
-              let dmg = [50, 80, 120, 180, 300][pLv - 1] * player.atkMultiplier; triggerPulse(range, dmg);
-           }
-        }
-        if (player.skills.blades > 0) {
-           let bLv = player.skills.blades; player.bladeTimer -= dt;
-           if (player.bladeTimer <= 0) {
-              player.bladeTimer = [4, 3.5, 3, 2.5, 1.5][bLv - 1]; let count = [2, 3, 4, 5, 8][bLv - 1];
-              let dmg = [30, 50, 80, 120, 200][bLv - 1] * player.atkMultiplier; fireHomingBlades(count, dmg, [0, 0, 0, 1, 2][bLv - 1]);
-           }
-        }
-
-        spawnEnemyLogic(dt);
-
-        for(let e of enemies){
-          const dx=player.x-e.x, dy=player.y-e.y, dSq = dx*dx + dy*dy;
-          if (dSq > 0) { const dist = Math.sqrt(dSq); e.x += (dx/dist)*e.speed*dt; e.y += (dy/dist)*e.speed*dt; }
-          if(e.hitTimer>0) e.hitTimer-=dt;
-          if(player.invincibleTimer<=0 && dSq < (player.radius + e.half)**2) { damagePlayer(e.atk); break; }
-        }
-
-        for(let i=bullets.length-1; i>=0; i--){
-          const b = bullets[i]; 
-          if (b.homing) {
-             let target = null, minDSq = Infinity;
-             for (let e of enemies) { let dSq = (e.x-b.x)**2 + (e.y-b.y)**2; if (dSq < minDSq) { minDSq = dSq; target = e; } }
-             if (target) {
-                let angle = Math.atan2(target.y - b.y, target.x - b.x); let currentAngle = Math.atan2(b.vy, b.vx);
-                let angleDiff = angle - currentAngle;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI*2; while (angleDiff < -Math.PI) angleDiff += Math.PI*2;
-                let turnSpeed = 6 * dt;
-                if (Math.abs(angleDiff) < turnSpeed) currentAngle = angle; else currentAngle += Math.sign(angleDiff) * turnSpeed;
-                let speed = Math.sqrt(b.vx**2 + b.vy**2); b.vx = Math.cos(currentAngle) * speed; b.vy = Math.sin(currentAngle) * speed;
-             }
-             b.life -= dt; if (b.life <= 0) { bullets.splice(i,1); continue; }
-          }
-
-          b.x += b.vx*dt; b.y += b.vy*dt;
-          if(!b.homing && (b.x<0||b.x>WORLD_W||b.y<0||b.y>WORLD_H)){ bullets.splice(i,1); continue; }
-          let remove = false;
-          for(let j=enemies.length-1; j>=0; j--){
-            const e = enemies[j];
-            const cx = Math.max(e.x-e.half, Math.min(b.x, e.x+e.half)); const cy = Math.max(e.y-e.half, Math.min(b.y, e.y+e.half));
-            if((b.x-cx)**2 + (b.y-cy)**2 < (b.radius+2)**2){
-              if(b.hitSet.has(e.id)) continue;
-              damageEnemy(j, b.dmg);
-              if(b.penetration>0) { b.penetration--; b.hitSet.add(e.id); } else { remove=true; break; }
-            }
-          }
-          if(remove) bullets.splice(i,1);
-        }
-
-        for (let orb of expOrbs) {
-          orb.x += orb.vx * dt; orb.y += orb.vy * dt; orb.vx *= 0.85; orb.vy *= 0.85;
-          const dx = player.x - orb.x, dy = player.y - orb.y, dSq = dx*dx + dy*dy;
-          if (dSq < (player.radius + 8)**2) { gainXP(orb.value); orb.collected = true; } 
-          else if (dSq < player.magnetRange**2) { const dist = Math.sqrt(dSq); orb.x += (dx/dist) * 450 * dt; orb.y += (dy/dist) * 450 * dt; }
-          orb.life -= dt;
-        }
-        expOrbs = expOrbs.filter(o => !o.collected && o.life > 0);
-      }
-
-      for(let i=trails.length-1; i>=0; i--){ trails[i].alpha -= dt * 1.5; if(trails[i].alpha <= 0) trails.splice(i,1); }
-      for(let p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; } particles = particles.filter(p=>p.life>0);
-      for(let tp of textParticles){ tp.y+=tp.vy*dt; tp.life-=dt; } textParticles = textParticles.filter(t=>t.life>0);
-
-      // 渲染阶段：只要不是初始状态，始终进行绘制
-      if (player && player.x !== undefined) { 
-          const cam = getCamera();
-          ctx.clearRect(0,0,VIEW_W,VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0,0,VIEW_W,VIEW_H);
-          ctx.save(); ctx.translate(-cam.x,-cam.y);
-          
-          ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1;
-          const grid=100, sx=-((cam.x%grid)|0), sy=-((cam.y%grid)|0);
-          ctx.beginPath();
-          for(let x=sx; x<VIEW_W+grid; x+=grid){ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y+VIEW_H);}
-          for(let y=sy; y<VIEW_H+grid; y+=grid){ctx.moveTo(cam.x, y); ctx.lineTo(cam.x+VIEW_W, y);}
-          ctx.stroke();
-
-          for(let t of trails) { ctx.beginPath(); ctx.arc(t.x, t.y, player.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(42,29,19,${t.alpha})`; ctx.lineWidth = 2; ctx.stroke(); }
-
-          ctx.fillStyle = THEME.xp;
-          for (let orb of expOrbs) ctx.fillRect(orb.x-3, orb.y-3, 6, 6);
-
-          for(let e of enemies){
-            const col = e.hitTimer>0 ? THEME.damage : THEME.main;
-            if(e.type==='square') { ctx.fillStyle = col; ctx.fillRect(e.x-e.half, e.y-e.half, e.size, e.size); } 
-            else if(e.type==='triangle') drawPoly(e.x, e.y, e.half+2, 3, col);
-            else if(e.type==='star') drawStar(e.x, e.y, e.half+4, col);
-            else if(e.type==='pentagon') drawPoly(e.x, e.y, e.half+4, 5, col);
-            else if(e.type==='hexagon') drawPoly(e.x, e.y, e.half+2, 6, col);
-          }
-
-          for(let b of bullets){ 
-             if (b.homing) {
-                 ctx.fillStyle = '#d9381e'; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
-                 ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, 4); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill(); ctx.restore();
-             } else {
-                 ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, 2*Math.PI); ctx.fill(); 
-             }
-          }
-
-          for(let p of particles){ 
-             if (p.type === 'pulse') {
-                 ctx.globalAlpha = p.life / p.maxLife; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * (1 - p.life / p.maxLife), 0, Math.PI*2);
-                 ctx.strokeStyle = THEME.main; ctx.lineWidth = 4; ctx.stroke(); ctx.globalAlpha = 1;
-             } else {
-                 ctx.globalAlpha = p.life/p.maxLife; ctx.fillStyle = p.color || THEME.main; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; 
-             }
-          }
-
-          for(let tp of textParticles){ ctx.globalAlpha = tp.life/0.5; ctx.fillStyle = tp.color || THEME.damage; ctx.font=`bold ${tp.size||14}px system-ui`; ctx.fillText(tp.text, tp.x-8, tp.y); }
-          ctx.globalAlpha=1;
-
-          if (!isGameOver) {
-             ctx.strokeStyle = (player.flashTimer>0 && Math.floor(player.flashTimer*20)%2===0) ? THEME.damage : THEME.main;
-             ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.stroke();
-             
-             if (player.damageReduction > 0) {
-                 ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI*2);
-                 ctx.strokeStyle = `rgba(42,150,250, 0.4)`; ctx.lineWidth = 2; ctx.stroke();
-             }
-          }
-          ctx.restore();
-      }
-
-      requestAnimationFrame(loop);
-    }
-    
-    requestAnimationFrame(loop);
-  </script>
-</body>
-</html>
+        // 1. isincos
+        if (player.skills.isincos > 0) {
+       
