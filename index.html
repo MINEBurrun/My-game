@@ -14,34 +14,54 @@
     canvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; }
     #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
     
-    .hud-top { position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 20; opacity: 0; transition: opacity 0.3s; }
+    /* 顶部左侧：血量 */
+    .hud-top { position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
     .hud-top.visible { opacity: 1; }
     #hp-text { font-size: 18px; font-weight: 900; color: #2a1d13; letter-spacing: 1px; }
     .hp-label { font-size: 10px; color: #7a6b5d; font-weight: bold; letter-spacing: 2px; }
     #hp-bar-container { width: 180px; height: 6px; background: rgba(42,29,19,0.15); border-radius: 3px; margin-top: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
     #hp-bar-fill { height: 100%; background: #d9381e; width: 100%; transition: width 0.2s ease-out; }
 
+    /* 顶部右侧：实时分数 */
+    #score-display { position: absolute; top: 20px; right: 24px; font-size: 20px; font-weight: 900; color: #2a1d13; letter-spacing: 2px; opacity: 0; transition: opacity 0.3s; text-align: right; }
+    #score-display.visible { opacity: 1; }
+    #score-display span { color: #d9381e; font-family: monospace; font-size: 22px; }
+
+    /* 右上侧：技能面板与冷却条 (修改位置防止与经验条重叠) */
+    #skill-tracker { position: absolute; top: 90px; right: 24px; display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 0.3s; align-items: flex-end; }
+    #skill-tracker.visible { opacity: 1; }
+    .skill-badge { position: relative; background: rgba(255,255,255,0.65); border: 2px solid rgba(42,29,19,0.2); border-radius: 4px; padding: 6px 10px; font-size: 12px; font-weight: 900; color: #2a1d13; overflow: hidden; display: flex; justify-content: space-between; min-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); backdrop-filter: blur(4px); }
+    .skill-cd-bg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: rgba(217, 56, 30, 0.25); z-index: 0; transform-origin: bottom; transform: scaleY(0); }
+    .skill-name-txt { position: relative; z-index: 1; text-transform: uppercase; }
+    .skill-lv-txt { position: relative; z-index: 1; color: #d9381e; font-family: monospace; font-size: 13px; }
+
+    /* 事件日志 */
     #event-log { position: absolute; top: 90px; left: 24px; width: 280px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 50; }
     .event-item { font-size: 13px; color: #2a1d13; background: rgba(250,249,246,0.85); padding: 8px 12px; border-left: 4px solid #d9381e; border-radius: 2px 6px 6px 2px; box-shadow: 0 4px 10px rgba(42,29,19,0.1); animation: slideIn 0.3s ease-out; backdrop-filter: blur(2px); line-height: 1.4; }
     @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     
+    /* 底部中央：经验条 */
     #xp-bar-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 300px; display: flex; align-items: center; gap: 12px; opacity: 0; transition: opacity 0.3s; }
     #xp-bar-container.visible { opacity: 1; }
     #xp-bar-bg { flex: 1; height: 4px; background: rgba(42,29,19,0.1); border-radius: 2px; overflow: hidden; }
     #xp-bar-fill { height: 100%; background: #2a1d13; width: 0%; transition: width 0.3s cubic-bezier(0.2,0.8,0.2,1); }
     #level-text { font-size: 14px; font-weight: bold; color: #2a1d13; font-style: italic; }
     
+    /* 摇杆 */
     #joystick-zone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; display: none; }
     #joystick-base { position: absolute; width: 110px; height: 110px; border-radius: 50%; background: rgba(250,249,246,0.7); border: 2px solid rgba(42,29,19,0.15); transform: translate(-50%, -50%); opacity: 0; pointer-events: none; z-index: 20; transition: opacity 0.2s ease-out; backdrop-filter: blur(2px); }
     #joystick-thumb { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; border-radius: 50%; background: #2a1d13; box-shadow: 0 4px 10px rgba(42,29,19,0.3); }
     
+    /* UI 面板基类 */
     .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(250,249,246,0.95); display: flex; align-items: center; justify-content: center; z-index: 60; pointer-events: auto; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px); }
     .overlay.active { opacity: 1; visibility: visible; }
-    .panel { display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 25px; width: 90%; max-width: 480px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); max-height: 95vh; }
+    .panel { position: relative; display: flex; flex-direction: column; gap: 12px; background: #fff; border: 3px solid #2a1d13; padding: 25px; width: 90%; max-width: 480px; transform: scale(0.95) translateY(20px); transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); text-align: center; box-shadow: 12px 12px 0px rgba(42,29,19,0.1); max-height: 95vh; }
     .overlay.active .panel { transform: scale(1) translateY(0); }
     
     .section-title { color: #2a1d13; font-size: 22px; font-weight: 900; letter-spacing: 4px; margin-bottom: 10px; text-transform: uppercase; }
+    .version-txt { position: absolute; top: 10px; right: 15px; font-size: 12px; color: #999; font-weight: bold; letter-spacing: 1px; }
     
+    /* 升级老虎机 */
     .slot-machine { display: flex; gap: 8px; height: 220px; overflow: hidden; background: #faf9f6; border: 3px solid #2a1d13; border-radius: 6px; padding: 5px; position: relative; box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); }
     .slot-col { flex: 1; height: 100%; overflow: hidden; position: relative; background: #fff; border: 2px solid rgba(42,29,19,0.1); border-radius: 4px; }
     .slot-strip { position: absolute; top: 0; left: 0; width: 100%; }
@@ -52,12 +72,15 @@
     .opt-name { font-size: 15px; font-weight: 900; color: #2a1d13; margin-bottom: 8px; line-height: 1.2; word-break: break-all; }
     .opt-desc { font-size: 12px; font-weight: bold; color: #7a6b5d; line-height: 1.4; }
     
-    .primary-btn { background: #2a1d13; border: none; color: #fff; padding: 16px 32px; font-size: 18px; margin-top: 10px; cursor: pointer; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; transition: transform 0.1s; }
+    /* 按钮样式 */
+    .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+    .primary-btn { flex: 1; background: #2a1d13; border: none; color: #fff; padding: 14px 20px; font-size: 16px; cursor: pointer; font-weight: 900; letter-spacing: 2px; transition: transform 0.1s; }
     .primary-btn:active { background: #111; transform: scale(0.96); }
-    .secondary-btn { background: transparent; border: 2px solid #2a1d13; color: #2a1d13; padding: 12px 32px; font-size: 15px; margin-top: 5px; cursor: pointer; font-weight: 900; letter-spacing: 1px; transition: 0.1s; }
+    .secondary-btn { background: transparent; border: 2px solid #2a1d13; color: #2a1d13; padding: 10px 20px; font-size: 15px; cursor: pointer; font-weight: 900; letter-spacing: 1px; transition: 0.1s; }
     .secondary-btn:active { background: #f0eee8; transform: scale(0.96); }
     .secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* 排行榜 */
     .leaderboard-container { margin-top: 10px; text-align: left; border-top: 2px dashed rgba(42,29,19,0.2); padding-top: 15px; }
     .leaderboard-container h3 { font-size: 18px; color: #2a1d13; margin-bottom: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
     #leaderboard-list { list-style: none; font-size: 14px; color: #555; max-height: 160px; overflow-y: auto; padding-right: 5px; font-weight: bold; }
@@ -74,34 +97,50 @@
     <div id="joystick-base"><div id="joystick-thumb"></div></div>
 
     <div id="ui-layer">
+      <!-- 游戏进行时UI -->
       <div class="hud-top" id="hud-top">
-        <div class="hp-label">INTEGRITY (系统完整度)</div>
+        <div class="hp-label">INTEGRITY</div>
         <div id="hp-text">1000 / 1000</div>
         <div id="hp-bar-container"><div id="hp-bar-fill"></div></div>
       </div>
       
+      <!-- 实时分数 -->
+      <div id="score-display">SCORE<br><span id="score-span">0</span></div>
+      
+      <!-- 右侧技能面板 -->
+      <div id="skill-tracker"></div>
+      
+      <!-- 聊天框事件 -->
       <div id="event-log"></div>
 
+      <!-- 经验条 -->
       <div id="xp-bar-container">
         <div id="xp-bar-bg"><div id="xp-bar-fill"></div></div>
         <span id="level-text">Lv.1</span>
       </div>
       
+      <!-- 主菜单面板 -->
       <div class="overlay active" id="main-menu">
         <div class="panel">
+          <div class="version-txt">v3.1 维度法则</div>
           <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">维度暴走版</span></div>
-          <button class="primary-btn" id="start-game-btn">启 动 核 心</button>
+          
+          <div class="btn-group">
+            <button class="primary-btn" id="start-game-btn">数 据 连 接</button>
+            <button class="primary-btn" id="offline-game-btn" style="background:#7a6b5d;">离 线 模 式</button>
+          </div>
           
           <div class="leaderboard-container">
-            <h3>🏆 维度主宰记录</h3>
+            <h3>🏆 维度主宰记录 <span id="clear-acc-btn" style="font-size:12px; color:#d9381e; cursor:pointer; text-decoration:underline; font-weight:normal;">[注销账号]</span></h3>
             <ul id="leaderboard-list">
               <li style="justify-content: center; color: #999;">正在加载数据库...</li>
             </ul>
-            <button id="refresh-lb-btn" class="secondary-btn" style="width: 100%; padding: 8px; font-size: 13px;">刷 新 排 行</button>
+            <button id="refresh-lb-btn" class="secondary-btn" style="width: 100%; padding: 8px; font-size: 13px; margin-top: 10px;">刷 新 排 行</button>
           </div>
         </div>
       </div>
 
+      <!-- 老虎机抽奖面板 -->
       <div class="overlay" id="upgrade-overlay">
         <div class="panel">
           <div class="section-title">基 因 抽 取</div>
@@ -114,6 +153,7 @@
         </div>
       </div>
       
+      <!-- 游戏结束面板 -->
       <div class="overlay" id="end-modal">
         <div class="panel">
           <div class="section-title" style="font-size:28px;">系 统 停 机</div>
@@ -121,8 +161,8 @@
             存活时间: <span id="final-time" style="color: #2a1d13;">0</span>s<br><br>
             同化碎片: <span id="final-score" style="color: #d9381e; font-size: 20px;">0</span>
           </div>
-          <button class="primary-btn" id="restart-btn">重 启 核 心</button>
-          <button class="secondary-btn" id="return-menu-btn">返回主菜单</button>
+          <button class="primary-btn" id="restart-btn" style="width:100%; margin-bottom:5px;">重 启 核 心</button>
+          <button class="secondary-btn" id="return-menu-btn" style="width:100%;">返回主菜单</button>
         </div>
       </div>
     </div>
@@ -130,21 +170,25 @@
 
   <script>
     // ==========================================
-    // 第一部分：数据库与全局状态
+    // 离线控制与数据库集成
     // ==========================================
     const SUPABASE_URL = 'https://zjjcudrgaavabuffyfrk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqamN1ZHJnYWF2YWJ1ZmZ5ZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTA0NzQsImV4cCI6MjA5NDc4NjQ3NH0.G_3vxAjML1tLWi7cSobnGZ21ACQ5Ucyb-BeAT3uKmpE';               
     let supabaseClient = null;
+    let isOfflineMode = false; // 全局离线控制阀门
 
     function getDB() {
+      if (isOfflineMode) return null;
       if (supabaseClient) return supabaseClient;
       if (typeof window.supabase !== 'undefined') {
-        try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supabaseClient; } catch(e) {}
+        try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supabaseClient; } 
+        catch(e) {}
       }
       return null;
     }
 
     async function submitScore(name, score) {
+      if (isOfflineMode) return;
       const db = getDB(); if (!db) return;
       try {
         const { data: exist } = await db.from('leaderboard').select('id, score').eq('player_name', name).order('score', { ascending: false }).limit(1);
@@ -157,6 +201,7 @@
     }
 
     async function getLeaderboard() {
+      if (isOfflineMode) return null;
       const db = getDB(); if (!db) return null;
       try {
         const { data, error } = await db.from('leaderboard').select('player_name, score').order('score', { ascending: false }).limit(10);
@@ -167,14 +212,24 @@
     async function renderLeaderboard() {
       const list = document.getElementById('leaderboard-list'); if (!list) return;
       const db = getDB();
-      if (!db) { list.innerHTML = `<li style="justify-content: center; color: #999;">正在连接...</li>`; setTimeout(renderLeaderboard, 1000); return; }
+      if (!db && !isOfflineMode) { list.innerHTML = `<li style="justify-content: center; color: #999;">正在连接...</li>`; setTimeout(renderLeaderboard, 1000); return; }
+      if (isOfflineMode) { list.innerHTML = `<li style="justify-content: center; color: #7a6b5d;">当前处于离线模式，无法获取榜单</li>`; return; }
+      
       const top10 = await getLeaderboard();
-      if (!top10) { list.innerHTML = `<li style="justify-content: center; color: #d9381e; font-size:12px;">拉取数据失败，请检查建表与安全规则</li>`; return; }
+      if (!top10) { list.innerHTML = `<li style="justify-content: center; color: #d9381e; font-size:12px;">拉取数据失败，请检查网络或建表配置</li>`; return; }
       if (top10.length === 0) { list.innerHTML = `<li style="justify-content: center; color: #999;">暂无排名记录</li>`; return; }
       list.innerHTML = top10.map((item, i) => { let c = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`; return `<li><span>${c} ${item.player_name}</span> <span>${item.score}</span></li>`; }).join('');
     }
 
-    // --- 核心全局变量 ---
+    // 注销账号功能
+    document.getElementById('clear-acc-btn').addEventListener('click', () => {
+        localStorage.removeItem('geo_game_account');
+        alert('本地记忆账号已注销！下次游戏结束将重新提示输入名字。');
+    });
+
+    // ==========================================
+    // 游戏全局变量与属性
+    // ==========================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const THEME = { bg: '#faf9f6', main: '#2a1d13', damage: '#d9381e', grid: 'rgba(42,29,19,0.04)', xp: '#7a6b5d' };
@@ -182,7 +237,6 @@
     let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
     const WORLD_W = 4000, WORLD_H = 4000;
     
-    // 【重要】：彻底修复变量遗漏问题
     let gameRunning = false, isGameOver = false, screenShake = 0;
     let gameTime = 0, level = 1, xp = 0, xpToNext = 50, score = 0, enemyIdCounter = 0, spawnTimer = 0;
     let activeEvent = null, eventTimer = 0, eventsTriggered = {};
@@ -194,9 +248,7 @@
     let moveX = 0, moveY = 0, keys = {}, joystickActive = false;
     let rerollsLeft = 1, currentUpgradeChoices = [];
 
-    // ==========================================
-    // 第二部分：音效与属性计算
-    // ==========================================
+    // --- 音效模块 ---
     let audioCtx = null;
     function initAudio() {
       try {
@@ -204,7 +256,6 @@
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       } catch(e) {}
     }
-
     function playSound(type) {
       if (!audioCtx) return;
       try {
@@ -232,6 +283,13 @@
       } catch(e) {}
     }
 
+    // --- 技能字典与配置 ---
+    const SKILL_NAMES = {
+        expansion: '扩张', refinement: '精炼', gravity: '引力', drawSpeed: '加速',
+        splitShot: '分裂弹',
+        isincos: 'isincos', bomb: 'X^x 炸弹', blackhole: '∞ 黑洞', downgrade: 'R^n-1 降维'
+    };
+
     function initPlayer() {
       player = {
         x: WORLD_W/2, y: WORLD_H/2, radius: 14, speed: 200, maxHP: 1000, hp: 1000,
@@ -246,6 +304,14 @@
     function getPickupRange() { return player ? (100 * (1 + [0, 0.3, 0.4, 0.5, 0.6, 0.7][player.skills.gravity || 0])) : 100; }
     function getRangeMulti() { return player ? (1 + [0, 0.1, 0.2, 0.3, 0.4, 0.5][player.skills.expansion || 0]) : 1; }
     function getCdMulti() { return player ? (1 - [0, 0.1, 0.15, 0.2, 0.25, 0.3][player.skills.drawSpeed || 0]) : 1; }
+    function getSkillMaxCd(id) {
+       if (!player) return 1; let lv = player.skills[id] || 0;
+       if(id === 'isincos') return 15 * getCdMulti() * (lv >= 4 ? 0.85 : (lv >= 2 ? 0.9 : 1));
+       if(id === 'bomb') return 8 * getCdMulti() * (lv >= 3 ? 0.9 : 1);
+       if(id === 'blackhole') return 20 * getCdMulti();
+       if(id === 'downgrade') return 60 * getCdMulti();
+       return 1;
+    }
 
     function resize() { VIEW_W = window.innerWidth; VIEW_H = window.innerHeight; canvas.width = VIEW_W * window.devicePixelRatio; canvas.height = VIEW_H * window.devicePixelRatio; ctx.scale(window.devicePixelRatio, window.devicePixelRatio); }
     window.addEventListener('resize', resize); resize();
@@ -253,11 +319,19 @@
     function isInView(x, y, margin = 80) { const cam = getCamera(); return x > cam.x - margin && x < cam.x + VIEW_W + margin && y > cam.y - margin && y < cam.y + VIEW_H + margin; }
 
     // ==========================================
-    // 第三部分：游戏流程与UI管控
+    // UI 控制与启动流程
     // ==========================================
-    document.getElementById('start-game-btn').addEventListener('click', startGame);
+    document.getElementById('start-game-btn').addEventListener('click', () => { isOfflineMode = false; startGame(); });
+    document.getElementById('offline-game-btn').addEventListener('click', () => { isOfflineMode = true; startGame(); });
     document.getElementById('restart-btn').addEventListener('click', startGame);
-    document.getElementById('return-menu-btn').addEventListener('click', () => { document.getElementById('end-modal').classList.remove('active'); document.getElementById('main-menu').classList.add('active'); document.getElementById('hud-top').classList.remove('visible'); document.getElementById('xp-bar-container').classList.remove('visible'); });
+    document.getElementById('return-menu-btn').addEventListener('click', () => { 
+        document.getElementById('end-modal').classList.remove('active'); 
+        document.getElementById('main-menu').classList.add('active'); 
+        document.getElementById('hud-top').classList.remove('visible'); 
+        document.getElementById('xp-bar-container').classList.remove('visible'); 
+        document.getElementById('score-display').classList.remove('visible'); 
+        document.getElementById('skill-tracker').classList.remove('visible'); 
+    });
     document.getElementById('refresh-lb-btn').addEventListener('click', renderLeaderboard);
     setTimeout(renderLeaderboard, 500);
 
@@ -266,26 +340,59 @@
       enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[]; lasers=[]; bombs=[]; blackholes=[]; downgradeRings=[]; floorTexts=[];
       score=0; level=1; xp=0; xpToNext=50; gameTime=0; enemyIdCounter=0; screenShake=0; spawnTimer=0;
       eventsTriggered = {60:false, 120:false, 180:false, 240:false, 300:false}; activeEvent = null; eventTimer = 0;
+      
       document.getElementById('event-log').innerHTML = '';
+      document.getElementById('score-span').textContent = '0';
       document.getElementById('main-menu').classList.remove('active'); document.getElementById('end-modal').classList.remove('active');
       document.getElementById('hud-top').classList.add('visible'); document.getElementById('xp-bar-container').classList.add('visible');
+      document.getElementById('score-display').classList.add('visible'); document.getElementById('skill-tracker').classList.add('visible');
       document.getElementById('joystick-zone').style.display = 'block';
-      updateHPUI(); updateXPUI(); gameRunning = true; isGameOver = false;
+      
+      updateHPUI(); updateXPUI(); updateSkillPanelUI(); 
+      gameRunning = true; isGameOver = false;
     }
 
     function endGame() { 
       gameRunning = false; isGameOver = true; document.getElementById('joystick-zone').style.display = 'none';
+      document.getElementById('score-display').classList.remove('visible'); document.getElementById('skill-tracker').classList.remove('visible');
       document.getElementById('end-modal').classList.add('active'); document.getElementById('final-score').textContent = score; document.getElementById('final-time').textContent = Math.floor(gameTime); 
+      
       setTimeout(async () => {
+        if (isOfflineMode) {
+            alert(`离线系统停机。\n本次同化碎片: ${score}\n(离线模式不上传成绩)`);
+            return;
+        }
+
         let savedName = localStorage.getItem('geo_game_account');
-        let promptMsg = savedName ? `本次得分: ${score}\n\n已检测到本地账号【${savedName}】\n点“确定”使用此账号上传，或输入新名字：` : `本次得分: ${score}\n\n请输入名字记录成绩：`;
-        const playerName = prompt(promptMsg, savedName || '匿名玩家');
-        if (playerName && playerName.trim() !== '') {
-          const finalName = playerName.trim().substring(0, 10);
-          localStorage.setItem('geo_game_account', finalName); 
-          await submitScore(finalName, score); await renderLeaderboard();
+        if (savedName) {
+          // 静默上传机制
+          await submitScore(savedName, score); await renderLeaderboard();
+          alert(`系统停机。\n\n检测到账号【${savedName}】本次得分: ${score}\n成绩已自动上传！(如需更换账号请在主菜单点击注销)`);
+        } else {
+          const playerName = prompt(`本次得分: ${score}\n\n请输入你的名字（将作为专属账号记录）：`, '匿名玩家');
+          if (playerName && playerName.trim() !== '') {
+            const finalName = playerName.trim().substring(0, 10);
+            localStorage.setItem('geo_game_account', finalName); 
+            await submitScore(finalName, score); await renderLeaderboard();
+          }
         }
       }, 300);
+    }
+
+    // --- 动态技能面板 ---
+    function updateSkillPanelUI() {
+        const tracker = document.getElementById('skill-tracker'); tracker.innerHTML = '';
+        if (!player) return;
+        for (let key in player.skills) {
+            if (player.skills[key] > 0) {
+                let isCD = ['isincos', 'bomb', 'blackhole', 'downgrade'].includes(key);
+                tracker.innerHTML += `<div class="skill-badge" id="badge-${key}">
+                  ${isCD ? `<div class="skill-cd-bg" id="cd-${key}"></div>` : ''}
+                  <span class="skill-name-txt">${SKILL_NAMES[key]}</span>
+                  <span class="skill-lv-txt">Lv.${player.skills[key]}</span>
+                </div>`;
+            }
+        }
     }
 
     function triggerEvent(msg, type, duration) {
@@ -306,15 +413,15 @@
     window.addEventListener('keydown', e => { initAudio(); keys[e.key] = true; }); window.addEventListener('keyup', e => { keys[e.key] = false; });
 
     // ==========================================
-    // 第四部分：老虎机抽奖系统
+    // 第五部分：老虎机抽奖系统
     // ==========================================
     const ALL_UPGRADES = [
-      { id: 'splitShot', name: '分裂弹', descs: ['命中分裂1弹(30%伤害)','命中分裂1弹(40%伤害)','命中分裂2弹(40%伤害)','命中分裂2弹(50%伤害)','命中分裂2弹(70%伤害)'] },
+      { id: 'splitShot', name: '被动-分裂弹', descs: ['命中分裂1弹(30%伤)','命中分裂1弹(40%伤)','命中分裂2弹(40%伤)','命中分裂2弹(50%伤)','命中分裂2弹(70%伤)'] },
       { id: 'expansion', name: '常驻-扩张', descs: ['全技能范围+10%','全技能范围+20%','全技能范围+30%','全技能范围+40%','全技能范围+50%'] },
       { id: 'refinement', name: '常驻-精炼', descs: ['EXP获取+20%','EXP获取+25%','EXP获取+30%','EXP获取+35%','EXP获取+40%'] },
       { id: 'gravity', name: '常驻-引力', descs: ['晶体吸附范围+30%','晶体吸附范围+40%','晶体吸附范围+50%','晶体吸附范围+60%','晶体吸附范围+70%'] },
       { id: 'drawSpeed', name: '常驻-加速', descs: ['主技能冷却-10%','主技能冷却-15%','主技能冷却-20%','主技能冷却-25%','主技能冷却-30%'] },
-      { id: 'isincos', name: '主动-isincos', descs: ['极简黑体激光','激光伤害提升,减CD','激光大幅提升','激光伤害提升,减CD','毁灭级激光切割'] },
+      { id: 'isincos', name: '主动-isincos', descs: ['极简黑体切割射线','射线伤害提升,减CD','射线伤害大幅提升','射线伤害提升,减CD','毁灭级物理切割'] },
       { id: 'bomb', name: '主动-X^x', descs: ['抛出数学炸弹','炸弹抛出量+1','炸弹伤害提升,减CD','炸弹抛出量+1','炸弹伤害毁灭'] },
       { id: 'blackhole', name: '主动-∞黑洞', descs: ['引力塌缩场','吸引范围提升','持续伤害提升','范围大幅提升','主宰级引力场'] }
     ];
@@ -360,7 +467,8 @@
         else if (choice.id === 'hpup') { player.maxHP+=100; player.hp+=100; } 
         else player.skills[choice.id]++;
         
-        document.getElementById('upgrade-overlay').classList.remove('active'); gameRunning = true; updateHPUI(); 
+        document.getElementById('upgrade-overlay').classList.remove('active'); gameRunning = true; 
+        updateHPUI(); updateSkillPanelUI(); // 实时刷新技能面板
         if (xp >= xpToNext) setTimeout(() => { triggerLevelUp(); }, 100);
     }
 
@@ -375,7 +483,7 @@
     function triggerLevelUp() { xp -= xpToNext; level++; xpToNext = Math.floor(xpToNext * 1.5) + 10; updateXPUI(); triggerUpgradeUI(); }
 
     // ==========================================
-    // 第五部分：核心战斗逻辑 (绝不遗漏)
+    // 第六部分：核心战斗逻辑
     // ==========================================
     function spawnEnemyLogic(dt) {
        let baseInterval = Math.max(0.4, 2.5 - (gameTime / 180)); let spawnMultiplier = 1;
@@ -419,6 +527,274 @@
     function checkActiveSkills(dt) {
         if (!player || !player.skills) return;
         
-        // 1. isincos
         if (player.skills.isincos > 0) {
-       
+            player.timers.isincos -= dt;
+            if(player.timers.isincos <= 0) {
+                let lv = player.skills.isincos; player.timers.isincos = getSkillMaxCd('isincos');
+                let visible = enemies.filter(e => isInView(e.x, e.y, 50)); 
+                if (visible.length > 0) {
+                    let nearest = visible.reduce((min, e) => { let d = (e.x-player.x)**2 + (e.y-player.y)**2; return d < min.d ? {e, d} : min; }, {e:null, d:Infinity}).e;
+                    let angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+                    let dmg = [0, 150, 300, 600, 1000, 2500][lv] * getRangeMulti();
+                    lasers.push({ x: player.x, y: player.y, angle: angle, life: 0.6, maxLife: 0.6, dmg: dmg, hitSet: new Set(), widthOffset: getRangeMulti() });
+                    screenShake = 15; playSound('laser');
+                }
+            }
+        }
+        
+        if (player.skills.bomb > 0) {
+            player.timers.bomb -= dt;
+            if (player.timers.bomb <= 0) {
+                let lv = player.skills.bomb; player.timers.bomb = getSkillMaxCd('bomb');
+                let count = [0, 1, 2, 2, 3, 3][lv], dmg = [0, 200, 200, 400, 400, 1000][lv];
+                let sorted = [...enemies].filter(e=>isInView(e.x, e.y, 200)).map(e => ({e, d:(e.x-player.x)**2+(e.y-player.y)**2})).sort((a,b)=>a.d-b.d);
+                for(let i=0; i<Math.min(count, sorted.length); i++) {
+                    let bStr = `${Math.floor(Math.random()*8)+2}^${Math.floor(Math.random()*8)+2}`;
+                    bombs.push({ startX: player.x, startY: player.y, tX: sorted[i].e.x, tY: sorted[i].e.y, life: 1.0, maxLife: 1.0, text: bStr, dmg: dmg, range: 120 * getRangeMulti() });
+                }
+                if (sorted.length > 0) playSound('bomb');
+            }
+        }
+
+        if (player.skills.blackhole > 0) {
+            player.timers.blackhole -= dt;
+            if(player.timers.blackhole <= 0) {
+                let lv = player.skills.blackhole; player.timers.blackhole = getSkillMaxCd('blackhole');
+                blackholes.push({ x: player.x, y: player.y, radius: [0, 250, 250, 350, 450, 600][lv] * getRangeMulti(), life: 5.0, maxLife: 5.0, dps: [0, 30, 50, 100, 100, 250][lv] });
+                screenShake = 8;
+            }
+        }
+
+        if (player.skills.downgrade > 0) {
+            player.timers.downgrade -= dt;
+            if(player.timers.downgrade <= 0) {
+                player.timers.downgrade = getSkillMaxCd('downgrade');
+                downgradeRings.push({ x: player.x, y: player.y, radius: 10, speed: 600, life: 5, id: Math.random() }); 
+                playSound('downgrade'); triggerLog("释放: 降维打击 (R^n-1)");
+            }
+        }
+    }
+
+    function damageEnemy(index, dmg, isCrit=false) {
+        if (!enemies[index]) return; let e = enemies[index];
+        e.hp -= dmg; e.hitTimer = 0.1;
+        textParticles.push({x: e.x, y: e.y-e.radius-5, text: `-${Math.ceil(dmg)}`, life: 0.5, vy: -30, size: isCrit ? 18 : 14, color: isCrit ? '#d9381e' : THEME.damage});
+        if (e.hp <= 0) killEnemy(index);
+    }
+
+    function damagePlayer(amount) {
+        if (!gameRunning || player.invincibleTimer > 0) return;
+        let finalDamage = amount * (1 - (player.damageReduction || 0));
+        player.hp -= finalDamage; player.invincibleTimer = 0.5; player.flashTimer = 0.2; screenShake = 10;
+        updateHPUI(); playSound('hurt');
+        if (player.hp <= 0) { player.hp = 0; endGame(); }
+    }
+
+    function killEnemy(index) {
+        const e = enemies[index]; expOrbs.push({ x: e.x, y: e.y, value: e.exp, life: 15, vx: (Math.random()-0.5)*150, vy: (Math.random()-0.5)*150 });
+        for (let i=0; i<4; i++) particles.push({ x: e.x, y: e.y, vx: (Math.random()-0.5)*200, vy: (Math.random()-0.5)*200, life: 0.3, maxLife: 0.3, size: 2+Math.random()*3, color: THEME.main });
+        enemies.splice(index,1); 
+        score += Math.floor(e.maxHp / 10); 
+        document.getElementById('score-span').textContent = score; 
+        playSound('hit');
+    }
+
+    // ==========================================
+    // 第七部分：引擎主循环与无缝重叠渲染
+    // ==========================================
+    
+    // 【白边修复】：彻底去掉描边，纯用半透明叠加
+    function drawEnemyPoly(cx, cy, radius, sides, angle, color) {
+        ctx.fillStyle = color; ctx.beginPath();
+        for (let i = 0; i < sides; i++) { const a = angle + (i * 2 * Math.PI) / sides; ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius); }
+        ctx.closePath(); ctx.fill(); 
+    }
+
+    let lastTime = performance.now();
+    function loop(now){
+      const dt = Math.min(0.05, (now - lastTime) / 1000); lastTime = now;
+
+      if (gameRunning && !isGameOver && player) {
+        gameTime += dt;
+        
+        let sec = Math.floor(gameTime);
+        if (sec === 60 && !eventsTriggered[60]) { eventsTriggered[60]=true; triggerEvent("警告：多边形进化群落接近！", "horde", 15); }
+        if (sec === 120 && !eventsTriggered[120]) { eventsTriggered[120]=true; triggerEvent("空间碎裂：高维晶体强敌降临！", "elite", 20); }
+        if (sec === 180 && !eventsTriggered[180]) { eventsTriggered[180]=true; triggerEvent("能量潮汐：核心掉落限时翻倍！", "double_xp", 20); }
+        if (sec === 240 && !eventsTriggered[240]) { eventsTriggered[240]=true; triggerEvent("致命警告：超级几何体海降临！", "horde_massive", 20); }
+        if (sec === 300 && !eventsTriggered[300]) { eventsTriggered[300]=true; triggerEvent("系统崩溃：无尽深渊协议启动...", "endgame", 9999); }
+        if (activeEvent) { eventTimer -= dt; if (eventTimer <= 0) { activeEvent = null; triggerEvent("异常消除，系统逐渐稳定。", "normal", 0); } }
+
+        // --- 技能栏冷却可视化 (ScaleY) ---
+        ['isincos', 'bomb', 'blackhole', 'downgrade'].forEach(sk => {
+            if(player.skills[sk] > 0) {
+                let el = document.getElementById(`cd-${sk}`);
+                if(el) { let pct = Math.max(0, (player.timers[sk] / getSkillMaxCd(sk))); el.style.transform = `scaleY(${pct})`; }
+            }
+        });
+
+        let mx = moveX, my = moveY;
+        if (keys['w']||keys['ArrowUp']) my-=1; if (keys['s']||keys['ArrowDown']) my+=1; if (keys['a']||keys['ArrowLeft']) mx-=1; if (keys['d']||keys['ArrowRight']) mx+=1;
+        const mag = Math.sqrt(mx*mx+my*my); if(mag>1){mx/=mag;my/=mag;}
+        
+        player.x = Math.max(player.radius, Math.min(WORLD_W-player.radius, player.x + mx * player.speed * dt));
+        player.y = Math.max(player.radius, Math.min(WORLD_H-player.radius, player.y + my * player.speed * dt));
+
+        if (mag > 0.1 && Math.random()<0.3) trails.push({ x: player.x, y: player.y, alpha: 0.3 });
+
+        if(player.invincibleTimer>0) player.invincibleTimer-=dt; if(player.flashTimer>0) player.flashTimer-=dt;
+        if(player.shootCooldown>0) player.shootCooldown-=dt; if(player.shootCooldown<=0) { fireBasicShoot(); player.shootCooldown=player.shootDelay; }
+
+        checkActiveSkills(dt);
+        spawnEnemyLogic(dt);
+
+        for (let ring of downgradeRings) {
+            ring.radius += ring.speed * dt; ring.life -= dt;
+            for (let e of enemies) {
+                if (e.hitByRing.has(ring.id)) continue;
+                if (Math.abs(Math.sqrt((e.x-ring.x)**2 + (e.y-ring.y)**2) - ring.radius) < 30) {
+                    e.hitByRing.add(ring.id);
+                    if (e.sides > 3) {
+                        e.sides -= 1; e.radius *= 0.8; e.speed *= 1.25; let oldMax = e.maxHp; e.maxHp *= 0.6; e.hp = e.hp * (e.maxHp / oldMax);
+                        textParticles.push({x: e.x, y: e.y, text: "DIM -1", life: 0.8, vy: -20, size: 16, color: '#4285f4'});
+                    }
+                }
+            }
+        }
+        downgradeRings = downgradeRings.filter(r => r.life > 0);
+
+        for (let bh of blackholes) {
+            bh.life -= dt;
+            for (let i=enemies.length-1; i>=0; i--) {
+                let e = enemies[i]; let dx = player.x - e.x, dy = player.y - e.y, dist = Math.sqrt(dx*dx+dy*dy);
+                if (dist < bh.radius) {
+                    let pull = Math.pow(Math.max(0, 1 - dist/bh.radius), 2) * 800 * dt; 
+                    e.x += (dx/dist)*pull; e.y += (dy/dist)*pull; e.hp -= bh.dps * dt;
+                    if(e.hp <= 0) killEnemy(i);
+                }
+            }
+        }
+        blackholes = blackholes.filter(b => b.life > 0);
+
+        for (let i=bombs.length-1; i>=0; i--) {
+            let b = bombs[i]; b.life -= dt;
+            if (b.life <= 0) {
+                particles.push({x: b.tX, y: b.tY, type:'blast', radius: b.range, life: 0.5, maxLife: 0.5});
+                floorTexts.push({x: b.tX, y: b.tY, text: b.text, life: 2.0, maxLife: 2.0});
+                for(let j=enemies.length-1; j>=0; j--){ if ((enemies[j].x-b.tX)**2 + (enemies[j].y-b.tY)**2 < b.range**2) damageEnemy(j, b.dmg, true); }
+                bombs.splice(i,1);
+            }
+        }
+        for(let ft of floorTexts) ft.life -= dt; floorTexts = floorTexts.filter(ft => ft.life > 0);
+
+        for(let e of enemies){
+          const dx=player.x-e.x, dy=player.y-e.y, dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist > 0) { e.x += (dx/dist)*e.speed*dt; e.y += (dy/dist)*e.speed*dt; }
+          e.angle += e.spin * dt; if(e.hitTimer>0) e.hitTimer-=dt;
+          
+          if(player.invincibleTimer<=0 && dist < (player.radius + e.radius)) { damagePlayer(e.atk); }
+        }
+
+        for(let i=bullets.length-1; i>=0; i--){
+          const b = bullets[i]; b.x += b.vx*dt; b.y += b.vy*dt; b.life -= dt;
+          if(b.life<=0 || b.x<0||b.x>WORLD_W||b.y<0||b.y>WORLD_H){ bullets.splice(i,1); continue; }
+          let remove = false;
+          for(let j=enemies.length-1; j>=0; j--){
+            const e = enemies[j];
+            if((b.x-e.x)**2 + (b.y-e.y)**2 < (b.radius+e.radius)**2){
+              if(b.hitSet.has(e.id)) continue;
+              damageEnemy(j, b.dmg);
+              if(!b.isSplit) triggerSplit(b.x, b.y);
+              if(b.penetration>0) { b.penetration--; b.hitSet.add(e.id); } else { remove=true; break; }
+            }
+          }
+          if(remove) bullets.splice(i,1);
+        }
+
+        for (let l of lasers) {
+            l.life -= dt; let ldx = Math.cos(l.angle), ldy = Math.sin(l.angle);
+            let curWidth = Math.pow(Math.sin((l.life/l.maxLife)*Math.PI), 0.5) * 150 * l.widthOffset;
+            for(let j=enemies.length-1; j>=0; j--){
+                let e = enemies[j], vX = e.x - l.x, vY = e.y - l.y, proj = vX * ldx + vY * ldy;
+                if (proj > 0) {
+                    let dist = Math.abs(vX * ldy - vY * ldx);
+                    if (dist < curWidth/2 + e.radius && !l.hitSet.has(e.id)) { damageEnemy(j, l.dmg, true); l.hitSet.add(e.id); }
+                }
+            }
+        }
+        lasers = lasers.filter(l => l.life > 0);
+
+        let actRange = getPickupRange();
+        for (let orb of expOrbs) {
+          orb.x += orb.vx * dt; orb.y += orb.vy * dt; orb.vx *= 0.85; orb.vy *= 0.85;
+          const dx = player.x - orb.x, dy = player.y - orb.y, dSq = dx*dx + dy*dy;
+          if (dSq < (player.radius + 8)**2) { 
+              xp += orb.value * getExpMulti(); playSound('xp'); orb.collected = true; 
+              if (xp >= xpToNext) { xp-=xpToNext; level++; xpToNext=Math.floor(xpToNext*1.5)+10; updateXPUI(); triggerUpgradeUI(); } else updateXPUI();
+          } 
+          else if (dSq < actRange**2) { const dist = Math.sqrt(dSq); orb.x += (dx/dist) * 600 * dt; orb.y += (dy/dist) * 600 * dt; }
+          orb.life -= dt;
+        }
+        expOrbs = expOrbs.filter(o => !o.collected && o.life > 0);
+      }
+
+      for(let i=trails.length-1; i>=0; i--){ trails[i].alpha -= dt * 1.5; if(trails[i].alpha <= 0) trails.splice(i,1); }
+      for(let p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; } particles = particles.filter(p=>p.life>0);
+      for(let tp of textParticles){ tp.y+=tp.vy*dt; tp.life-=dt; } textParticles = textParticles.filter(t=>t.life>0);
+      if (screenShake > 0) { screenShake *= 0.8; if(screenShake < 0.5) screenShake = 0; }
+
+      // --- 全局渲染 ---
+      if (player && player.x !== undefined) { 
+          const cam = getCamera();
+          ctx.clearRect(0,0,VIEW_W,VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+          ctx.save(); if(screenShake>0) ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake); ctx.translate(-cam.x,-cam.y);
+          
+          ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1; const grid=100, sx=-((cam.x%grid)|0), sy=-((cam.y%grid)|0); ctx.beginPath();
+          for(let x=sx; x<VIEW_W+grid; x+=grid){ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y+VIEW_H);}
+          for(let y=sy; y<VIEW_H+grid; y+=grid){ctx.moveTo(cam.x, y); ctx.lineTo(cam.x+VIEW_W, y);} ctx.stroke();
+
+          for(let ft of floorTexts) { ctx.save(); ctx.globalAlpha = ft.life / ft.maxLife; ctx.fillStyle = 'rgba(42,29,19,0.3)'; ctx.font = '900 24px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.translate(ft.x, ft.y); ctx.scale(1, 0.5); ctx.fillText(ft.text, 0, 0); ctx.restore(); }
+          for(let t of trails) { ctx.beginPath(); ctx.arc(t.x, t.y, player.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(42,29,19,${t.alpha})`; ctx.lineWidth = 2; ctx.stroke(); }
+          
+          for (let bh of blackholes) {
+              ctx.fillStyle = `rgba(0,0,0,${(bh.life/5)*0.15})`; ctx.beginPath(); ctx.arc(bh.x, bh.y, bh.radius, 0, Math.PI*2); ctx.fill();
+              let timeE = gameTime * 2;
+              for(let i=0; i<3; i++) { let r = bh.radius * (1 - ((timeE + i/3) % 1)); ctx.beginPath(); ctx.arc(bh.x, bh.y, r, 0, Math.PI*2); ctx.strokeStyle = `rgba(0,0,0,${r/bh.radius * (bh.life/5)})`; ctx.lineWidth = 3; ctx.stroke(); }
+          }
+
+          for (let ring of downgradeRings) { ctx.beginPath(); ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(66, 133, 244, ${ring.life/5})`; ctx.lineWidth = 10; ctx.stroke(); }
+          ctx.fillStyle = THEME.xp; for (let orb of expOrbs) ctx.fillRect(orb.x-3, orb.y-3, 6, 6);
+
+          for(let e of enemies){ let baseColor = e.hitTimer>0 ? `rgba(217, 56, 30, 0.8)` : `rgba(42, 29, 19, 0.5)`; drawEnemyPoly(e.x, e.y, e.radius, e.sides, e.angle, baseColor); }
+
+          for(let l of lasers) {
+              let curWidth = Math.pow(Math.sin((l.life/l.maxLife)*Math.PI), 0.5) * 150 * l.widthOffset;
+              ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.angle); ctx.fillStyle = `rgba(10, 10, 10, ${l.life/l.maxLife})`;
+              ctx.beginPath(); ctx.moveTo(0, -curWidth/2); ctx.lineTo(WORLD_W, -curWidth/10); ctx.lineTo(WORLD_W, curWidth/10); ctx.lineTo(0, curWidth/2); ctx.fill(); ctx.restore();
+          }
+
+          for(let b of bullets){ ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, 2*Math.PI); ctx.fill(); }
+
+          for(let b of bombs) {
+              let p = 1 - (b.life / b.maxLife); let curX = b.startX + (b.tX - b.startX) * p, curY = b.startY + (b.tY - b.startY) * p; let z = Math.sin(p * Math.PI) * 200; 
+              ctx.save(); ctx.translate(curX, curY - z); let scale = 1 + z/200; ctx.scale(scale, scale); ctx.fillStyle = '#111'; ctx.font = '900 16px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.text, 0, 0); ctx.restore();
+              ctx.fillStyle = `rgba(0,0,0,0.1)`; ctx.beginPath(); ctx.ellipse(curX, curY, 15*(1-p), 5*(1-p), 0, 0, Math.PI*2); ctx.fill(); 
+          }
+
+          for(let p of particles){ 
+             if (p.type === 'blast') { ctx.globalAlpha = p.life / p.maxLife; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fillStyle = `rgba(217, 56, 30, 0.5)`; ctx.fill(); ctx.globalAlpha = 1; } 
+             else { ctx.globalAlpha = p.life/p.maxLife; ctx.fillStyle = p.color || THEME.main; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; }
+          }
+
+          for(let tp of textParticles){ ctx.globalAlpha = tp.life/0.5; ctx.fillStyle = tp.color || THEME.damage; ctx.font=`900 ${tp.size||14}px system-ui`; ctx.fillText(tp.text, tp.x, tp.y); } ctx.globalAlpha=1;
+
+          if (!isGameOver) { ctx.strokeStyle = (player.flashTimer>0 && Math.floor(player.flashTimer*20)%2===0) ? THEME.damage : THEME.main; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.stroke(); }
+          ctx.restore();
+      }
+      requestAnimationFrame(loop);
+    }
+    
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
