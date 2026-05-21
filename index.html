@@ -178,7 +178,7 @@
     .section-title { color: #2a1d13; font-size: 24px; font-weight: 900; letter-spacing: 4px; margin-bottom: 10px; text-transform: uppercase; }
     .version-txt { position: absolute; top: 10px; right: 15px; font-size: 12px; color: #999; font-weight: bold; letter-spacing: 1px; }
     
-    /* 重制老虎机基因抽取深色UI */
+    /* 升级老虎机基因抽取深色UI */
     #upgrade-overlay .panel { background: rgba(20, 15, 12, 0.95); border: 2px solid #d9381e; box-shadow: 0 0 30px rgba(217, 56, 30, 0.3); }
     #upgrade-overlay .section-title { color: #d9381e; text-shadow: 0 0 10px rgba(217,56,30,0.5); }
     .slot-machine { background: #0a0a0a; border: 2px solid rgba(217, 56, 30, 0.5); display: flex; gap: 6px; height: 220px; overflow: hidden; border-radius: 6px; padding: 5px; position: relative; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5); }
@@ -278,9 +278,14 @@
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
     /* 绝对防御级弹窗层 */
-    #info-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); pointer-events: auto; }
-    #info-modal.active { display: flex; }
-    #info-modal .panel { max-width: 350px; padding: 20px; z-index: 10000; pointer-events: auto; }
+    #info-modal, #auth-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); pointer-events: auto; }
+    #info-modal.active, #auth-modal.active { display: flex; }
+    .modal-panel { background: rgba(250,249,246,0.95); padding: 25px; border: 3px solid #2a1d13; border-radius: 8px; max-width: 350px; width: 90%; display: flex; flex-direction: column; gap: 15px; z-index: 10000; pointer-events: auto; text-align: center; }
+    
+    .auth-input { padding: 10px; border: 2px solid rgba(42,29,19,0.3); border-radius: 4px; font-size: 14px; outline: none; font-family: monospace; width: 100%; box-sizing: border-box; }
+    .auth-input:focus { border-color: #d9381e; }
+    .auth-toggle { font-size: 12px; color: #7a6b5d; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px; }
+
   </style>
 </head>
 <body>
@@ -345,7 +350,13 @@
       <!-- 主菜单 -->
       <div class="overlay active" id="main-menu">
         <div class="panel">
-          <div class="version-txt">v10.0 绝密无瑕版</div>
+          <div class="version-txt">v11.1.5 Alpha</div>
+          
+          <div id="user-status-bar" style="font-size:12px; font-weight:bold; color:#555; margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:2px dashed rgba(42,29,19,0.2); padding-bottom:5px;">
+              <span id="current-user-name">未登录游客</span>
+              <span id="login-logout-btn" style="color:#d9381e; cursor:pointer; text-decoration:underline;">[账号登录]</span>
+          </div>
+
           <div class="section-title" style="font-size:36px; line-height: 1.3; margin-bottom: 20px;">
               几何碰撞<br>
               <span class="dynamic-subtitle" style="font-size:18px; color: #d9381e; font-family: monospace; letter-spacing: 6px;">□◇○△☆▽◁</span>
@@ -365,7 +376,22 @@
           <div class="leaderboard-container">
             <h3>🏆 维度主宰记录</h3>
             <ul id="leaderboard-list"><li style="justify-content: center; color: #999;">正在请求数据库...</li></ul>
+            <button id="refresh-lb-btn" class="secondary-btn" style="width: 100%; padding: 8px; font-size: 13px; margin-top: 10px;">刷 新 排 行</button>
           </div>
+        </div>
+      </div>
+
+      <!-- 登录/注册 弹窗 -->
+      <div id="auth-modal">
+        <div class="modal-panel">
+          <div class="section-title" id="auth-title" style="font-size: 20px; margin-bottom:0;">系 统 登 录</div>
+          <input type="text" id="auth-email" class="auth-input" placeholder="邮箱账号 (Email)">
+          <input type="password" id="auth-pwd" class="auth-input" placeholder="密码 (Password)">
+          <input type="text" id="auth-name" class="auth-input" placeholder="代号 (仅注册需填)" style="display:none;">
+          <div id="auth-error" style="color:#d9381e; font-size:12px; font-weight:bold; display:none; text-align:left;"></div>
+          <button class="primary-btn" id="auth-submit-btn" style="padding: 10px;">登 录</button>
+          <div class="auth-toggle" id="auth-toggle-btn">没有账号？点击注册</div>
+          <button class="secondary-btn" id="auth-close-btn" style="padding: 8px;">取 消</button>
         </div>
       </div>
 
@@ -420,12 +446,12 @@
                           <div class="weapon-card active" data-wid="basic">
                               <div class="weapon-icon">☄️</div>
                               <div class="weapon-name">基础粒子炮</div>
-                              <div class="weapon-info-btn" data-info="【基础粒子炮】\n\n传统的动能实体武器。\n基础伤害：30\n基础射速：0.32秒/发\n\n特性：\n发射高能动能实体弹丸，散布微小。可完美兼容装载【分裂弹】、【散射】、【连射】等全套物理弹道学技能。">?</div>
+                              <div class="weapon-info-btn" data-info="【基础粒子炮】\n\n传统的动能实体武器。\n基础伤害：30\n基础射速：0.32秒/发\n\n特性：\n发射高能动能实体弹丸，自带微弱的弹道散射压制力。可完美兼容装载【分裂弹】、【散射】、【连射】等全套物理弹道学技能。">?</div>
                           </div>
                           <div class="weapon-card" data-wid="laser">
                               <div class="weapon-icon">⚡</div>
                               <div class="weapon-name">高能激光</div>
-                              <div class="weapon-info-btn" data-info="【高能激光】\n\n贯穿维度的光束武器。\n基础伤害：10 (享极高攻击力增益)\n基础射速：0.50秒/发\n\n特性：\n发射能瞬间无限穿透所有目标的强激光。完全隔离物理弹药技能池，解锁【天基打击】、【光子裂隙】、【矩阵光刃】、【超新星】与【浮游伴星】五大专属主动技能！">?</div>
+                              <div class="weapon-info-btn" data-info="【高能激光】\n\n贯穿维度的光束武器。\n基础伤害：10 (享极高攻击力增益)\n基础射速：0.50秒/发\n\n特性：\n发射能瞬间无限穿透所有目标的强激光。完全隔离物理弹药技能池，解锁激光专属的【天基打击】、【光子裂隙】、【矩阵光刃】、【超新星】与【浮游伴星】五大专属主动技能！">?</div>
                           </div>
                       </div>
                   </div>
@@ -472,12 +498,12 @@
         </div>
       </div>
 
-      <!-- 终极隔离级信息弹窗 -->
+      <!-- 信息弹窗 -->
       <div id="info-modal">
-          <div class="panel">
-              <div class="section-title" style="font-size:18px;">系 统 提 示</div>
+          <div class="modal-panel">
+              <div class="section-title" style="font-size:18px; margin-bottom:0;">系 统 提 示</div>
               <div id="info-modal-text" style="font-size:14px; color:#555; white-space:pre-wrap; text-align:left; line-height:1.5;"></div>
-              <button class="primary-btn" id="close-info-btn" style="margin-top:15px; padding:10px;">确 定</button>
+              <button class="primary-btn" id="close-info-btn" style="margin-top:10px; padding:10px;">确 定</button>
           </div>
       </div>
 
@@ -499,6 +525,7 @@
         </div>
       </div>
 
+      <!-- 结算界面 -->
       <div class="overlay" id="end-modal">
         <div class="panel">
           <div class="section-title" style="font-size:28px;">系 统 停 机</div>
@@ -527,7 +554,7 @@
   </div>
 
   <script>
-    // 终极安全层兜底：确保所有输入到Canvas渲染的数值绝对不为NaN或Infinity
+    // 安全数值计算兜底，防备引擎致命白屏
     function safeNum(val, fallback = 0) {
         if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) return fallback;
         return val;
@@ -540,7 +567,6 @@
     let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
     const WORLD_W = 4000, WORLD_H = 4000;
 
-    // 引入新的升级状态指示器，用于显示升级动态背景
     let gameRunning = false, isGameOver = false, isPaused = false, isUpgrading = false, screenShake = 0;
     let screenRedFlash = 0;
     let gameTime = 0, level = 1, xp = 0, xpToNext = 50, score = 0;
@@ -595,10 +621,7 @@
     };
 
     const SKILL_NAMES = {
-        weapon_basic: '基础粒子炮',
-        weapon_laser: '高能主激光',
-        skill_split: '触发-分裂弹',
-        
+        weapon_basic: '基础粒子炮', weapon_laser: '高能主激光', skill_split: '触发-分裂弹',
         expansion:'扩张', refinement:'精炼', gravity:'引力', drawSpeed:'加速',
         regen:'自愈', maxHpUp:'扩容', lifesteal:'吸血', bulletPower:'火力强化', fireRate:'射速强化', agility:'轻捷',
         
@@ -702,35 +725,54 @@
     window.addEventListener('touchmove', dpsMove, {passive: false});
     window.addEventListener('touchend', dpsEnd);
 
+    let currentUser = null;
+    let isLoginMode = true;
+
     async function initialNetworkCheck() {
         const btn = document.getElementById('start-game-btn');
         const retryBtn = document.getElementById('retry-conn-btn');
         
-        btn.textContent = '连接数据库中...';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
+        btn.textContent = '连接数据库中...'; btn.disabled = true; btn.style.opacity = '0.5';
         if(retryBtn) { retryBtn.textContent = '检测中...'; retryBtn.disabled = true; }
         
         try {
             if (typeof window.supabase === 'undefined') throw new Error('SDK Not Loaded');
-            const db = window.supabase.createClient('https://placeholder.supabase.co', 'placeholder_key');
+            const db = window.supabase.createClient('https://zjjcudrgaavabuffyfrk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqamN1ZHJnYWF2YWJ1ZmZ5ZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTA0NzQsImV4cCI6MjA5NDc4NjQ3NH0.G_3vxAjML1tLWi7cSobnGZ21ACQ5Ucyb-BeAT3uKmpE');
+            
             const { data, error } = await db.from('leaderboard').select('id').limit(1);
             if (error) throw error;
             
             isDbUsable = true;
             supabaseClientObj = db;
-            btn.textContent = '数 据 连 接';
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
+            btn.textContent = '数 据 连 接'; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
             if(retryBtn) { retryBtn.textContent = '已连接'; retryBtn.disabled = true; retryBtn.style.color = '#34a853'; retryBtn.style.borderColor = '#34a853'; }
+            
             renderLeaderboard();
+
+            supabaseClientObj.auth.onAuthStateChange((event, session) => {
+                if (session && session.user) {
+                    currentUser = session.user;
+                    let name = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+                    document.getElementById('current-user-name').textContent = `行者: ${name}`;
+                    document.getElementById('login-logout-btn').textContent = '[注销]';
+                } else {
+                    currentUser = null;
+                    document.getElementById('current-user-name').textContent = '未登录游客';
+                    document.getElementById('login-logout-btn').textContent = '[账号登录]';
+                }
+            });
+
+            const { data: { session } } = await supabaseClientObj.auth.getSession();
+            if(session) {
+                currentUser = session.user;
+                let name = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+                document.getElementById('current-user-name').textContent = `行者: ${name}`;
+                document.getElementById('login-logout-btn').textContent = '[注销]';
+            }
+
         } catch (err) {
             isDbUsable = false;
-            btn.textContent = '无数据连接(禁入)';
-            btn.disabled = true; 
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
+            btn.textContent = '无数据连接(禁入)'; btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
             if(retryBtn) { retryBtn.textContent = '重试链接'; retryBtn.disabled = false; retryBtn.style.color = '#d9381e'; retryBtn.style.borderColor = '#d9381e'; }
             
             const list = document.getElementById('leaderboard-list');
@@ -738,118 +780,148 @@
         }
     }
     initialNetworkCheck();
-    
     document.getElementById('retry-conn-btn').addEventListener('click', () => { initialNetworkCheck(); });
 
-    let matchHistory = [];
-    let historyPage = 0;
-    const HIST_PER_PAGE = 5;
+    document.getElementById('login-logout-btn').addEventListener('click', async () => {
+        if (!isDbUsable) { alert("网络异常，无法访问账号系统。"); return; }
+        if (currentUser) {
+            await supabaseClientObj.auth.signOut();
+            alert("已注销。");
+        } else {
+            document.getElementById('auth-modal').classList.add('active');
+            document.getElementById('auth-error').style.display = 'none';
+        }
+    });
+
+    document.getElementById('auth-close-btn').addEventListener('click', () => {
+        document.getElementById('auth-modal').classList.remove('active');
+    });
+    
+    document.getElementById('auth-modal').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('auth-modal')) {
+            document.getElementById('auth-modal').classList.remove('active');
+        }
+    });
+
+    document.getElementById('auth-toggle-btn').addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').textContent = isLoginMode ? '系 统 登 录' : '新 行 者 注 册';
+        document.getElementById('auth-submit-btn').textContent = isLoginMode ? '登 录' : '注 册';
+        document.getElementById('auth-name').style.display = isLoginMode ? 'none' : 'block';
+        document.getElementById('auth-toggle-btn').textContent = isLoginMode ? '没有账号？点击注册' : '已有账号？点击登录';
+        document.getElementById('auth-error').style.display = 'none';
+    });
+
+    document.getElementById('auth-submit-btn').addEventListener('click', async () => {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-pwd').value;
+        const name = document.getElementById('auth-name').value.trim();
+        const errEl = document.getElementById('auth-error');
+
+        if (!email || !password) { errEl.textContent = "邮箱或密码不能为空！"; errEl.style.display = 'block'; return; }
+
+        try {
+            document.getElementById('auth-submit-btn').disabled = true;
+            document.getElementById('auth-submit-btn').textContent = '处理中...';
+            if (isLoginMode) {
+                const { data, error } = await supabaseClientObj.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                document.getElementById('auth-modal').classList.remove('active');
+            } else {
+                if (!name) { errEl.textContent = "请输入代号！"; errEl.style.display = 'block'; return; }
+                const { data, error } = await supabaseClientObj.auth.signUp({
+                    email, password, options: { data: { display_name: name } }
+                });
+                if (error) throw error;
+                alert("注册成功！");
+                document.getElementById('auth-modal').classList.remove('active');
+            }
+        } catch (err) {
+            errEl.textContent = err.message || "操作失败，请重试";
+            errEl.style.display = 'block';
+        } finally {
+            document.getElementById('auth-submit-btn').disabled = false;
+            document.getElementById('auth-submit-btn').textContent = isLoginMode ? '登 录' : '注 册';
+        }
+    });
+
+    async function submitScore(name, s) {
+        const db = supabaseClientObj; if (!db) return;
+        try {
+            const { data:exist } = await db.from('leaderboard').select('id,score').eq('player_name',name).order('score',{ascending:false}).limit(1);
+            if (exist && exist.length>0) { if (s>exist[0].score) await db.from('leaderboard').update({score:s}).eq('player_name',name); }
+            else await db.from('leaderboard').insert([{player_name:name,score:s}]);
+        } catch(err) {}
+    }
+    
+    async function fetchLeaderboardData() {
+        const db = supabaseClientObj; if (!db) return null;
+        try {
+            const {data,error} = await db.from('leaderboard').select('player_name,score').order('score',{ascending:false}).limit(10);
+            return error ? null : data;
+        } catch(e) { return null; }
+    }
+    
+    async function renderLeaderboard() {
+        const list = document.getElementById('leaderboard-list'); if (!list) return;
+        if (isOfflineMode) { list.innerHTML='<li style="justify-content:center;color:#7a6b5d;">当前为离线模式</li>'; return; }
+        if (!isDbUsable) { list.innerHTML='<li style="justify-content:center;color:#d9381e;">网络连接异常</li>'; return; }
+        
+        const top10 = await fetchLeaderboardData();
+        if (!top10) { list.innerHTML='<li style="justify-content:center;color:#d9381e;font-size:12px;">拉取数据库失败</li>'; return; }
+        if (top10.length===0) { list.innerHTML='<li style="justify-content:center;color:#999;">暂无登顶记录</li>'; return; }
+        list.innerHTML = top10.map((item,i)=>`<li><span>${['🥇','🥈','🥉'][i]||`${i+1}.`} ${item.player_name}</span><span>${item.score}</span></li>`).join('');
+    }
+
+    let matchHistory = []; let historyPage = 0; const HIST_PER_PAGE = 5;
 
     function loadHistory() {
-        try {
-            const saved = localStorage.getItem('geo_match_history');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed)) matchHistory = parsed;
-                else matchHistory = [];
-            }
-        } catch(e) { matchHistory = []; }
+        try { const saved = localStorage.getItem('geo_match_history'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) matchHistory = parsed; else matchHistory = []; } } catch(e) { matchHistory = []; }
     }
     
     function saveHistory(data) {
-        try {
-            if (!Array.isArray(matchHistory)) matchHistory = [];
-            matchHistory.unshift(data);
-            if (matchHistory.length > 50) matchHistory.pop(); 
-            localStorage.setItem('geo_match_history', JSON.stringify(matchHistory));
-        } catch(e) {}
+        try { if (!Array.isArray(matchHistory)) matchHistory = []; matchHistory.unshift(data); if (matchHistory.length > 50) matchHistory.pop(); localStorage.setItem('geo_match_history', JSON.stringify(matchHistory)); } catch(e) {}
     }
     
     function getLocalMaxScore() {
-        let max = 0;
-        if (!Array.isArray(matchHistory)) return 0;
-        for (let m of matchHistory) { if (m && m.score > max) max = m.score; }
-        return max;
+        let max = 0; if (!Array.isArray(matchHistory)) return 0; for (let m of matchHistory) { if (m && m.score > max) max = m.score; } return max;
     }
 
     function renderHistoryUI() {
-        const list = document.getElementById('history-list-ui');
-        const detail = document.getElementById('history-detail-ui');
-        list.innerHTML = '';
-        detail.innerHTML = '<div class="hd-full" style="text-align:center; color:#999; margin-top:50px;">请选择一条记录</div>';
+        const list = document.getElementById('history-list-ui'); const detail = document.getElementById('history-detail-ui'); list.innerHTML = ''; detail.innerHTML = '<div class="hd-full" style="text-align:center; color:#999; margin-top:50px;">请选择一条记录</div>';
+        if (!Array.isArray(matchHistory) || matchHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无战斗数据</div>'; return; }
         
-        if (!Array.isArray(matchHistory) || matchHistory.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无战斗数据</div>';
-            return;
-        }
-        
-        let totalPages = Math.ceil(matchHistory.length / HIST_PER_PAGE);
-        if (historyPage >= totalPages) historyPage = Math.max(0, totalPages - 1);
-        
-        document.getElementById('hist-page-txt').textContent = `${historyPage + 1} / ${totalPages}`;
-        document.getElementById('hist-prev').disabled = historyPage === 0;
-        document.getElementById('hist-next').disabled = historyPage >= totalPages - 1;
+        let totalPages = Math.ceil(matchHistory.length / HIST_PER_PAGE); if (historyPage >= totalPages) historyPage = Math.max(0, totalPages - 1);
+        document.getElementById('hist-page-txt').textContent = `${historyPage + 1} / ${totalPages}`; document.getElementById('hist-prev').disabled = historyPage === 0; document.getElementById('hist-next').disabled = historyPage >= totalPages - 1;
 
-        let start = historyPage * HIST_PER_PAGE;
-        let end = Math.min(start + HIST_PER_PAGE, matchHistory.length);
-        
+        let start = historyPage * HIST_PER_PAGE; let end = Math.min(start + HIST_PER_PAGE, matchHistory.length);
         for (let i = start; i < end; i++) {
-            let m = matchHistory[i];
-            if (!m) continue;
-            let item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <div>
-                    <div class="hi-main">分数: <span style="color:#d9381e;">${m.score || 0}</span> [${m.diff || 'F'}级]</div>
-                    <div class="hi-sub">${m.date || '未知时间'} | ${m.weapon==='laser'?'高能激光':'基础炮'}</div>
-                </div>
-                <div style="font-size:12px; font-weight:bold;">${formatTime(m.time || 0)}</div>
-            `;
+            let m = matchHistory[i]; if (!m) continue; let item = document.createElement('div'); item.className = 'history-item';
+            item.innerHTML = `<div><div class="hi-main">分数: <span style="color:#d9381e;">${m.score || 0}</span> [${m.diff || 'F'}级]</div><div class="hi-sub">${m.date || '未知时间'} | ${m.weapon==='laser'?'高能激光':'基础炮'}</div></div><div style="font-size:12px; font-weight:bold;">${formatTime(m.time || 0)}</div>`;
             item.onclick = () => {
-                document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
-                item.classList.add('active');
-                let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 };
-                let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
-                detail.innerHTML = `
-                    <div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div>
-                    <div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div>
-                    <div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div>
-                    <div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${m.weapon==='laser'?'激光':'基础炮'}</span></div>
-                    <div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div>
-                    <div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div>
-                    <div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div>
-                    <div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div>
-                    <div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div>
-                `;
-            };
-            list.appendChild(item);
+                document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active')); item.classList.add('active');
+                let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
+                detail.innerHTML = `<div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div><div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div><div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div><div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${m.weapon==='laser'?'激光':'基础炮'}</span></div><div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div><div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div><div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div><div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div><div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div>`;
+            }; list.appendChild(item);
         }
     }
     
     document.getElementById('hist-prev').onclick = () => { if (historyPage > 0) { historyPage--; renderHistoryUI(); } };
     document.getElementById('hist-next').onclick = () => { if (historyPage < Math.ceil(matchHistory.length / HIST_PER_PAGE) - 1) { historyPage++; renderHistoryUI(); } };
 
-    document.getElementById('local-stats-btn').addEventListener('click', () => {
-        loadHistory(); historyPage = 0; renderHistoryUI(); document.getElementById('history-overlay').classList.add('active');
-    });
+    document.getElementById('local-stats-btn').addEventListener('click', () => { loadHistory(); historyPage = 0; renderHistoryUI(); document.getElementById('history-overlay').classList.add('active'); });
     document.getElementById('close-local-stats-btn').addEventListener('click', () => { document.getElementById('history-overlay').classList.remove('active'); });
 
     function updateTalentUI() {
         let sum = currentTalents.hp + currentTalents.atk + currentTalents.regen + currentTalents.spd + currentTalents.def;
         document.getElementById('tp-left').textContent = 10 - sum;
-        ['hp','atk','regen','spd','def'].forEach(k => {
-            let s = document.querySelector(`.talent-slider[data-id="${k}"]`);
-            let n = document.querySelector(`.talent-num[data-id="${k}"]`);
-            if (s) s.value = currentTalents[k];
-            if (n) n.value = currentTalents[k];
-        });
+        ['hp','atk','regen','spd','def'].forEach(k => { let s = document.querySelector(`.talent-slider[data-id="${k}"]`); let n = document.querySelector(`.talent-num[data-id="${k}"]`); if (s) s.value = currentTalents[k]; if (n) n.value = currentTalents[k]; });
     }
 
     function handleTalentChange(key, val) {
         val = parseInt(val) || 0; if(val < 0) val = 0;
         let sumOther = 0; for(let k in currentTalents) { if(k !== key) sumOther += currentTalents[k]; }
-        if(sumOther + val > 10) val = 10 - sumOther;
-        currentTalents[key] = val; updateTalentUI();
+        if(sumOther + val > 10) val = 10 - sumOther; currentTalents[key] = val; updateTalentUI();
     }
 
     document.querySelectorAll('.talent-slider, .talent-num').forEach(el => { el.addEventListener('input', (e) => { handleTalentChange(e.target.dataset.id, e.target.value); }); });
@@ -857,23 +929,19 @@
     document.querySelectorAll('.weapon-card').forEach(card => {
         card.addEventListener('click', (e) => {
             if(e.target.classList.contains('weapon-info-btn')) return; 
-            document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active'); selectedWeapon = card.dataset.wid;
+            document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active')); card.classList.add('active'); selectedWeapon = card.dataset.wid;
         });
     });
 
     document.querySelectorAll('.weapon-info-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            document.getElementById('info-modal-text').textContent = btn.dataset.info.replace(/\\n/g, '\n');
-            document.getElementById('info-modal').classList.add('active');
+            e.stopPropagation(); e.preventDefault();
+            document.getElementById('info-modal-text').textContent = btn.dataset.info.replace(/\\n/g, '\n'); document.getElementById('info-modal').classList.add('active');
         });
     });
-    document.getElementById('close-info-btn').addEventListener('click', (e) => { 
-        e.stopPropagation();
-        e.preventDefault();
-        document.getElementById('info-modal').classList.remove('active'); 
+    document.getElementById('close-info-btn').addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); document.getElementById('info-modal').classList.remove('active'); });
+    document.getElementById('info-modal').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('info-modal')) document.getElementById('info-modal').classList.remove('active');
     });
 
     function checkDifficultyUnlocks() {
@@ -886,12 +954,8 @@
 
     document.querySelectorAll('.diff-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            if(btn.classList.contains('locked')) {
-                let df = btn.dataset.diff; alert(`需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该难度。`); return;
-            }
-            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); selectedDiff = btn.dataset.diff;
-            document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc;
+            if(btn.classList.contains('locked')) { let df = btn.dataset.diff; alert(`需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该难度。`); return; }
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedDiff = btn.dataset.diff; document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc;
         });
     });
 
@@ -904,31 +968,21 @@
         if(!document.getElementById('prep-screen').classList.contains('active')) return;
         
         const rect = prevCanvas.parentElement.getBoundingClientRect();
-        if(prevCanvas.width !== rect.width * devicePixelRatio) {
-            prevCanvas.width = rect.width * devicePixelRatio;
-            prevCanvas.height = rect.height * devicePixelRatio;
-        }
+        if(prevCanvas.width !== rect.width * devicePixelRatio) { prevCanvas.width = rect.width * devicePixelRatio; prevCanvas.height = rect.height * devicePixelRatio; }
         
-        let dt = (now - prevTime) / 1000;
-        if (isNaN(dt) || dt < 0 || dt > 0.1) dt = 0.016;
-        prevTime = now;
-        let pT = now / 1000;
+        let dt = (now - prevTime) / 1000; if (isNaN(dt) || dt < 0 || dt > 0.1) dt = 0.016; prevTime = now; let pT = now / 1000;
 
-        prevCtx.save();
-        prevCtx.clearRect(0,0,prevCanvas.width, prevCanvas.height);
+        prevCtx.save(); prevCtx.clearRect(0,0,prevCanvas.width, prevCanvas.height);
         
         prevCtx.strokeStyle = 'rgba(42,29,19,0.05)'; prevCtx.lineWidth=2;
         for(let x=0; x<prevCanvas.width; x+=40) { prevCtx.beginPath(); prevCtx.moveTo(x,0); prevCtx.lineTo(x,prevCanvas.height); prevCtx.stroke(); }
         for(let y=0; y<prevCanvas.height; y+=40) { prevCtx.beginPath(); prevCtx.moveTo(0,y); prevCtx.lineTo(prevCanvas.width,y); prevCtx.stroke(); }
 
-        let cx = prevCanvas.width / 2;
-        let cy = prevCanvas.height / 2;
-        
+        let cx = prevCanvas.width / 2; let cy = prevCanvas.height / 2;
         let aimAngle = Math.sin(pT * 2) * 0.5 - Math.PI/2; 
         let scale = devicePixelRatio * 1.5;
 
-        prevCtx.translate(cx, cy);
-        prevCtx.scale(scale, scale);
+        prevCtx.translate(cx, cy); prevCtx.scale(scale, scale);
 
         if(selectedWeapon === 'laser') {
             if(Math.floor(pT * 2) % 2 === 0) { 
@@ -946,13 +1000,8 @@
             prevCtx.restore();
         }
 
-        prevCtx.strokeStyle = '#2a1d13'; prevCtx.lineWidth = 3;
-        prevCtx.beginPath(); prevCtx.arc(0, 0, 14, 0, Math.PI*2); prevCtx.stroke();
-        prevCtx.save(); prevCtx.rotate(aimAngle);
-        prevCtx.fillStyle = '#2a1d13';
-        prevCtx.beginPath(); prevCtx.moveTo(18, 0); prevCtx.lineTo(8, -6); prevCtx.lineTo(8, 6); prevCtx.closePath(); prevCtx.fill();
-        prevCtx.restore();
-
+        prevCtx.strokeStyle = '#2a1d13'; prevCtx.lineWidth = 3; prevCtx.beginPath(); prevCtx.arc(0, 0, 14, 0, Math.PI*2); prevCtx.stroke();
+        prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.fillStyle = '#2a1d13'; prevCtx.beginPath(); prevCtx.moveTo(18, 0); prevCtx.lineTo(8, -6); prevCtx.lineTo(8, 6); prevCtx.closePath(); prevCtx.fill(); prevCtx.restore();
         prevCtx.restore();
     }
     requestAnimationFrame(renderPreview);
@@ -962,20 +1011,14 @@
     let _lastSoundFrame = 0;
 
     function initAudio() {
-        try {
-            if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if(AC) audioCtx = new AC(); }
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        } catch(e) {}
+        try { if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if(AC) audioCtx = new AC(); } if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e) {}
     }
 
     function playSound(type) {
         if (!audioCtx) return;
         if (Math.floor(gameTime * 30) !== _lastSoundFrame) { _soundCounters = {}; _lastSoundFrame = Math.floor(gameTime * 30); }
         const limit = SOUND_LIMITS[type];
-        if (limit !== undefined) {
-            _soundCounters[type] = (_soundCounters[type] || 0) + 1;
-            if (_soundCounters[type] > limit) return;
-        }
+        if (limit !== undefined) { _soundCounters[type] = (_soundCounters[type] || 0) + 1; if (_soundCounters[type] > limit) return; }
         try {
             const t = audioCtx.currentTime;
             if (type === 'shoot') {
@@ -993,11 +1036,11 @@
             } else if (type === 'hit') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sawtooth'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t+0.06);
-                g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06); o.start(t); o.stop(t+0.06);
+                g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06); o.start(t); o.stop(t+0.06);
             } else if (type === 'crit') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sawtooth'; o.frequency.setValueAtTime(280, t); o.frequency.exponentialRampToValueAtTime(60, t+0.1);
-                g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1); o.start(t); o.stop(t+0.1);
+                g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1); o.start(t); o.stop(t+0.1);
             } else if (type === 'kill') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'triangle'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(50, t+0.12);
@@ -1098,6 +1141,7 @@
     document.getElementById('offline-game-btn').addEventListener('click', ()=>{ isOfflineMode = true; showTransitionToPrep(); });
 
     function showTransitionToPrep() {
+        isGameOver = false; gameRunning = false;
         document.getElementById('main-menu').classList.remove('active');
         let ts = document.getElementById('transition-screen');
         document.getElementById('ts-text-1').textContent = "NEURAL LINK"; document.getElementById('ts-text-2').textContent = "ESTABLISHING";
@@ -1118,7 +1162,7 @@
 
     document.getElementById('restart-btn').addEventListener('click', ()=>{ 
         document.getElementById('end-modal').classList.remove('active');
-        isGameOver = false; gameRunning = false; isUpgrading = false; // 完全重置状态轴
+        isGameOver = false; gameRunning = false; isUpgrading = false; 
         showTransitionToPrep();
     });
     
@@ -1140,18 +1184,15 @@
     });
     
     document.getElementById('exit-btn').addEventListener('click', ()=>{
-        isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); gameRunning = false; isGameOver = true;
+        isPaused = false; document.getElementById('pause-overlay').classList.remove('active'); gameRunning = false; isGameOver = false; 
         ['hud-top','score-display','skill-tracker','damage-panel', 'boss-ui'].forEach(id=>{ let el = document.getElementById(id); if(el) el.classList.remove('visible'); });
         document.getElementById('pause-btn-wrap').style.display='none'; document.getElementById('dps-display').style.display='none';
-        
-        isGameOver = false; // 退出不触发死亡逻辑
         document.getElementById('main-menu').classList.add('active');
     });
     
     document.getElementById('return-menu-btn').addEventListener('click', ()=>{
         document.getElementById('end-modal').classList.remove('active');
-        isGameOver = false; gameRunning = false; isUpgrading = false; // 完全重置状态轴
-        
+        isGameOver = false; gameRunning = false; isUpgrading = false; 
         ['score-display','skill-tracker','damage-panel', 'hud-top'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.remove('visible'); });
         document.getElementById('pause-btn-wrap').style.display='none'; document.getElementById('dps-display').style.display='none';
         document.getElementById('main-menu').classList.add('active');
@@ -1227,7 +1268,7 @@
             
             lastTime = performance.now(); gameRunning = true; isGameOver = false; isPaused = false; isUpgrading = false; stickEnd();
         } catch(e) {
-            alert("启动时发生了意外的渲染崩塌。请确认您的浏览器支持Canvas！\n报错详情: " + e.message);
+            alert("启动失败，您的设备可能不支持Canvas API: " + e.message);
         }
     }
 
@@ -1238,7 +1279,9 @@
             ['hud-top','score-display','skill-tracker','damage-panel', 'boss-ui'].forEach(id => { let el = document.getElementById(id); if (el) el.classList.remove('visible'); });
             
             let loadedSkills = [];
-            if (player && player.skills) { for (let k in player.skills) { if (player.skills[k] > 0) loadedSkills.push(`${SKILL_NAMES[k]||k}Lv.${player.skills[k]}`); } }
+            if (player && player.skills) {
+                for (let k in player.skills) { if (player.skills[k] > 0) loadedSkills.push(`${SKILL_NAMES[k]||k}Lv.${player.skills[k]}`); } 
+            }
             let skillStr = loadedSkills.length > 0 ? loadedSkills.join(' | ') : '基础形态';
 
             let histData = {
@@ -1252,6 +1295,26 @@
             document.getElementById('end-setup').textContent = `${selectedDiff} | ${selectedWeapon==='laser'?'激光':'基础炮'}`; document.getElementById('end-damage').textContent = Math.floor(stats.totalDamage).toLocaleString();
             document.getElementById('end-talents').textContent = `HP:${currentTalents.hp} ATK:${currentTalents.atk} REG:${currentTalents.regen} SPD:${currentTalents.spd} DEF:${currentTalents.def}`;
             document.getElementById('end-skills').textContent = skillStr;
+
+            setTimeout(async ()=>{
+                if (isOfflineMode || !isDbUsable) return; 
+                let savedName=null;
+                if(currentUser) {
+                    savedName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+                } else {
+                    try { savedName=localStorage.getItem('geo_game_account'); } catch(e) {}
+                    if (!savedName) {
+                        savedName = '行者' + Math.floor(Math.random() * 9999);
+                        try { localStorage.setItem('geo_game_account',savedName); } catch(e) {}
+                    }
+                }
+                if (savedName) {
+                    savedName = savedName.trim().substring(0,10);
+                    await submitScore(savedName, score);
+                    await renderLeaderboard();
+                }
+            }, 300);
+
             document.getElementById('end-modal').classList.add('active');
         } catch(e) { document.getElementById('end-modal').classList.add('active'); }
     }
@@ -1292,9 +1355,6 @@
     function gainXP(amount) { xp += amount * (activeEvent==='double_xp'?2:1) * getExpMulti(); playSound('xp'); if (xp >= xpToNext) triggerLevelUp(); else updateXPUI(); }
     function triggerLevelUp() { xp -= xpToNext; level++; xpToNext = Math.floor(xpToNext * 1.15) + 20; updateXPUI(); triggerUpgradeUI(); }
 
-    // ==========================================
-    // 摇杆控制与 PC 鼠标支持 (UI穿透全局版)
-    // ==========================================
     const jBase=document.getElementById('joystick-base'); const jThumb=document.getElementById('joystick-thumb'); let jTouchId = null;
     
     function stickStart(x, y) { initAudio(); joystickActive=true; touchStartX=x; touchStartY=y; jBase.style.left=touchStartX+'px'; jBase.style.top=touchStartY+'px'; jBase.style.opacity='1'; }
@@ -1328,9 +1388,6 @@
 
     window.addEventListener('keydown', e=>{ initAudio(); keys[e.key]=true; }); window.addEventListener('keyup', e=>{ keys[e.key]=false; });
 
-    // ==========================================
-    // 升级系统 (绝对硬隔离 + 3/4 限制规则)
-    // ==========================================
     function triggerUpgradeUI() {
         gameRunning = false; isUpgrading = true; rerollsLeft = 1;
         document.getElementById('reroll-btn').textContent = '重 组 序 列 (剩1次)'; document.getElementById('reroll-btn').disabled = false;
@@ -1411,9 +1468,6 @@
         if (xp >= xpToNext) setTimeout(() => triggerLevelUp(), 100);
     }
 
-    // ==========================================
-    // 战斗处理系统 
-    // ==========================================
     function createLightningPath(x1, y1, x2, y2) {
         const dx = x2 - x1, dy = y2 - y1, dist = Math.sqrt(dx*dx + dy*dy);
         if (dist === 0) return [{x: x1, y: y1}, {x: x2, y: y2}];
@@ -1461,7 +1515,7 @@
             const spread = 0.35; const step = sc > 1 ? spread / (sc - 1) : 0; const startAngle = sc % 2 === 0 ? baseAngle - step * (sc / 2 - 0.5) : baseAngle - spread / 2;
             for (let i = 0; i < sc; i++) {
                 const baseAng = sc > 1 ? (startAngle + step * i) : baseAngle;
-                const finalAng = baseAng + (Math.random() - 0.5) * 0.25; // 加入弹道散射
+                const finalAng = baseAng + (Math.random() - 0.5) * 0.25; 
                 bullets.push({ x: player.x, y: player.y, vx: Math.cos(finalAng) * player.bulletSpeed, vy: Math.sin(finalAng) * player.bulletSpeed, radius: player.bulletRadius, life: 3, dmg: dmgEach, hitSet: new Set(), isSplit: false, isDark, type: 'weapon_basic' });
             }
             playSound('shoot'); coreShootPulse = 1.0;
@@ -1554,7 +1608,6 @@
         if (player.hp <= 0 && !player.isDead) { 
             player.hp = 0; player.isDead = true; playerDeadTimer = 2.5; screenShake = 60; playSound('bomb');
             for(let k=0; k<60; k++) particles.push({x: player.x, y: player.y, vx: (Math.random()-0.5)*800, vy: (Math.random()-0.5)*800, life: 1.5, maxLife: 1.5, size: Math.random()*6+2, color: THEME.damage});
-            document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('pause-btn-wrap').style.display = 'none';
         }
     }
 
@@ -2065,7 +2118,8 @@
                         ctx.globalAlpha = 0.3; ctx.fillStyle = 'rgba(217, 56, 30, 0.2)'; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2); ctx.fill();
                         ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
                     } else if (s.state === 'fire') {
-                        const a = s.life / s.maxLife; ctx.globalAlpha = a * 0.9; let bW = s.radius * 2 * a;
+                        const a = s.life / s.maxLife; ctx.globalAlpha = a * 0.9;
+                        let bW = s.radius * 2 * a;
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(s.x - bW/4, cam.y, bW/2, s.y - cam.y);
                         ctx.fillStyle = 'rgba(217, 56, 30, 0.6)'; ctx.fillRect(s.x - bW/2, cam.y, bW, s.y - cam.y);
                         ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * a, 0, Math.PI*2); ctx.fill();
@@ -2074,7 +2128,7 @@
                 }
 
                 for (const r of photonRifts) {
-                    ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(gameTime * 3);
+                    ctx.save(); ctx.translate(safeNum(r.x), safeNum(r.y)); ctx.rotate(gameTime * 3);
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
                     ctx.strokeStyle = 'rgba(217, 56, 30, 0.9)'; ctx.lineWidth = 3;
                     for(let i=0; i<4; i++) { ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(20,0); ctx.stroke(); ctx.rotate(Math.PI/2); }
@@ -2082,65 +2136,70 @@
                 }
 
                 for (const nv of supernovas) {
-                    const a = 1 - (nv.life / nv.maxLife); ctx.globalAlpha = a * 0.8; ctx.strokeStyle = 'rgba(255, 200, 50, 0.9)'; ctx.lineWidth = 15 * a; ctx.beginPath(); ctx.arc(nv.x, nv.y, nv.radius, 0, Math.PI*2); ctx.stroke();
-                    ctx.strokeStyle = 'rgba(217, 56, 30, 0.6)'; ctx.lineWidth = 30 * a; ctx.beginPath(); ctx.arc(nv.x, nv.y, nv.radius * 0.9, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+                    const a = 1 - (nv.life / nv.maxLife); ctx.globalAlpha = a * 0.8; ctx.strokeStyle = 'rgba(255, 200, 50, 0.9)'; ctx.lineWidth = 15 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius), 0, Math.PI*2); ctx.stroke();
+                    ctx.strokeStyle = 'rgba(217, 56, 30, 0.6)'; ctx.lineWidth = 30 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius * 0.9), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                 }
 
                 for (const r of downgradeRings) {
-                    const a = r.life / 5; ctx.globalAlpha = a * 0.9; ctx.strokeStyle = '#4285f4'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2); ctx.stroke();
-                    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(100,180,255,0.7)'; ctx.beginPath(); ctx.arc(r.x, r.y, r.radius + 4, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+                    const a = r.life / 5; ctx.globalAlpha = a * 0.9; ctx.strokeStyle = '#4285f4'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(safeNum(r.x), safeNum(r.y), safeNum(r.radius), 0, Math.PI*2); ctx.stroke();
+                    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(100,180,255,0.7)'; ctx.beginPath(); ctx.arc(safeNum(r.x), safeNum(r.y), safeNum(r.radius + 4), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                 }
+                
                 for (const m of darkmines) {
-                    ctx.save(); ctx.translate(m.x, m.y);
+                    ctx.save(); ctx.translate(safeNum(m.x), safeNum(m.y));
                     if (m.state === 'arming') { const a = 1 - (m.timer / 0.8); ctx.globalAlpha = a * 0.5; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, m.radius * a, 0, Math.PI*2); ctx.stroke(); } 
                     else if (m.state === 'idle') { ctx.globalAlpha = 0.25; const pulseRadius = m.radius * (1 + Math.sin(gameTime * 4) * 0.05); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.fill(); ctx.rotate(gameTime * 2); ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.setLineDash([10, 15]); ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.stroke(); } 
                     else if (m.state === 'explode') { const a = m.timer / 0.4; ctx.globalAlpha = a; const r = m.radius * 1.6 * (1.5 - 0.5 * a); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill(); }
                     ctx.restore(); ctx.globalAlpha = 1;
                 }
-                for (const t of trails) { ctx.globalAlpha = t.alpha; ctx.strokeStyle = THEME.main; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(t.x, t.y, player && !player.isDead ? player.radius - 2 : 12, 0, Math.PI*2); ctx.stroke(); } ctx.globalAlpha = 1;
+                
+                for (const t of trails) { ctx.globalAlpha = t.alpha; ctx.strokeStyle = THEME.main; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(safeNum(t.x), safeNum(t.y), player && !player.isDead ? player.radius - 2 : 12, 0, Math.PI*2); ctx.stroke(); } ctx.globalAlpha = 1;
 
                 for (const s of activeSingularities) {
-                    const a = s.life / s.maxLife; const r = 40 + Math.sin(gameTime * 5) * 8; ctx.globalAlpha = a * 0.5; ctx.strokeStyle = 'rgba(100,0,200,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2); ctx.stroke(); ctx.strokeStyle = 'rgba(180,100,255,0.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(s.x, s.y, r * 0.6, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+                    const a = s.life / s.maxLife; const r = 40 + Math.sin(gameTime * 5) * 8; ctx.globalAlpha = a * 0.5; ctx.strokeStyle = 'rgba(100,0,200,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(safeNum(s.x), safeNum(s.y), r, 0, Math.PI*2); ctx.stroke(); ctx.strokeStyle = 'rgba(180,100,255,0.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(safeNum(s.x), safeNum(s.y), r * 0.6, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                 }
+                
                 for (const it of items) {
-                    ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot); ctx.strokeStyle = 'rgba(100,0,200,0.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); 
+                    ctx.save(); ctx.translate(safeNum(it.x), safeNum(it.y)); ctx.rotate(safeNum(it.rot)); ctx.strokeStyle = 'rgba(100,0,200,0.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); 
                     for (let j = 0; j < 4; j++) { const ang = (j / 4) * Math.PI * 2; const r = 14 + Math.sin(gameTime * 4 + j) * 2; ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r); } 
                     ctx.closePath(); ctx.stroke(); ctx.fillStyle = 'rgba(80,0,160,0.25)'; ctx.fill(); ctx.restore();
                 }
+                
                 for (const orb of expOrbs) {
-                    ctx.globalAlpha = 0.3; ctx.fillStyle = THEME.xp; const shadowR = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(orb.x - (orb.vx || 0) * 0.02, orb.y - (orb.vy || 0) * 0.02, shadowR * 0.8, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+                    ctx.globalAlpha = 0.3; ctx.fillStyle = THEME.xp; const shadowR = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x - (orb.vx || 0) * 0.02), safeNum(orb.y - (orb.vy || 0) * 0.02), shadowR * 0.8, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
                 }
                 for (const orb of expOrbs) {
-                    ctx.fillStyle = THEME.xp; const br = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(orb.x, orb.y, br, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+                    ctx.fillStyle = THEME.xp; const br = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x), safeNum(orb.y), br, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
                 }
+                
                 for (const p of shatterPieces) {
-                    const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(p.p1x, p.p1y); ctx.lineTo(p.p2x, p.p2y); ctx.closePath(); ctx.fill(); ctx.restore();
+                    const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(safeNum(p.p1x), safeNum(p.p1y)); ctx.lineTo(safeNum(p.p2x), safeNum(p.p2y)); ctx.closePath(); ctx.fill(); ctx.restore();
                 } ctx.globalAlpha = 1;
 
                 for (let i = 0; i < enemies.length; i++) {
                     const e = enemies[i]; if (!isInView(e.x, e.y, 250)) continue; const baseAlpha = Math.max(0.35, 1 - (e.overlapCount || 0) * 0.18); ctx.globalAlpha = baseAlpha;
-                    if (e.isBoss) { ctx.fillStyle = e.hitTimer > 0 ? 'rgba(255,50,50,0.9)' : 'rgba(30,10,30,0.9)'; ctx.strokeStyle = 'rgba(217,56,30,0.8)'; ctx.lineWidth = 4; drawEnemyPoly(e.x, e.y, e.radius, e.sides, e.angle, baseAlpha, true, e.morphPhase); ctx.fill(); ctx.stroke(); } 
-                    else if (e.hitTimer > 0) { ctx.fillStyle = 'rgba(220,50,30,0.85)'; drawEnemyPoly(e.x, e.y, e.radius, e.sides, e.angle, baseAlpha, false, 0); ctx.fill(); } 
-                    else { ctx.fillStyle = THEME.main; drawEnemyPoly(e.x, e.y, e.radius, e.sides, e.angle, baseAlpha, false, 0); ctx.fill(); } ctx.globalAlpha = 1;
+                    if (e.isBoss) { ctx.fillStyle = e.hitTimer > 0 ? 'rgba(255,50,50,0.9)' : 'rgba(30,10,30,0.9)'; ctx.strokeStyle = 'rgba(217,56,30,0.8)'; ctx.lineWidth = 4; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, true, safeNum(e.morphPhase)); ctx.fill(); ctx.stroke(); } 
+                    else if (e.hitTimer > 0) { ctx.fillStyle = 'rgba(220,50,30,0.85)'; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, false, 0); ctx.fill(); } 
+                    else { ctx.fillStyle = THEME.main; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, false, 0); ctx.fill(); } ctx.globalAlpha = 1;
 
                     if (e.burnEffect) {
                         const phase = e.burnEffect.sparkPhase || 0;
                         for (let k = 0; k < 8; k++) {
                             const sparkAngle = (k / 8) * Math.PI * 2 + phase; const r = e.radius * (0.9 + Math.sin(phase * 2 + k) * 0.2); const sx2 = e.x + Math.cos(sparkAngle) * r; const sy2 = e.y + Math.sin(sparkAngle) * r; const flicker = 0.5 + Math.sin(phase * 5 + k * 1.3) * 0.4;
-                            ctx.globalAlpha = flicker * 0.85; ctx.fillStyle = 'rgba(180,0,255,0.75)'; ctx.beginPath(); ctx.arc(sx2, sy2, 4 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(80,0,160,0.4)'; ctx.beginPath(); ctx.arc(sx2, sy2, 7 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill();
+                            ctx.globalAlpha = flicker * 0.85; ctx.fillStyle = 'rgba(180,0,255,0.75)'; ctx.beginPath(); ctx.arc(safeNum(sx2), safeNum(sy2), 4 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(80,0,160,0.4)'; ctx.beginPath(); ctx.arc(safeNum(sx2), safeNum(sy2), 7 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill();
                         }
-                        ctx.globalAlpha = 0.35 + Math.sin(phase * 3) * 0.15; ctx.strokeStyle = 'rgba(150,0,255,0.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 3 + Math.sin(phase * 6) * 2, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+                        ctx.globalAlpha = 0.35 + Math.sin(phase * 3) * 0.15; ctx.strokeStyle = 'rgba(150,0,255,0.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(safeNum(e.x), safeNum(e.y), safeNum(e.radius + 3 + Math.sin(phase * 6) * 2), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                     }
-                    if (!e.isBoss && e.hp < e.maxHp && e.hp > 0) { const bw = e.radius * 2; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(e.x - bw / 2, e.y - e.radius - 9, bw, 3); ctx.fillStyle = '#d9381e'; ctx.fillRect(e.x - bw / 2, e.y - e.radius - 9, bw * (e.hp / e.maxHp), 3); }
+                    if (!e.isBoss && e.hp < e.maxHp && e.hp > 0) { const bw = e.radius * 2; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 9), safeNum(bw), 3); ctx.fillStyle = '#d9381e'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 9), safeNum(bw * (e.hp / e.maxHp)), 3); }
                 }
 
                 for (const l of lasers) {
                     if (l.isMatrixBlade) {
                         ctx.strokeStyle = 'rgba(217, 56, 30, 0.8)'; ctx.lineWidth = l.widthOffset * 30; ctx.lineCap = 'round';
-                        ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(l.endX, l.endY); ctx.stroke(); continue;
+                        ctx.beginPath(); ctx.moveTo(safeNum(l.x), safeNum(l.y)); ctx.lineTo(safeNum(l.endX), safeNum(l.endY)); ctx.stroke(); continue;
                     }
                     const a = l.life / l.maxLife; const ldx = Math.cos(l.angle), ldy = Math.sin(l.angle); const cw = Math.pow(Math.max(0.01, Math.sin((l.life / l.maxLife) * Math.PI)), 0.4) * 100 * l.widthOffset;
-                    ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.angle);
+                    ctx.save(); ctx.translate(safeNum(l.x), safeNum(l.y)); ctx.rotate(safeNum(l.angle));
                     if (l.bw) {
                         ctx.globalAlpha = a * 0.15; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(1000, 0, 1000, cw * 1.5, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = a * 0.85; ctx.fillStyle = 'rgba(10,10,10,0.95)'; ctx.beginPath(); ctx.moveTo(0, -cw / 2); ctx.lineTo(3000, -cw / 8); ctx.lineTo(3000, cw / 8); ctx.lineTo(0, cw / 2); ctx.closePath(); ctx.fill(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(3000, 0); ctx.stroke();
                     } else if(l.isMainWeapon) {
@@ -2152,52 +2211,52 @@
                 }
 
                 for (const b of bombs) {
-                    const t = 1 - (b.life / b.maxLife); const bx = b.startX + (b.tX - b.startX) * t; const by = b.startY + (b.tY - b.startY) * t - Math.sin(t * Math.PI) * 110; ctx.fillStyle = THEME.main; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.text, bx, by); ctx.globalAlpha = 0.08; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.beginPath(); ctx.ellipse(bx, b.tY, Math.max(0.1, 18 * (1 - t)), Math.max(0.1, 6 * (1 - t)), 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+                    const t = 1 - (b.life / b.maxLife); const bx = b.startX + (b.tX - b.startX) * t; const by = b.startY + (b.tY - b.startY) * t - Math.sin(t * Math.PI) * 110; ctx.fillStyle = THEME.main; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.text, safeNum(bx), safeNum(by)); ctx.globalAlpha = 0.08; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.beginPath(); ctx.ellipse(safeNum(bx), safeNum(b.tY), Math.max(0.1, 18 * (1 - t)), Math.max(0.1, 6 * (1 - t)), 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
                 }
                 for (const bt of bulletTrails) {
-                    const a = bt.life / bt.maxLife; ctx.globalAlpha = a * 0.45; ctx.fillStyle = bt.isDark ? 'rgba(120,0,200,0.8)' : THEME.main; ctx.beginPath(); ctx.arc(bt.x, bt.y, bt.r * a, 0, Math.PI*2); ctx.fill();
+                    const a = bt.life / bt.maxLife; ctx.globalAlpha = a * 0.45; ctx.fillStyle = bt.isDark ? 'rgba(120,0,200,0.8)' : THEME.main; ctx.beginPath(); ctx.arc(safeNum(bt.x), safeNum(bt.y), safeNum(bt.r * a), 0, Math.PI*2); ctx.fill();
                 } ctx.globalAlpha = 1;
                 
                 for (const b of bullets) {
                     if (b.isDark) {
-                        const fc = 4; for (let f = 0; f < fc; f++) { const fang = (gameTime * 7 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = b.radius + 5; ctx.globalAlpha = 0.55; ctx.fillStyle = 'rgba(120,0,200,0.8)'; ctx.beginPath(); ctx.arc(b.x + Math.cos(fang) * fr, b.y + Math.sin(fang) * fr, 3, 0, Math.PI*2); ctx.fill(); }
+                        const fc = 4; for (let f = 0; f < fc; f++) { const fang = (gameTime * 7 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = b.radius + 5; ctx.globalAlpha = 0.55; ctx.fillStyle = 'rgba(120,0,200,0.8)'; ctx.beginPath(); ctx.arc(safeNum(b.x + Math.cos(fang) * fr), safeNum(b.y + Math.sin(fang) * fr), 3, 0, Math.PI*2); ctx.fill(); }
                         ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(80,0,160,0.9)';
                     } else { ctx.fillStyle = THEME.main; }
-                    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2); ctx.fill(); if (b.isDark) { ctx.strokeStyle = 'rgba(180,100,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke(); }
+                    ctx.beginPath(); ctx.arc(safeNum(b.x), safeNum(b.y), safeNum(b.radius), 0, Math.PI*2); ctx.fill(); if (b.isDark) { ctx.strokeStyle = 'rgba(180,100,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke(); }
                 }
                 for (const c of chainEffects) {
-                    const a = c.life / c.maxLife; ctx.globalAlpha = a * 0.85; ctx.strokeStyle = 'rgba(100,0,220,0.95)'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(c.path[0].x, c.path[0].y); for (let j = 1; j < c.path.length; j++) ctx.lineTo(c.path[j].x, c.path[j].y); ctx.stroke(); ctx.globalAlpha = a * 0.95; ctx.strokeStyle = 'rgba(220,180,255,1)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(c.path[0].x, c.path[0].y); for (let j = 1; j < c.path.length; j++) ctx.lineTo(c.path[j].x, c.path[j].y); ctx.stroke(); ctx.globalAlpha = 1;
+                    const a = c.life / c.maxLife; ctx.globalAlpha = a * 0.85; ctx.strokeStyle = 'rgba(100,0,220,0.95)'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(safeNum(c.path[0].x), safeNum(c.path[0].y)); for (let j = 1; j < c.path.length; j++) ctx.lineTo(safeNum(c.path[j].x), safeNum(c.path[j].y)); ctx.stroke(); ctx.globalAlpha = a * 0.95; ctx.strokeStyle = 'rgba(220,180,255,1)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(safeNum(c.path[0].x), safeNum(c.path[0].y)); for (let j = 1; j < c.path.length; j++) ctx.lineTo(safeNum(c.path[j].x), safeNum(c.path[j].y)); ctx.stroke(); ctx.globalAlpha = 1;
                 }
                 
                 for (const dr of drones) {
-                    ctx.save(); let tx = player.x + Math.cos(dr.angle) * dr.orbitR; let ty = player.y + Math.sin(dr.angle) * dr.orbitR; ctx.translate(tx, ty); ctx.rotate(gameTime * 5); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(-4,6); ctx.lineTo(-4,-6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+                    ctx.save(); let tx = player.x + Math.cos(dr.angle) * dr.orbitR; let ty = player.y + Math.sin(dr.angle) * dr.orbitR; ctx.translate(safeNum(tx), safeNum(ty)); ctx.rotate(gameTime * 5); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(-4,6); ctx.lineTo(-4,-6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
                 }
 
                 for (const p of particles) {
                     const a = p.life / (p.maxLife || 1); ctx.globalAlpha = a;
-                    if (p.type === 'pulse') { ctx.strokeStyle = THEME.main; ctx.lineWidth = 6 * a; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * (1 - a), 0, Math.PI*2); ctx.stroke(); } 
-                    else if (p.type === 'blast') { ctx.fillStyle = 'rgba(217,56,30,0.4)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(217,56,30,0.6)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * 0.6, 0, Math.PI*2); ctx.fill(); } 
-                    else { ctx.fillStyle = p.color || THEME.main; ctx.beginPath(); ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI*2); ctx.fill(); }
+                    if (p.type === 'pulse') { ctx.strokeStyle = THEME.main; ctx.lineWidth = 6 * a; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * (1 - a)), 0, Math.PI*2); ctx.stroke(); } 
+                    else if (p.type === 'blast') { ctx.fillStyle = 'rgba(217,56,30,0.4)'; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius), 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(217,56,30,0.6)'; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * 0.6), 0, Math.PI*2); ctx.fill(); } 
+                    else { ctx.fillStyle = p.color || THEME.main; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.size || 3), 0, Math.PI*2); ctx.fill(); }
                 } ctx.globalAlpha = 1;
 
                 if (player && !player.isDead) {
                     const px = player.x, py = player.y, pr = player.radius; const isFlash = player.flashTimer > 0 && Math.floor(gameTime * 25) % 2 === 0;
                     
                     if (player.darksurgeDuration > 0 && player.darksurgeDuration !== Infinity) {
-                        const fc = 10; for (let f = 0; f < fc; f++) { const fang = (gameTime * 4 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 14 + Math.sin(gameTime * 8 + f) * 4; ctx.globalAlpha = 0.65; ctx.fillStyle = 'rgba(150,0,255,0.7)'; ctx.beginPath(); ctx.arc(px + Math.cos(fang) * fr, py + Math.sin(fang) * fr, 7, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
+                        const fc = 10; for (let f = 0; f < fc; f++) { const fang = (gameTime * 4 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 14 + Math.sin(gameTime * 8 + f) * 4; ctx.globalAlpha = 0.65; ctx.fillStyle = 'rgba(150,0,255,0.7)'; ctx.beginPath(); ctx.arc(safeNum(px + Math.cos(fang) * fr), safeNum(py + Math.sin(fang) * fr), 7, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
                     } else if (player.darksurgeDuration === Infinity) {
-                        const fc = 12; for (let f = 0; f < fc; f++) { const fang = (gameTime * 5 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 16 + Math.sin(gameTime * 10 + f) * 5; ctx.globalAlpha = 0.8; ctx.fillStyle = 'rgba(180,0,255,0.85)'; ctx.beginPath(); ctx.arc(px + Math.cos(fang) * fr, py + Math.sin(fang) * fr, 9, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
+                        const fc = 12; for (let f = 0; f < fc; f++) { const fang = (gameTime * 5 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 16 + Math.sin(gameTime * 10 + f) * 5; ctx.globalAlpha = 0.8; ctx.fillStyle = 'rgba(180,0,255,0.85)'; ctx.beginPath(); ctx.arc(safeNum(px + Math.cos(fang) * fr), safeNum(py + Math.sin(fang) * fr), 9, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
                     }
                     
-                    ctx.strokeStyle = isFlash ? THEME.damage : (player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.9)' : THEME.main); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI*2); ctx.stroke();
-                    ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(px, py, pr * 0.65, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+                    ctx.strokeStyle = isFlash ? THEME.damage : (player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.9)' : THEME.main); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(safeNum(px), safeNum(py), safeNum(pr), 0, Math.PI*2); ctx.stroke();
+                    ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(safeNum(px), safeNum(py), safeNum(pr * 0.65), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                     
-                    ctx.save(); ctx.translate(px, py); ctx.rotate(gameTime * 0.6);
+                    ctx.save(); ctx.translate(safeNum(px), safeNum(py)); ctx.rotate(safeNum(gameTime * 0.6));
                     let coreSize; if (coreSkillCharge > 0.1) { coreSize = pr * 0.38 * (1 + coreSkillCharge * 0.7); } else if (coreShootPulse > 0) { coreSize = pr * 0.38 * (1 + coreShootPulse * 0.6); } else { coreSize = pr * 0.38 * (0.88 + Math.sin(coreBreathPhase) * 0.1); } coreSize = Math.min(coreSize, pr * 0.72);
                     
                     const cColor = player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.85)' : THEME.damage; ctx.strokeStyle = cColor; ctx.lineWidth = 2; ctx.fillStyle = player.darksurgeDuration > 0 ? 'rgba(80,0,160,0.5)' : 'rgba(217,56,30,0.35)'; ctx.beginPath(); ctx.moveTo(0, -coreSize); ctx.lineTo(coreSize * 0.58, 0); ctx.lineTo(0, coreSize); ctx.lineTo(-coreSize * 0.58, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(0, 0, coreSize * 0.22, 0, Math.PI*2); ctx.fill(); ctx.restore();
                     
-                    ctx.save(); ctx.translate(px, py); ctx.rotate(player.aimAngle || 0); ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.moveTo(pr + 14, 0); ctx.lineTo(pr + 5, -5); ctx.lineTo(pr + 5, 5); ctx.closePath(); ctx.fill(); ctx.restore();
+                    ctx.save(); ctx.translate(safeNum(px), safeNum(py)); ctx.rotate(safeNum(player.aimAngle || 0)); ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.moveTo(pr + 14, 0); ctx.lineTo(pr + 5, -5); ctx.lineTo(pr + 5, 5); ctx.closePath(); ctx.fill(); ctx.restore();
                 } 
                 ctx.restore();
 
@@ -2205,14 +2264,14 @@
                     let bx = bossSystem.bossEntity.x - cam.x; let by = bossSystem.bossEntity.y - cam.y;
                     if (bx < 0 || bx > VIEW_W || by < 0 || by > VIEW_H) {
                         let cx = VIEW_W / 2; let cy = VIEW_H / 2; let angle = Math.atan2(by - cy, bx - cx); let padding = 40; let drawX = Math.max(padding, Math.min(VIEW_W - padding, bx)); let drawY = Math.max(padding, Math.min(VIEW_H - padding, by));
-                        ctx.save(); ctx.translate(drawX, drawY); ctx.rotate(angle); ctx.fillStyle = 'rgba(217, 56, 30, 0.9)'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -12); ctx.lineTo(-6, 0); ctx.lineTo(-12, 12); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+                        ctx.save(); ctx.translate(safeNum(drawX), safeNum(drawY)); ctx.rotate(safeNum(angle)); ctx.fillStyle = 'rgba(217, 56, 30, 0.9)'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -12); ctx.lineTo(-6, 0); ctx.lineTo(-12, 12); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
                     }
                 }
 
                 for (const tp of textParticles) {
                     const a = tp.life / (tp.maxLife || 0.8); ctx.globalAlpha = Math.pow(Math.max(0, a), 1.5); let rx = tp.x - cam.x; let ry = tp.y - cam.y;
                     if (tp.isDmg) { const curHue = tp.hueEnd + (tp.hueStart - tp.hueEnd) * a; ctx.fillStyle = `hsl(${curHue}, 100%, ${tp.size > 16 ? 60 : 55}%)`; } else { ctx.fillStyle = tp.color; }
-                    ctx.font = `bold ${tp.size}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.strokeText(tp.text, rx, ry); ctx.fillText(tp.text, rx, ry);
+                    ctx.font = `bold ${tp.size}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.strokeText(tp.text, safeNum(rx), safeNum(ry)); ctx.fillText(tp.text, safeNum(rx), safeNum(ry));
                 } ctx.globalAlpha = 1;
                 
                 if (screenRedFlash > 0) { ctx.fillStyle = `rgba(217, 56, 30, ${screenRedFlash * 0.4})`; ctx.fillRect(0, 0, VIEW_W, VIEW_H); }
