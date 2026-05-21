@@ -26,7 +26,7 @@
        ========================================== */
     #hud-top { 
       position: absolute; top: 20px; left: 24px; display: flex; flex-direction: column; gap: 8px; 
-      pointer-events: none; opacity: 0; transition: opacity 0.3s; 
+      pointer-events: none; opacity: 0; transition: opacity 0.5s ease-out; 
       background: rgba(250,249,246,0.85); padding: 12px 16px; border-radius: 8px; 
       border: 2px solid rgba(42,29,19,0.15); backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
@@ -66,7 +66,7 @@
     .score-pop { animation: scorePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
     /* ==========================================
-       左下侧：伤害输出自动排序面板
+       左下侧：伤害输出自动排序面板 (FLIP动画结构)
        ========================================== */
     #damage-panel { 
       position: absolute; bottom: 30px; left: 24px; width: 220px; max-height: 350px; 
@@ -122,14 +122,22 @@
     #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff4500, #d9381e); transition: width 0.2s ease-out; }
 
     /* ==========================================
-       右上侧：技能等级面板
+       右上侧：微缩版技能等级面板
        ========================================== */
-    #skill-tracker { position: absolute; top: 150px; right: 24px; display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 0.3s; align-items: flex-end; }
+    #skill-tracker { 
+      position: absolute; top: 150px; right: 10px; display: flex; flex-direction: column; 
+      gap: 4px; opacity: 0; transition: opacity 0.3s; align-items: flex-end; 
+    }
     #skill-tracker.visible { opacity: 1; }
-    .skill-badge { position: relative; background: rgba(255,255,255,0.85); border: 2px solid rgba(42,29,19,0.2); border-radius: 4px; padding: 6px 10px; font-size: 12px; font-weight: 900; color: #2a1d13; overflow: hidden; display: flex; justify-content: space-between; min-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); backdrop-filter: blur(4px); }
+    .skill-badge { 
+      position: relative; background: rgba(255,255,255,0.7); border: 1px solid rgba(42,29,19,0.2); 
+      border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 900; color: #2a1d13; 
+      overflow: hidden; display: flex; justify-content: space-between; min-width: 100px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); backdrop-filter: blur(2px); 
+    }
     .skill-cd-bg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: rgba(217, 56, 30, 0.25); z-index: 0; transform-origin: bottom; transform: scaleY(0); }
     .skill-name-txt { position: relative; z-index: 1; text-transform: uppercase; }
-    .skill-lv-txt { position: relative; z-index: 1; color: #d9381e; font-family: monospace; font-size: 13px; }
+    .skill-lv-txt { position: relative; z-index: 1; color: #d9381e; font-family: monospace; font-size: 11px; }
 
     /* 事件日志 */
     #event-log { position: absolute; top: 180px; left: 24px; width: 280px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 50; }
@@ -239,7 +247,7 @@
 
       <div class="overlay active" id="main-menu">
         <div class="panel">
-          <div class="version-txt">v5.3 矩阵巅峰</div>
+          <div class="version-txt">v5.4 矩阵巅峰</div>
           <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">深渊暴走版</span></div>
           
           <div class="btn-group" style="flex-direction: column;">
@@ -325,33 +333,30 @@
     let activeEvent = null, eventTimer = 0;
     let eventsTriggered = { 60:false,120:false,180:false,240:false,300:false };
 
-    // 统计数据
     let stats = { kills: 0, totalDamage: 0, bossesKilled: 0 };
     let damageStats = {}; 
 
-    // FPS监控
     let fpsFrames = 0;
     let fpsLastTime = performance.now();
     let currentFps = 60;
 
-    // 连击系统
     let comboCount = 0;
     let comboTimer = 0;
 
     let player = null;
     let enemies = [], bullets = [], particles = [], textParticles = [], expOrbs = [];
-    let trails = [], lasers = [], bombs = [], blackholes = [], downgradeRings = [];
+    let trails = [], lasers = [], bombs = [], downgradeRings = [];
     let floorTexts = [], items = [], activeSingularities = [], chainEffects = [];
-    let bulletTrails = [];
+    let bulletTrails = [], shatterPieces = [], darkmines = [];
     
     let burstQueue = [];
 
-    // Boss 系统相关（使用冷却时间配合极低概率实现纯随机降临）
+    // Boss 系统相关（纯概率+2分钟后）
     let bossSystem = {
         active: false,
         gathering: false,
         gatherPoint: { x: 0, y: 0 },
-        cooldown: 5, // 仅提供初始几秒安全期，之后全看脸
+        cooldown: 5, 
         absorbedHp: 0,
         minTier: 99,
         maxTier: 0,
@@ -366,12 +371,13 @@
     let isOfflineMode = false, audioCtx = null, supabaseClientObj = null;
     let damagePanelCollapsed = false;
 
+    // 移除黑洞相关记录
     const SKILL_NAMES = {
         expansion:'扩张', refinement:'精炼', gravity:'引力', drawSpeed:'加速',
         regen:'自愈', maxHpUp:'扩容', lifesteal:'吸血', splitShot:'分裂弹',
         burstShot:'连射', scatter:'散射', bulletPower:'子弹强化', fireRate:'生成加速', agility:'轻捷',
-        isincos:'isincos', bomb:'X^x炸弹', blackhole:'∞黑洞', downgrade:'R^n-1降维',
-        darksurge:'暗能涌动', darkburn:'暗灼', normal:'普通攻击', split:'分裂弹', chain:'暗能连锁'
+        isincos:'isincos', bomb:'X^x炸弹', downgrade:'R^n-1降维',
+        darksurge:'暗能涌动', darkburn:'暗灼', darkmine:'暗爆', normal:'普通攻击', split:'分裂弹', chain:'暗能连锁'
     };
 
     // ==========================================
@@ -416,7 +422,7 @@
     // 音效系统
     // ==========================================
     let _soundCounters = {};
-    const SOUND_LIMITS = { hit: 8, crit: 4, chain: 3, kill: 5, shoot: 6, burn: 5, laser: 2, blackhole: 1 };
+    const SOUND_LIMITS = { hit: 8, crit: 4, chain: 3, kill: 5, shoot: 6, burn: 5, laser: 2, bomb: 3 };
     let _lastSoundFrame = 0;
 
     function initAudio() {
@@ -480,9 +486,9 @@
             } else if (type === 'laser') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'sawtooth'; o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(80, t+0.3);
-                g.gain.setValueAtTime(0.08, t); g.gain.linearRampToValueAtTime(0.001, t+0.3);
-                o.start(t); o.stop(t+0.3);
+                o.type = 'sawtooth'; o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(80, t+0.25);
+                g.gain.setValueAtTime(0.08, t); g.gain.linearRampToValueAtTime(0.001, t+0.25);
+                o.start(t); o.stop(t+0.25);
             } else if (type === 'bomb') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.connect(g); g.connect(audioCtx.destination);
@@ -495,12 +501,6 @@
                 o.type = 'sine'; o.frequency.setValueAtTime(1000, t); o.frequency.linearRampToValueAtTime(100, t+0.6);
                 g.gain.setValueAtTime(0.04, t); g.gain.linearRampToValueAtTime(0.001, t+0.6);
                 o.start(t); o.stop(t+0.6);
-            } else if (type === 'blackhole') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.linearRampToValueAtTime(35, t+0.4);
-                g.gain.setValueAtTime(0.04, t); g.gain.linearRampToValueAtTime(0.001, t+0.4);
-                o.start(t); o.stop(t+0.4);
             } else if (type === 'playerHurt') {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.connect(g); g.connect(audioCtx.destination);
@@ -538,9 +538,9 @@
             skills: {
                 expansion:0, refinement:0, gravity:0, drawSpeed:0, regen:0, maxHpUp:0, lifesteal:0,
                 splitShot:0, burstShot:0, scatter:0, bulletPower:0, fireRate:0, agility:0,
-                isincos:0, bomb:0, blackhole:0, downgrade:0, darksurge:0, darkburn:0
+                isincos:0, bomb:0, downgrade:0, darksurge:0, darkburn:0, darkmine:0
             },
-            timers: { isincos:12, bomb:6, blackhole:18, downgrade:55, darksurge:8 },
+            timers: { isincos:12, bomb:6, downgrade:55, darksurge:8, darkmine:5 },
             darksurgeDuration: 0
         };
     }
@@ -562,9 +562,9 @@
         let lv = player.skills[id]||0;
         if(id==='isincos') return 15*getCdMulti()*(lv>=4?0.85:(lv>=2?0.9:1));
         if(id==='bomb') return 8*getCdMulti()*(lv>=3?0.9:1);
-        if(id==='blackhole') return 20*getCdMulti();
         if(id==='downgrade') return 60*getCdMulti();
         if(id==='darksurge') return [0,9,8,7,6,5][lv]*getCdMulti();
+        if(id==='darkmine') return [0,5,4.5,3,2.5,2][lv]*getCdMulti();
         return 1;
     }
     function getDarkburnCd() {
@@ -602,7 +602,7 @@
     }
 
     // ==========================================
-    // 网络机制
+    // 防篡改及网络机制
     // ==========================================
     let sdkReady = false;
     let sdkCheckCount = 0;
@@ -610,13 +610,26 @@
         if (typeof window.supabase !== 'undefined') {
             sdkReady = true;
             const btn = document.getElementById('start-game-btn');
-            if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = '数 据 连 接'; }
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.textContent = '数 据 连 接';
+            }
             return;
         }
         sdkCheckCount++;
         const btn = document.getElementById('start-game-btn');
-        if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; btn.textContent = sdkCheckCount > 30 ? '网络异常(请离线)' : '基建加载中...'; }
-        if (sdkCheckCount > 30) return;
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
+            btn.textContent = sdkCheckCount > 20 ? '强制准入(异常)' : '基建加载中...';
+        }
+        if (sdkCheckCount > 20) {
+            if (btn) { btn.disabled = false; btn.style.cursor = 'pointer'; btn.style.opacity = '1'; }
+            return;
+        }
         setTimeout(checkSDKReady, 500);
     }
     checkSDKReady();
@@ -638,6 +651,8 @@
             else await db.from('leaderboard').insert([{player_name:name,score:s}]);
         } catch(err) {}
     }
+    
+    let leaderboardRetries = 0;
     async function fetchLeaderboardData() {
         if (isOfflineMode) return null;
         const db = getDB(); if (!db) return null;
@@ -650,7 +665,13 @@
         const list = document.getElementById('leaderboard-list'); if (!list) return;
         if (isOfflineMode) { list.innerHTML='<li style="justify-content:center;color:#7a6b5d;">离线模式已启动</li>'; return; }
         const db = getDB();
-        if (!db) { list.innerHTML='<li style="justify-content:center;color:#999;">连接中...</li>'; setTimeout(renderLeaderboard,1000); return; }
+        if (!db) { 
+            if (leaderboardRetries > 6) { list.innerHTML='<li style="justify-content:center;color:#d9381e;font-size:12px;">无法连接数据库</li>'; return; }
+            leaderboardRetries++;
+            list.innerHTML='<li style="justify-content:center;color:#999;">连接中...</li>'; 
+            setTimeout(renderLeaderboard,1000); 
+            return; 
+        }
         const top10 = await fetchLeaderboardData();
         if (!top10) { list.innerHTML='<li style="justify-content:center;color:#d9381e;font-size:12px;">拉取数据库失败</li>'; return; }
         if (top10.length===0) { list.innerHTML='<li style="justify-content:center;color:#999;">暂无登顶记录</li>'; return; }
@@ -661,14 +682,14 @@
     // UI 控制与游戏状态流转
     // ==========================================
     document.getElementById('start-game-btn').addEventListener('click', ()=>{ 
-        if (!sdkReady) { alert('网络模块仍在挂载，强行使用请点击【离线模式】'); return; }
+        if (!sdkReady && sdkCheckCount <= 20) { alert('网络模块仍在挂载，强行使用请点击【离线模式】'); return; }
         isOfflineMode = false; startGame(); 
     });
     
     document.getElementById('offline-game-btn').addEventListener('click', ()=>{ isOfflineMode=true; startGame(); });
     
     document.getElementById('restart-btn').addEventListener('click', ()=>{
-        if (!isOfflineMode && !sdkReady) {
+        if (!isOfflineMode && !sdkReady && sdkCheckCount > 20) {
             alert('网络连接遗失，自动降级为离线模式');
             isOfflineMode = true;
         }
@@ -692,9 +713,10 @@
             const el=document.getElementById(id); if(el) el.classList.remove('visible');
         });
         document.getElementById('pause-btn-wrap').style.display='none';
+        leaderboardRetries = 0;
         renderLeaderboard();
     });
-    document.getElementById('refresh-lb-btn').addEventListener('click', renderLeaderboard);
+    document.getElementById('refresh-lb-btn').addEventListener('click', () => { leaderboardRetries=0; renderLeaderboard(); });
     setTimeout(renderLeaderboard, 800);
 
     document.getElementById('damage-panel-toggle').addEventListener('click', ()=>{
@@ -706,7 +728,7 @@
         else { panel.classList.remove('collapsed'); list.style.display='flex'; toggle.textContent='−'; }
     });
 
-    // FLIP 排序
+    // ====== 伤害面板 FLIP 原生平滑动画排序 & 跳动 ======
     function recordDamage(skillKey, dmg) {
         if (!damageStats[skillKey]) damageStats[skillKey] = 0;
         damageStats[skillKey] += dmg;
@@ -717,8 +739,12 @@
     function updateDamagePanel() {
         const list = document.getElementById('damage-list'); 
         if (!list || damagePanelCollapsed) return;
+        
         const oldPos = {};
-        Array.from(list.children).forEach(child => { oldPos[child.id] = child.getBoundingClientRect().top; });
+        Array.from(list.children).forEach(child => {
+            oldPos[child.id] = child.getBoundingClientRect().top;
+        });
+
         const sorted = Object.entries(damageStats).sort((a,b)=>b[1]-a[1]);
         
         sorted.forEach(([key, val], index) => {
@@ -730,6 +756,7 @@
                 item.innerHTML = `<div class="damage-skill-name">${SKILL_NAMES[key]||key}</div><div class="damage-value">0</div>`;
                 list.appendChild(item);
             }
+            
             const valEl = item.querySelector('.damage-value');
             const strVal = Math.floor(val).toLocaleString();
             if (valEl.textContent !== strVal) {
@@ -738,7 +765,10 @@
                 void valEl.offsetWidth; 
                 valEl.classList.add('dmg-pop-anim');
             }
-            if (list.children[index] !== item) list.insertBefore(item, list.children[index]);
+            
+            if (list.children[index] !== item) {
+                list.insertBefore(item, list.children[index]);
+            }
         });
 
         Array.from(list.children).forEach(child => {
@@ -747,7 +777,9 @@
                 const newTop = child.getBoundingClientRect().top;
                 const deltaY = oldTop - newTop;
                 if (deltaY !== 0) {
-                    child.style.transition = 'none'; child.style.transform = `translateY(${deltaY}px)`;
+                    child.style.transition = 'none';
+                    child.style.transform = `translateY(${deltaY}px)`;
+                    
                     requestAnimationFrame(() => {
                         child.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         child.style.transform = '';
@@ -760,8 +792,13 @@
     function addScoreEffect() {
         const el = document.getElementById('score-span');
         el.textContent = score;
-        el.classList.remove('score-pop'); void el.offsetWidth; el.classList.add('score-pop');
-        comboCount++; comboTimer = 2.0; 
+        el.classList.remove('score-pop');
+        void el.offsetWidth;
+        el.classList.add('score-pop');
+        
+        comboCount++;
+        comboTimer = 2.0; 
+        
         const comboEl = document.getElementById('combo-display');
         if (comboCount > 1) {
             comboEl.textContent = `Combo x${comboCount}!`;
@@ -773,9 +810,9 @@
     function startGame() {
         initAudio(); initPlayer();
         enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[];
-        lasers=[]; bombs=[]; blackholes=[]; downgradeRings=[]; floorTexts=[];
+        lasers=[]; bombs=[]; downgradeRings=[]; floorTexts=[];
         items=[]; activeSingularities=[]; chainEffects=[]; bulletTrails=[];
-        burstQueue=[]; damageStats={};
+        shatterPieces=[]; darkmines=[]; burstQueue=[]; damageStats={};
         stats = { kills: 0, totalDamage: 0, bossesKilled: 0 };
         comboCount = 0; comboTimer = 0;
         score=0; level=1; xp=0; xpToNext=50; gameTime=0;
@@ -784,7 +821,7 @@
         activeEvent=null; eventTimer=0;
         coreBreathPhase=0; coreShootPulse=0; coreSkillCharge=0; coreChargeActive=false;
         
-        bossSystem = { active: false, gathering: false, gatherPoint: {x:0,y:0}, cooldown: 5, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null };
+        bossSystem = { active: false, gathering: false, gatherPoint: {x:0,y:0}, nextSpawnTime: 90 + Math.random()*60, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null };
 
         document.getElementById('event-log').innerHTML='';
         document.getElementById('damage-list').innerHTML='';
@@ -841,6 +878,7 @@
                 finalName=finalName.trim().substring(0,10);
                 try { localStorage.setItem('geo_game_account',finalName); } catch(e) {}
                 await submitScore(finalName, score);
+                leaderboardRetries = 0;
                 await renderLeaderboard();
             }
         }, 300);
@@ -851,7 +889,7 @@
         if (!player) return;
         for (let key in player.skills) {
             if (player.skills[key]>0) {
-                let isCD=['isincos','bomb','blackhole','downgrade','darksurge'].includes(key);
+                let isCD=['isincos','bomb','downgrade','darksurge','darkmine'].includes(key);
                 tracker.innerHTML+=`<div class="skill-badge" id="badge-${key}">
                 ${isCD?`<div class="skill-cd-bg" id="cd-${key}"></div>`:''}
                 <span class="skill-name-txt">${SKILL_NAMES[key]||key}</span>
@@ -927,7 +965,7 @@
     window.addEventListener('keyup', e=>{ keys[e.key]=false; });
 
     // ==========================================
-    // 升级系统
+    // 升级系统（5列老虎机）
     // ==========================================
     const ALL_UPGRADES = [
         { id:'splitShot', name:'被动-分裂弹', max:5, descs:['命中分裂1弹(30%伤)','命中分裂1弹(40%伤)','命中分裂2弹(40%伤)','命中分裂2弹(50%伤)','命中分裂3弹(70%伤)'] },
@@ -945,9 +983,9 @@
         { id:'lifesteal', name:'常驻-吸血', max:5, descs:['攻击5%概率吸血','10%概率吸血','15%概率吸血','20%概率吸血','30%概率吸血'] },
         { id:'isincos', name:'主动-isincos', max:5, descs:['释放1发黑体射线','强化射线,降CD','释放2发射线','强化双射线,降CD','释放3发毁灭射线'] },
         { id:'bomb', name:'主动-X^x', max:5, descs:['抛出数学炸弹','炸弹抛出量+1','炸弹伤害提升,减CD','炸弹抛出量+1','炸弹伤害毁灭'] },
-        { id:'blackhole', name:'主动-∞黑洞', max:5, descs:['引力塌缩场','吸引范围提升','持续伤害提升','范围大幅提升','主宰级引力场'] },
         { id:'darksurge', name:'主动-暗能涌动', max:5, descs:['子弹附带暗能连锁','连锁次数+1','连锁次数+1,降CD','连锁伤害衰减减弱','常驻状态无冷却'] },
         { id:'darkburn', name:'主动-暗灼', max:5, descs:['子弹附带灼烧2s','灼烧3s,伤害提升','灼烧4s,伤害提升','灼烧5s,伤害提升','无限灼烧,伤害剧增'] },
+        { id:'darkmine', name:'主动-暗爆', max:5, descs:['每5s生成能量涌动点','每4.5s生成,伤害提升','每3s生成,伤害提升','每2.5s生成,伤害提升','每2s生成,毁灭涌动'] },
         { id:'downgrade', name:'主动-R^n-1', max:2, descs:['产生降维光环使敌怪降1级', '强化降维光环使敌怪连降2级'] }
     ];
 
@@ -1011,7 +1049,7 @@
             player.hp+=getMaxHP()-oldMax;
         } else {
             player.skills[choice.id]=(player.skills[choice.id]||0)+1;
-            if (['isincos','bomb','blackhole','downgrade','darksurge','darkburn'].includes(choice.id)) {
+            if (['isincos','bomb','downgrade','darksurge','darkburn','darkmine'].includes(choice.id)) {
                 if (player.skills[choice.id]===1) player.timers[choice.id]=getSkillMaxCd(choice.id);
             }
             if (choice.id === 'darksurge' && player.skills.darksurge >= 5) {
@@ -1138,6 +1176,28 @@
         }
     }
 
+    // 敌人布娃娃碎片化爆炸
+    function spawnShatterPieces(e) {
+        if (e.sides < 3) return;
+        const col = e.isBoss ? 'rgba(255,50,50,0.9)' : THEME.main;
+        for (let i = 0; i < e.sides; i++) {
+            const a1 = e.angle + (i * 2 * Math.PI) / e.sides;
+            const a2 = e.angle + ((i+1) * 2 * Math.PI) / e.sides;
+            const pAng = (a1 + a2) / 2;
+            shatterPieces.push({
+                x: e.x, y: e.y,
+                vx: Math.cos(pAng) * (100 + Math.random()*200),
+                vy: Math.sin(pAng) * (100 + Math.random()*200),
+                rot: e.angle, spin: (Math.random()-0.5)*15,
+                life: 0.5 + Math.random()*0.4,
+                maxLife: 0.9,
+                p1x: Math.cos(a1)*e.radius, p1y: Math.sin(a1)*e.radius,
+                p2x: Math.cos(a2)*e.radius, p2y: Math.sin(a2)*e.radius,
+                color: col
+            });
+        }
+    }
+
     function damageEnemy(e, baseDmg, forceCrit=false, skillKey='normal', silent=false) {
         if (!e||e.isDead) return;
         const isCrit=forceCrit||(Math.random()<player.critChance);
@@ -1152,15 +1212,23 @@
         }
 
         if (!silent) {
+            // 泰拉瑞亚飘字，起始位置错落，拥有初速度vx和向上的极速vy
+            const offsetX = (Math.random() - 0.5) * 40;
+            const offsetY = (Math.random() - 0.5) * 20;
             textParticles.push({
-                x:e.x + (Math.random()-0.5)*20, 
-                y:e.y - e.radius - 10,
-                text:`-${Math.ceil(finalDmg)}${isCrit?'!':''}`,
-                life:0.8, maxLife:0.8, 
-                vy:-60 - Math.random()*40, 
-                vx:(Math.random()-0.5)*80, 
-                color:isCrit?'#ff4500':THEME.damage,
-                size:isCrit?18:14
+                x: e.x + offsetX, 
+                baseX: e.x + offsetX, 
+                y: e.y - e.radius - 10 + offsetY,
+                text: `-${Math.ceil(finalDmg)}${isCrit?'!':''}`,
+                life: 0.9, maxLife: 0.9, 
+                vy: -70 - Math.random() * 30, 
+                vx: 0, 
+                isDmg: true,
+                wobbleSpeed: 6 + Math.random() * 6,
+                wobbleOffset: Math.random() * Math.PI * 2,
+                hueStart: 30 + Math.random() * 20, 
+                hueEnd: 0 + Math.random() * 10,    
+                size: isCrit ? 20 : 15
             });
             if (isCrit) playSound('crit'); else playSound('hit');
         }
@@ -1185,12 +1253,20 @@
             if (Math.random()<chance) {
                 player.hp=Math.min(getMaxHP(), player.hp+getMaxHP()*0.01);
                 updateHPUI();
-                if (!silent) textParticles.push({x:player.x,y:player.y-25,text:`+HP`,life:0.5,vy:-50,vx:0,size:14,color:'#34a853'});
+                if (!silent) {
+                    textParticles.push({
+                        x: player.x, y: player.y - 25, text: `+HP`, 
+                        life: 0.5, maxLife: 0.5, vy: -50, vx: 0, 
+                        isDmg: false, color: '#34a853', size: 14
+                    });
+                }
             }
         }
 
         if (e.hp<=0) {
             e.isDead=true;
+            spawnShatterPieces(e); 
+            
             if (e.isBoss) {
                 stats.bossesKilled++;
                 screenShake = 30;
@@ -1222,9 +1298,6 @@
         if (player.hp<=0) { player.hp=0; endGame(); }
     }
 
-    // ==========================================
-    // 逻辑流转
-    // ==========================================
     function spawnEnemyLogic(dt) {
         if (bossSystem.gathering || bossSystem.active) return; 
 
@@ -1258,7 +1331,7 @@
                     7:{r:38,hp:650,spd:48,exp:150,dmg:320}
                 }[sides];
                 const sm2=0.8+Math.random()*1.5;
-                const timeMult = 1 + gameTime/240;
+                const timeMult = Math.pow(1.05, gameTime/60); 
                 const atkMult = 1 + gameTime/300;
                 let fHp=stats.hp*Math.pow(sm2,1.2)*timeMult;
                 let fSpd=(stats.spd/Math.sqrt(sm2))*(0.9+Math.random()*0.2)*(1+gameTime/400);
@@ -1276,24 +1349,20 @@
     }
 
     function updateBossSystem(dt) {
-        if (!bossSystem.active && !bossSystem.gathering) {
-            if (bossSystem.cooldown > 0) {
-                bossSystem.cooldown -= dt;
-            } else {
-                if (Math.random() < (dt / 40)) {
-                    bossSystem.gathering = true;
-                    bossSystem.absorbedHp = 0;
-                    bossSystem.minTier = 99;
-                    bossSystem.maxTier = 0;
-                    let ang = Math.random() * Math.PI * 2;
-                    bossSystem.gatherPoint = {
-                        x: player.x + Math.cos(ang) * 500,
-                        y: player.y + Math.sin(ang) * 500
-                    };
-                    triggerEvent("警告：探测到极高浓度暗能反应！空间正在塌缩！", "elite", 10);
-                    playSound('bossRoar');
-                    screenShake = 20;
-                }
+        if (!bossSystem.active && !bossSystem.gathering && gameTime > 120) {
+            if (Math.random() < (dt / 60)) {
+                bossSystem.gathering = true;
+                bossSystem.absorbedHp = 0;
+                bossSystem.minTier = 99;
+                bossSystem.maxTier = 0;
+                let ang = Math.random() * Math.PI * 2;
+                bossSystem.gatherPoint = {
+                    x: player.x + Math.cos(ang) * 500,
+                    y: player.y + Math.sin(ang) * 500
+                };
+                triggerEvent("警告：探测到极高浓度暗能反应！空间正在塌缩！", "elite", 10);
+                playSound('bossRoar');
+                screenShake = 20;
             }
         }
 
@@ -1340,7 +1409,7 @@
                     hp: finalHp, maxHp: finalHp, exp: finalHp * 0.1, atk: 400 + gameTime,
                     angle: 0, spin: 1, hitTimer: 0, hitByRing: new Set(), isDead: false,
                     isBoss: true, phase: 'idle', phaseTimer: 2, laserCount: 0,
-                    morphPhase: 0, overlapCount: 0 
+                    morphPhase: 0 
                 };
                 enemies.push(boss);
                 bossSystem.bossEntity = boss;
@@ -1381,7 +1450,7 @@
                     
                     let spawnCount = 4 + Math.floor(Math.random() * 4); 
                     let avgTier = (bossSystem.minTier + bossSystem.maxTier) / 2;
-                    if (avgTier <= 4) spawnCount += Math.floor((5 - avgTier) * 4); // 如果等级低则爆量召唤
+                    if (avgTier <= 4) spawnCount += Math.floor((5 - avgTier) * 4); 
                     
                     for(let i=0; i<spawnCount; i++) {
                         let ang = Math.random()*Math.PI*2;
@@ -1498,26 +1567,6 @@
             }
         }
 
-        if (player.skills.blackhole>0) {
-            player.timers.blackhole-=dt;
-            if (player.timers.blackhole<=0) {
-                const lv=player.skills.blackhole;
-                player.timers.blackhole=getSkillMaxCd('blackhole');
-                const ang=Math.random()*Math.PI*2;
-                const d=80+Math.random()*150;
-                coreChargeActive=true;
-                blackholes.push({
-                    x:player.x+Math.cos(ang)*d,
-                    y:player.y+Math.sin(ang)*d,
-                    maxRadius:[0,250,250,350,450,600][lv]*getRangeMulti(),
-                    radius:0, expandSpeed:600,
-                    life:5.0, maxLife:5.0, dps:[0,30,50,100,100,250][lv]
-                });
-                playSound('blackhole'); screenShake=8;
-                setTimeout(()=>{coreChargeActive=false;},500);
-            }
-        }
-
         if (player.skills.downgrade>0) {
             player.timers.downgrade-=dt;
             if (player.timers.downgrade<=0) {
@@ -1525,6 +1574,22 @@
                 downgradeRings.push({x:player.x,y:player.y,radius:10,speed:600,life:5,id:Math.random()});
                 playSound('downgrade');
                 triggerEvent("释放: 降维打击 (R^n-1)", "normal", 0);
+            }
+        }
+
+        if (player.skills.darkmine > 0) {
+            player.timers.darkmine -= dt;
+            if (player.timers.darkmine <= 0) {
+                const lv = player.skills.darkmine;
+                player.timers.darkmine = getSkillMaxCd('darkmine');
+                darkmines.push({
+                    x: player.x, y: player.y,
+                    radius: 55 * getRangeMulti(),
+                    dmg: [0, 150, 240, 350, 460, 600][lv] * getBulletDamageMulti(),
+                    state: 'arming',
+                    timer: 0.8,
+                    life: 8.0, maxLife: 8.0
+                });
             }
         }
     }
@@ -1573,13 +1638,11 @@
             if (isNaN(dt)||dt<0||dt>0.1) dt=0.016;
             lastTime=now;
 
-            // FPS Update
             fpsFrames++;
             if (now - fpsLastTime >= 500) {
                 currentFps = Math.round((fpsFrames * 1000) / (now - fpsLastTime));
                 document.getElementById('fps-display').textContent = `FPS: ${currentFps}`;
-                fpsFrames = 0;
-                fpsLastTime = now;
+                fpsFrames = 0; fpsLastTime = now;
             }
 
             if (isPaused) return;
@@ -1613,13 +1676,12 @@
                     if (rAmt>0) { player.hp=Math.min(getMaxHP(),player.hp+rAmt*dt); updateHPUI(); }
                 }
 
-                for (const sk of ['isincos','bomb','blackhole','downgrade','darksurge']) {
+                for (const sk of ['isincos','bomb','downgrade','darksurge','darkmine']) {
                     if (player.skills[sk]>0) {
                         const el=document.getElementById(`cd-${sk}`);
                         if (el) {
                             let pct= (sk==='darksurge' && player.darksurgeDuration === Infinity)
-                                ? 1
-                                : Math.max(0,1-(player.timers[sk]/getSkillMaxCd(sk)));
+                                ? 1 : Math.max(0,1-(player.timers[sk]/getSkillMaxCd(sk)));
                             el.style.transform=`scaleY(${pct})`;
                         }
                     }
@@ -1662,11 +1724,8 @@
                 let newQueue = [];
                 for(let i=0; i<burstQueue.length; i++) {
                     burstQueue[i] -= dt;
-                    if(burstQueue[i] <= 0) {
-                        executeFire(true);
-                    } else {
-                        newQueue.push(burstQueue[i]);
-                    }
+                    if(burstQueue[i] <= 0) executeFire(true);
+                    else newQueue.push(burstQueue[i]);
                 }
                 burstQueue = newQueue;
 
@@ -1676,12 +1735,10 @@
 
                 for (const e of enemies) {
                     if (e.isDead||!e.burnEffect) continue;
-                    e.burnEffect.duration-=dt;
-                    e.burnEffect.timer+=dt;
+                    e.burnEffect.duration-=dt; e.burnEffect.timer+=dt;
                     e.burnEffect.sparkPhase=(e.burnEffect.sparkPhase||0)+dt*8;
                     if (e.burnEffect.timer>=e.burnEffect.interval) {
-                        e.burnEffect.timer=0;
-                        damageEnemy(e, e.burnEffect.damage, false, 'darkburn', false);
+                        e.burnEffect.timer=0; damageEnemy(e, e.burnEffect.damage, false, 'darkburn', false);
                     }
                     if (e.burnEffect.duration<=0) e.burnEffect=null;
                 }
@@ -1692,8 +1749,7 @@
                     const d=Math.sqrt((player.x-it.x)**2+(player.y-it.y)**2);
                     if (d<player.radius+20) {
                         activeSingularities.push({x:it.x,y:it.y,life:4,maxLife:4,angle:0});
-                        triggerEvent("触发奇点：经验引力场！","normal",0);
-                        playSound('laser');
+                        triggerEvent("触发奇点：经验引力场！","normal",0); playSound('laser');
                     } else if (it.life>0) newItems.push(it);
                 }
                 items=newItems;
@@ -1705,9 +1761,7 @@
                         newSings.push(s);
                         for (const o of expOrbs) {
                             if (!o.targetS) {
-                                o.targetS=s;
-                                o.orbitAngle=Math.random()*Math.PI*2;
-                                o.orbitRadius=30+Math.random()*50;
+                                o.targetS=s; o.orbitAngle=Math.random()*Math.PI*2; o.orbitRadius=30+Math.random()*50;
                             }
                         }
                     }
@@ -1723,14 +1777,15 @@
                         if (dtr<30) {
                             e.hitByRing.add(ring.id);
                             if (e.sides>3) {
-                                const dc=player.skills.downgrade;
-                                const oldS=e.sides;
-                                e.sides=Math.max(3,e.sides-dc);
-                                const drop=oldS-e.sides;
+                                const dc=player.skills.downgrade; const oldS=e.sides;
+                                e.sides=Math.max(3,e.sides-dc); const drop=oldS-e.sides;
                                 if (drop>0) {
                                     e.radius*=Math.pow(0.8,drop); e.speed*=Math.pow(1.25,drop);
                                     const oldMax=e.maxHp; e.maxHp*=Math.pow(0.6,drop); e.hp*=e.maxHp/oldMax;
-                                    textParticles.push({x:e.x,y:e.y,text:`DIM-${drop}`,life:0.8,vy:-40,vx:0,size:16,color:'#4285f4'});
+                                    textParticles.push({
+                                        x:e.x, y:e.y, text:`DIM-${drop}`, life:0.8, maxLife:0.8, vy:-40, vx:0, 
+                                        isDmg:false, color:'#4285f4', size:16
+                                    });
                                 }
                             }
                         }
@@ -1739,32 +1794,40 @@
                 }
                 downgradeRings=newRings;
 
-                const newBhs=[];
-                for (const bh of blackholes) {
-                    bh.life-=dt;
-                    if (bh.radius<bh.maxRadius) bh.radius=Math.min(bh.maxRadius, bh.radius+bh.expandSpeed*dt);
-                    for (const e of enemies) {
-                        if (e.isDead || e.isBoss) continue; 
-                        const dx=bh.x-e.x, dy=bh.y-e.y, dSq=dx*dx+dy*dy;
-                        if (dSq < bh.radius*bh.radius && dSq > 10) {
-                            const d = Math.sqrt(dSq);
-                            const pull=Math.pow(Math.max(0,1-d/bh.radius),1.5)*900*dt;
-                            e.x+=(dx/d)*pull; e.y+=(dy/d)*pull;
-                            
-                            e._bhDmgAcc = (e._bhDmgAcc || 0) + bh.dps*dt;
-                            e._bhDmgTimer = (e._bhDmgTimer || 0) + dt;
-                            if (e._bhDmgTimer >= 0.2) {
-                                damageEnemy(e, e._bhDmgAcc, false, 'blackhole', false);
-                                e._bhDmgAcc = 0; e._bhDmgTimer = 0;
-                            } else {
-                                e.hp -= bh.dps*dt; recordDamage('blackhole', bh.dps*dt);
-                                if (e.hp <= 0) damageEnemy(e, 0.01, false, 'blackhole', true);
+                const newMines=[];
+                for (const m of darkmines) {
+                    if (m.state === 'arming') {
+                        m.timer -= dt;
+                        if (m.timer <= 0) m.state = 'idle';
+                        newMines.push(m);
+                    } else if (m.state === 'idle') {
+                        m.life -= dt;
+                        if (m.life > 0) {
+                            let triggered = false;
+                            for (const e of enemies) {
+                                if (e.isDead) continue;
+                                const dSq = (e.x - m.x)**2 + (e.y - m.y)**2;
+                                if (dSq < (m.radius + e.radius)**2) { triggered = true; break; }
                             }
+                            if (triggered) {
+                                m.state = 'explode'; m.timer = 0.4;
+                                for (const e2 of enemies) {
+                                    if (e2.isDead) continue;
+                                    if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) {
+                                        damageEnemy(e2, m.dmg, true, 'darkmine');
+                                    }
+                                }
+                                playSound('bomb');
+                                screenShake = Math.max(screenShake, 15);
+                            }
+                            newMines.push(m);
                         }
+                    } else if (m.state === 'explode') {
+                        m.timer -= dt;
+                        if (m.timer > 0) newMines.push(m);
                     }
-                    if (bh.life>0) newBhs.push(bh);
                 }
-                blackholes=newBhs;
+                darkmines=newMines;
 
                 const newBombs=[];
                 for (const b of bombs) {
@@ -1787,7 +1850,6 @@
                     let targetX = player.x;
                     let targetY = player.y;
                     
-                    // 优化：计算重叠数量供渲染使用，同时计算防重叠推力
                     let sepX = 0, sepY = 0;
                     e.overlapCount = 0;
                     for (let j=0; j<enemies.length; j++) {
@@ -1858,8 +1920,7 @@
                             if (e.isDead) continue;
                             const vX=e.x-l.x, vY=e.y-l.y, proj=vX*ldx+vY*ldy;
                             if (proj>0&&Math.abs(vX*ldy-vY*ldx)<cw/2+e.radius&&!l.hitSet.has(e.id)) {
-                                damageEnemy(e, l.dmg, true, 'isincos');
-                                l.hitSet.add(e.id);
+                                damageEnemy(e, l.dmg, true, 'isincos'); l.hitSet.add(e.id);
                             }
                         }
                     }
@@ -1892,11 +1953,29 @@
 
             trails=trails.filter(t=>{t.alpha-=dt*1.5;return t.alpha>0;});
             particles=particles.filter(p=>{p.x+=(p.vx||0)*dt;p.y+=(p.vy||0)*dt;p.life-=dt;return p.life>0;});
+            
+            const newPieces = [];
+            for(const p of shatterPieces) {
+                p.x += p.vx * dt; p.y += p.vy * dt;
+                p.rot += p.spin * dt; p.life -= dt;
+                if(p.life > 0) newPieces.push(p);
+            }
+            shatterPieces = newPieces;
+
+            // 飘字动画核心 (支持抛物线和正弦波摇摆)
             textParticles=textParticles.filter(tp=>{
-                tp.x+=tp.vx*dt; tp.y+=tp.vy*dt; 
-                tp.vy+=180*dt;
-                tp.life-=dt; return tp.life>0;
+                if (tp.isDmg) {
+                    tp.x = tp.baseX + Math.sin(gameTime * tp.wobbleSpeed + tp.wobbleOffset) * 12;
+                    tp.y += tp.vy * dt;
+                    tp.vy += 150 * dt; // 重力
+                } else {
+                    tp.x += (tp.vx || 0) * dt; 
+                    tp.y += (tp.vy || 0) * dt; 
+                    tp.vy += 150 * dt; 
+                }
+                tp.life -= dt; return tp.life > 0;
             });
+
             chainEffects=chainEffects.filter(c=>{c.life-=dt;return c.life>0;});
             if (screenShake>0) { screenShake-=dt*55; if(screenShake<0) screenShake=0; }
 
@@ -1912,12 +1991,8 @@
             ctx.translate(-cam.x,-cam.y);
 
             ctx.strokeStyle=THEME.grid; ctx.lineWidth=1;
-            for (let x=Math.floor(cam.x/100)*100;x<cam.x+VIEW_W;x+=100) {
-                ctx.beginPath(); ctx.moveTo(x,cam.y); ctx.lineTo(x,cam.y+VIEW_H); ctx.stroke();
-            }
-            for (let y=Math.floor(cam.y/100)*100;y<cam.y+VIEW_H;y+=100) {
-                ctx.beginPath(); ctx.moveTo(cam.x,y); ctx.lineTo(cam.x+VIEW_W,y); ctx.stroke();
-            }
+            for (let x=Math.floor(cam.x/100)*100;x<cam.x+VIEW_W;x+=100) { ctx.beginPath(); ctx.moveTo(x,cam.y); ctx.lineTo(x,cam.y+VIEW_H); ctx.stroke(); }
+            for (let y=Math.floor(cam.y/100)*100;y<cam.y+VIEW_H;y+=100) { ctx.beginPath(); ctx.moveTo(cam.x,y); ctx.lineTo(cam.x+VIEW_W,y); ctx.stroke(); }
 
             for (const f of floorTexts) {
                 const a=f.life/f.maxLife;
@@ -1936,19 +2011,26 @@
                 ctx.globalAlpha=1;
             }
 
-            for (const bh of blackholes) {
-                const a=bh.life/bh.maxLife;
-                const cx2=bh.x, cy2=bh.y, r=Math.max(1,bh.radius);
-                ctx.globalAlpha=a*0.6; ctx.fillStyle='rgba(30,10,50,0.8)';
-                ctx.beginPath(); ctx.arc(cx2,cy2,r,0,Math.PI*2); ctx.fill();
-                ctx.globalAlpha=a*0.9; ctx.strokeStyle='rgba(100,0,200,0.8)'; ctx.lineWidth=3;
-                ctx.beginPath(); ctx.arc(cx2,cy2,r,0,Math.PI*2); ctx.stroke();
-                ctx.globalAlpha=a*0.4;
-                for (let ring=r*0.2;ring<r;ring+=r*0.18) {
-                    ctx.strokeStyle=`rgba(150,50,255,${0.5*(1-ring/r)})`; ctx.lineWidth=2;
-                    ctx.beginPath(); ctx.arc(cx2,cy2,ring+Math.sin(gameTime*4+ring)*6,0,Math.PI*2); ctx.stroke();
+            for (const m of darkmines) {
+                ctx.save(); ctx.translate(m.x, m.y);
+                if (m.state === 'arming') {
+                    const a = 1 - (m.timer / 0.8);
+                    ctx.globalAlpha = a; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, m.radius * a, 0, Math.PI*2); ctx.stroke();
+                } else if (m.state === 'idle') {
+                    const a = m.life / m.maxLife;
+                    ctx.globalAlpha = a * 0.4; ctx.fillStyle = THEME.darkPurple;
+                    ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI*2); ctx.fill();
+                    ctx.rotate(gameTime * 2);
+                    ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.setLineDash([10, 15]);
+                    ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI*2); ctx.stroke();
+                } else if (m.state === 'explode') {
+                    const a = m.timer / 0.4; ctx.globalAlpha = a;
+                    const r = m.radius * 1.6 * (1.5 - 0.5 * a);
+                    ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill();
                 }
-                ctx.globalAlpha=1;
+                ctx.restore(); ctx.globalAlpha = 1;
             }
 
             for (const t of trails) {
@@ -1990,7 +2072,16 @@
                 ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5; ctx.stroke();
             }
 
-            // 敌人渲染（使用缓存的 overlapCount）
+            for (const p of shatterPieces) {
+                const a = p.life / p.maxLife;
+                ctx.globalAlpha = a; ctx.fillStyle = p.color;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale);
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(p.p1x, p.p1y); ctx.lineTo(p.p2x, p.p2y); ctx.closePath();
+                ctx.fill(); ctx.restore();
+            }
+            ctx.globalAlpha = 1;
+
             for (let i=0;i<enemies.length;i++) {
                 const e=enemies[i];
                 if (!isInView(e.x,e.y,250)) continue;
@@ -2005,12 +2096,10 @@
                     ctx.fill(); ctx.stroke();
                 } else if (e.hitTimer>0) {
                     ctx.fillStyle='rgba(220,50,30,0.85)';
-                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0);
-                    ctx.fill();
+                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0); ctx.fill();
                 } else {
                     ctx.fillStyle=THEME.main;
-                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0);
-                    ctx.fill();
+                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0); ctx.fill();
                 }
                 ctx.globalAlpha=1;
 
@@ -2019,12 +2108,9 @@
                     for (let k=0;k<8;k++) {
                         const sparkAngle=(k/8)*Math.PI*2+phase;
                         const r=e.radius*(0.9+Math.sin(phase*2+k)*0.2);
-                        const sx2=e.x+Math.cos(sparkAngle)*r;
-                        const sy2=e.y+Math.sin(sparkAngle)*r;
+                        const sx2=e.x+Math.cos(sparkAngle)*r; const sy2=e.y+Math.sin(sparkAngle)*r;
                         const flicker=0.5+Math.sin(phase*5+k*1.3)*0.4;
-                        
-                        ctx.globalAlpha=flicker*0.85;
-                        ctx.fillStyle='rgba(180,0,255,0.75)';
+                        ctx.globalAlpha=flicker*0.85; ctx.fillStyle='rgba(180,0,255,0.75)';
                         ctx.beginPath(); ctx.arc(sx2,sy2,4+Math.sin(phase*4+k)*2,0,Math.PI*2); ctx.fill();
                         ctx.fillStyle='rgba(80,0,160,0.4)';
                         ctx.beginPath(); ctx.arc(sx2,sy2,7+Math.sin(phase*4+k)*2,0,Math.PI*2); ctx.fill();
@@ -2054,7 +2140,10 @@
                     ctx.globalAlpha=a; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=2;
                     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(3000,0); ctx.stroke();
                 } else {
-                    ctx.globalAlpha=a*0.6; ctx.strokeStyle='rgba(217,56,30,0.8)'; ctx.lineWidth=cw; ctx.lineCap='round';
+                    ctx.globalAlpha=a*0.6;
+                    const gradient=ctx.createLinearGradient(0,0,2000,0);
+                    gradient.addColorStop(0, THEME.main); gradient.addColorStop(0.3, '#d9381e'); gradient.addColorStop(1, 'rgba(217,56,30,0)');
+                    ctx.strokeStyle=gradient; ctx.lineWidth=cw; ctx.lineCap='round';
                     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(2000,0); ctx.stroke();
                 }
                 ctx.restore(); ctx.globalAlpha=1;
@@ -2089,20 +2178,18 @@
                         ctx.beginPath(); ctx.arc(b.x+Math.cos(fang)*fr,b.y+Math.sin(fang)*fr,3,0,Math.PI*2); ctx.fill();
                     }
                     ctx.globalAlpha=1; ctx.fillStyle='rgba(80,0,160,0.9)';
-                } else {
-                    ctx.fillStyle=THEME.main;
-                }
+                } else { ctx.fillStyle=THEME.main; }
                 ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill();
                 if (b.isDark) { ctx.strokeStyle='rgba(180,100,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke(); }
             }
 
             for (const c of chainEffects) {
                 const a=c.life/c.maxLife;
-                ctx.globalAlpha=a*0.6; ctx.strokeStyle='rgba(150,50,255,0.8)'; ctx.lineWidth=6;
+                ctx.globalAlpha=a*0.85; ctx.strokeStyle='rgba(100,0,220,0.95)'; ctx.lineWidth=3.5;
                 ctx.beginPath(); ctx.moveTo(c.path[0].x,c.path[0].y);
                 for (let j=1;j<c.path.length;j++) ctx.lineTo(c.path[j].x,c.path[j].y);
                 ctx.stroke();
-                ctx.globalAlpha=a*0.9; ctx.strokeStyle='rgba(220,180,255,1)'; ctx.lineWidth=2;
+                ctx.globalAlpha=a*0.95; ctx.strokeStyle='rgba(220,180,255,1)'; ctx.lineWidth=1.5;
                 ctx.beginPath(); ctx.moveTo(c.path[0].x,c.path[0].y);
                 for (let j=1;j<c.path.length;j++) ctx.lineTo(c.path[j].x,c.path[j].y);
                 ctx.stroke();
@@ -2162,24 +2249,15 @@
 
                 ctx.save(); ctx.translate(px,py); ctx.rotate(gameTime*0.6);
                 let coreSize;
-                if (coreSkillCharge>0.1) {
-                    coreSize=pr*0.38*(1+coreSkillCharge*0.7);
-                } else if (coreShootPulse>0) {
-                    coreSize=pr*0.38*(1+coreShootPulse*0.6);
-                } else {
-                    coreSize=pr*0.38*(0.88+Math.sin(coreBreathPhase)*0.1);
-                }
+                if (coreSkillCharge>0.1) coreSize=pr*0.38*(1+coreSkillCharge*0.7);
+                else if (coreShootPulse>0) coreSize=pr*0.38*(1+coreShootPulse*0.6);
+                else coreSize=pr*0.38*(0.88+Math.sin(coreBreathPhase)*0.1);
                 coreSize=Math.min(coreSize, pr*0.72);
                 
                 const cColor=player.darksurgeDuration>0?'rgba(120,0,220,0.85)':THEME.damage;
                 ctx.strokeStyle=cColor; ctx.lineWidth=2;
                 ctx.fillStyle=player.darksurgeDuration>0?'rgba(80,0,160,0.5)':'rgba(217,56,30,0.35)';
-                ctx.beginPath();
-                ctx.moveTo(0,-coreSize);
-                ctx.lineTo(coreSize*0.58,0);
-                ctx.lineTo(0,coreSize);
-                ctx.lineTo(-coreSize*0.58,0);
-                ctx.closePath();
+                ctx.beginPath(); ctx.moveTo(0,-coreSize); ctx.lineTo(coreSize*0.58,0); ctx.lineTo(0,coreSize); ctx.lineTo(-coreSize*0.58,0); ctx.closePath();
                 ctx.fill(); ctx.stroke();
                 ctx.fillStyle='rgba(255,255,255,0.7)';
                 ctx.beginPath(); ctx.arc(0,0,coreSize*0.22,0,Math.PI*2); ctx.fill();
@@ -2191,13 +2269,24 @@
                 ctx.restore();
             }
 
+            // 渲染泰拉瑞亚飘字 (动态色相滑动)
             for (const tp of textParticles) {
-                const a=tp.life/0.8;
-                ctx.globalAlpha=Math.max(0,a); ctx.fillStyle=tp.color;
-                ctx.font=`bold ${tp.size}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
-                ctx.fillText(tp.text,tp.x,tp.y);
+                const a = tp.life / (tp.maxLife || 0.8);
+                ctx.globalAlpha = Math.max(0, a); 
+                if (tp.isDmg) {
+                    const curHue = tp.hueEnd + (tp.hueStart - tp.hueEnd) * a;
+                    ctx.fillStyle = `hsl(${curHue}, 100%, ${tp.size > 16 ? 60 : 55}%)`;
+                } else {
+                    ctx.fillStyle = tp.color;
+                }
+                ctx.font = `bold ${tp.size}px sans-serif`; 
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                
+                ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                ctx.strokeText(tp.text, tp.x, tp.y);
+                ctx.fillText(tp.text, tp.x, tp.y);
             }
-            ctx.globalAlpha=1;
+            ctx.globalAlpha = 1;
 
             ctx.restore();
 
