@@ -43,7 +43,7 @@
     #xp-bar-fill { height: 100%; background: #2a1d13; width: 0%; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
     /* ==========================================
-       右上角：分数与连击系统
+       右上角：分数、DPS与连击系统
        ========================================== */
     #score-display { 
       position: absolute; top: 70px; right: 24px; font-size: 16px; font-weight: 900; color: #7a6b5d; 
@@ -54,10 +54,17 @@
     
     #combo-display {
       font-size: 14px; font-weight: 900; color: #ff4500; font-style: italic; 
-      opacity: 0; transform: translateX(20px); transition: all 0.2s ease-out;
+      opacity: 0; transform: translateX(20px); transition: all 0.2s ease-out; margin-bottom: 4px;
     }
     #combo-display.active { opacity: 1; transform: translateX(0) scale(1.1); }
     
+    #dps-display {
+      font-size: 13px; font-weight: 900; color: #7a6b5d; letter-spacing: 1px; margin-top: 4px;
+      background: rgba(250,249,246,0.7); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(42,29,19,0.1);
+      display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    #dps-span { color: #2a1d13; font-family: monospace; font-size: 16px; }
+
     @keyframes scorePop {
       0% { transform: scale(1); color: #2a1d13; }
       50% { transform: scale(1.4); color: #ff4500; }
@@ -125,7 +132,7 @@
        右上侧：微缩版技能等级面板
        ========================================== */
     #skill-tracker { 
-      position: absolute; top: 150px; right: 10px; display: flex; flex-direction: column; 
+      position: absolute; top: 160px; right: 10px; display: flex; flex-direction: column; 
       gap: 4px; opacity: 0; transition: opacity 0.3s; align-items: flex-end; 
     }
     #skill-tracker.visible { opacity: 1; }
@@ -226,6 +233,7 @@
         SCORE<br>
         <span id="score-span">0</span>
         <div id="combo-display"></div>
+        <div id="dps-display">DPS: <span id="dps-span">0</span></div>
       </div>
       
       <div id="skill-tracker"></div>
@@ -247,7 +255,7 @@
 
       <div class="overlay active" id="main-menu">
         <div class="panel">
-          <div class="version-txt">v5.4 矩阵巅峰</div>
+          <div class="version-txt">v5.5 矩阵巅峰</div>
           <div class="section-title" style="font-size:32px; line-height: 1.2;">极简几何<br><span style="font-size:16px; color: #7a6b5d;">深渊暴走版</span></div>
           
           <div class="btn-group" style="flex-direction: column;">
@@ -328,13 +336,19 @@
     const WORLD_W = 4000, WORLD_H = 4000;
 
     let gameRunning = false, isGameOver = false, isPaused = false, screenShake = 0;
+    let screenRedFlash = 0;
     let gameTime = 0, level = 1, xp = 0, xpToNext = 50, score = 0;
     let enemyIdCounter = 0, spawnTimer = 0;
     let activeEvent = null, eventTimer = 0;
     let eventsTriggered = { 60:false,120:false,180:false,240:false,300:false };
 
+    // 统计数据
     let stats = { kills: 0, totalDamage: 0, bossesKilled: 0 };
     let damageStats = {}; 
+    
+    // DPS 监控
+    let recentDamageList = [];
+    let currentDps = 0;
 
     let fpsFrames = 0;
     let fpsLastTime = performance.now();
@@ -351,16 +365,9 @@
     
     let burstQueue = [];
 
-    // Boss 系统相关（纯概率+2分钟后）
     let bossSystem = {
-        active: false,
-        gathering: false,
-        gatherPoint: { x: 0, y: 0 },
-        cooldown: 5, 
-        absorbedHp: 0,
-        minTier: 99,
-        maxTier: 0,
-        bossEntity: null
+        active: false, gathering: false, gatherPoint: { x: 0, y: 0 },
+        cooldown: 5, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null
     };
 
     let coreBreathPhase = 0, coreShootPulse = 0, coreSkillCharge = 0, coreChargeActive = false;
@@ -371,7 +378,6 @@
     let isOfflineMode = false, audioCtx = null, supabaseClientObj = null;
     let damagePanelCollapsed = false;
 
-    // 移除黑洞相关记录
     const SKILL_NAMES = {
         expansion:'扩张', refinement:'精炼', gravity:'引力', drawSpeed:'加速',
         regen:'自愈', maxHpUp:'扩容', lifesteal:'吸血', splitShot:'分裂弹',
@@ -385,21 +391,14 @@
     // ==========================================
     function loadLocalStats() {
         let s = { plays: 0, maxScore: 0, maxTime: 0, totalKills: 0, totalBosses: 0, totalDmg: 0 };
-        try {
-            const saved = localStorage.getItem('geo_local_stats');
-            if(saved) s = JSON.parse(saved);
-        } catch(e){}
+        try { const saved = localStorage.getItem('geo_local_stats'); if(saved) s = JSON.parse(saved); } catch(e){}
         return s;
     }
     
     function saveLocalStats() {
         let s = loadLocalStats();
-        s.plays++;
-        s.maxScore = Math.max(s.maxScore, score);
-        s.maxTime = Math.max(s.maxTime, gameTime);
-        s.totalKills += stats.kills;
-        s.totalBosses += stats.bossesKilled;
-        s.totalDmg += stats.totalDamage;
+        s.plays++; s.maxScore = Math.max(s.maxScore, score); s.maxTime = Math.max(s.maxTime, gameTime);
+        s.totalKills += stats.kills; s.totalBosses += stats.bossesKilled; s.totalDmg += stats.totalDamage;
         try { localStorage.setItem('geo_local_stats', JSON.stringify(s)); } catch(e){}
     }
 
@@ -450,75 +449,49 @@
         try {
             const t = audioCtx.currentTime;
             if (type === 'shoot') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'square';
-                o.frequency.setValueAtTime(800, t); o.frequency.exponentialRampToValueAtTime(200, t+0.06);
-                g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06);
-                o.start(t); o.stop(t+0.06);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'square'; o.frequency.setValueAtTime(800, t); o.frequency.exponentialRampToValueAtTime(200, t+0.06);
+                g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06); o.start(t); o.stop(t+0.06);
             } else if (type === 'hit') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'sawtooth';
-                o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t+0.06);
-                g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06);
-                o.start(t); o.stop(t+0.06);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'sawtooth'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t+0.06);
+                g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06); o.start(t); o.stop(t+0.06);
             } else if (type === 'crit') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'sawtooth';
-                o.frequency.setValueAtTime(280, t); o.frequency.exponentialRampToValueAtTime(60, t+0.1);
-                g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1);
-                o.start(t); o.stop(t+0.1);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'sawtooth'; o.frequency.setValueAtTime(280, t); o.frequency.exponentialRampToValueAtTime(60, t+0.1);
+                g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1); o.start(t); o.stop(t+0.1);
             } else if (type === 'kill') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'triangle';
-                o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(50, t+0.12);
-                g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
-                o.start(t); o.stop(t+0.12);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'triangle'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(50, t+0.12);
+                g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12); o.start(t); o.stop(t+0.12);
             } else if (type === 'xp') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sine'; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(1800, t+0.08);
-                g.gain.setValueAtTime(0.02, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.08);
-                o.start(t); o.stop(t+0.08);
+                g.gain.setValueAtTime(0.02, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.08); o.start(t); o.stop(t+0.08);
             } else if (type === 'laser') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'sawtooth'; o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(80, t+0.25);
-                g.gain.setValueAtTime(0.08, t); g.gain.linearRampToValueAtTime(0.001, t+0.25);
-                o.start(t); o.stop(t+0.25);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'sawtooth'; o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(80, t+0.3);
+                g.gain.setValueAtTime(0.08, t); g.gain.linearRampToValueAtTime(0.001, t+0.3); o.start(t); o.stop(t+0.3);
             } else if (type === 'bomb') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sine'; o.frequency.setValueAtTime(80, t); o.frequency.exponentialRampToValueAtTime(20, t+0.25);
-                g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.25);
-                o.start(t); o.stop(t+0.25);
+                g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.25); o.start(t); o.stop(t+0.25);
             } else if (type === 'downgrade') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sine'; o.frequency.setValueAtTime(1000, t); o.frequency.linearRampToValueAtTime(100, t+0.6);
-                g.gain.setValueAtTime(0.04, t); g.gain.linearRampToValueAtTime(0.001, t+0.6);
-                o.start(t); o.stop(t+0.6);
+                g.gain.setValueAtTime(0.04, t); g.gain.linearRampToValueAtTime(0.001, t+0.6); o.start(t); o.stop(t+0.6);
             } else if (type === 'playerHurt') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'square'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(60, t+0.12);
-                g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
-                o.start(t); o.stop(t+0.12);
+                g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12); o.start(t); o.stop(t+0.12);
             } else if (type === 'chain') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'square'; o.frequency.setValueAtTime(400+Math.random()*200, t); o.frequency.exponentialRampToValueAtTime(100, t+0.06);
-                g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06);
-                o.start(t); o.stop(t+0.06);
+                g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.06); o.start(t); o.stop(t+0.06);
             } else if (type === 'bossRoar') {
-                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
                 o.type = 'sawtooth'; o.frequency.setValueAtTime(80, t); o.frequency.linearRampToValueAtTime(20, t+1.5);
-                g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t+1.5);
-                o.start(t); o.stop(t+1.5);
+                g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t+1.5); o.start(t); o.stop(t+1.5);
             }
         } catch(e) {}
     }
@@ -733,6 +706,7 @@
         if (!damageStats[skillKey]) damageStats[skillKey] = 0;
         damageStats[skillKey] += dmg;
         stats.totalDamage += dmg;
+        recentDamageList.push({ t: gameTime, dmg: dmg });
         updateDamagePanel();
     }
 
@@ -812,9 +786,9 @@
         enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[];
         lasers=[]; bombs=[]; downgradeRings=[]; floorTexts=[];
         items=[]; activeSingularities=[]; chainEffects=[]; bulletTrails=[];
-        shatterPieces=[]; darkmines=[]; burstQueue=[]; damageStats={};
+        shatterPieces=[]; darkmines=[]; burstQueue=[]; damageStats={}; recentDamageList=[];
         stats = { kills: 0, totalDamage: 0, bossesKilled: 0 };
-        comboCount = 0; comboTimer = 0;
+        comboCount = 0; comboTimer = 0; currentDps = 0; screenRedFlash = 0;
         score=0; level=1; xp=0; xpToNext=50; gameTime=0;
         enemyIdCounter=0; screenShake=0; spawnTimer=0;
         eventsTriggered={60:false,120:false,180:false,240:false,300:false};
@@ -826,6 +800,7 @@
         document.getElementById('event-log').innerHTML='';
         document.getElementById('damage-list').innerHTML='';
         document.getElementById('score-span').textContent='0';
+        document.getElementById('dps-span').textContent='0';
         document.getElementById('combo-display').classList.remove('active');
         document.getElementById('boss-ui').classList.remove('visible');
         
@@ -1176,7 +1151,6 @@
         }
     }
 
-    // 敌人布娃娃碎片化爆炸
     function spawnShatterPieces(e) {
         if (e.sides < 3) return;
         const col = e.isBoss ? 'rgba(255,50,50,0.9)' : THEME.main;
@@ -1212,7 +1186,6 @@
         }
 
         if (!silent) {
-            // 泰拉瑞亚飘字，起始位置错落，拥有初速度vx和向上的极速vy
             const offsetX = (Math.random() - 0.5) * 40;
             const offsetY = (Math.random() - 0.5) * 20;
             textParticles.push({
@@ -1289,7 +1262,12 @@
     function damagePlayer(amount) {
         if (!gameRunning||player.invincibleTimer>0) return;
         player.hp-=amount*(1-(player.damageReduction||0));
-        player.invincibleTimer=0.5; player.flashTimer=0.2; screenShake=12;
+        player.invincibleTimer=0.5; player.flashTimer=0.2; 
+        
+        // 玩家受伤：屏幕剧烈震动+全局泛红
+        screenShake = Math.max(screenShake, 25);
+        screenRedFlash = 1.0; 
+        
         updateHPUI(); playSound('playerHurt');
         
         comboCount = 0;
@@ -1588,7 +1566,7 @@
                     dmg: [0, 150, 240, 350, 460, 600][lv] * getBulletDamageMulti(),
                     state: 'arming',
                     timer: 0.8,
-                    life: 8.0, maxLife: 8.0
+                    life: Infinity, maxLife: Infinity // 不再随时间消失
                 });
             }
         }
@@ -1650,6 +1628,18 @@
             if (gameRunning && !isGameOver && player) {
                 gameTime+=dt;
                 document.getElementById('hud-time').textContent = formatTime(gameTime);
+                
+                // DPS 平滑更新
+                let dpsSum = 0;
+                let newDpsList = [];
+                for (let i = 0; i < recentDamageList.length; i++) {
+                    if (gameTime - recentDamageList[i].t <= 1.0) {
+                        dpsSum += recentDamageList[i].dmg;
+                        newDpsList.push(recentDamageList[i]);
+                    }
+                }
+                recentDamageList = newDpsList;
+                document.getElementById('dps-span').textContent = Math.floor(dpsSum).toLocaleString();
 
                 if (comboTimer > 0) {
                     comboTimer -= dt;
@@ -1657,6 +1647,11 @@
                         comboCount = 0;
                         document.getElementById('combo-display').classList.remove('active');
                     }
+                }
+                
+                if (screenRedFlash > 0) {
+                    screenRedFlash -= dt * 2.5; 
+                    if (screenRedFlash < 0) screenRedFlash = 0;
                 }
                 
                 const sec=Math.floor(gameTime);
@@ -1801,27 +1796,25 @@
                         if (m.timer <= 0) m.state = 'idle';
                         newMines.push(m);
                     } else if (m.state === 'idle') {
-                        m.life -= dt;
-                        if (m.life > 0) {
-                            let triggered = false;
-                            for (const e of enemies) {
-                                if (e.isDead) continue;
-                                const dSq = (e.x - m.x)**2 + (e.y - m.y)**2;
-                                if (dSq < (m.radius + e.radius)**2) { triggered = true; break; }
-                            }
-                            if (triggered) {
-                                m.state = 'explode'; m.timer = 0.4;
-                                for (const e2 of enemies) {
-                                    if (e2.isDead) continue;
-                                    if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) {
-                                        damageEnemy(e2, m.dmg, true, 'darkmine');
-                                    }
-                                }
-                                playSound('bomb');
-                                screenShake = Math.max(screenShake, 15);
-                            }
-                            newMines.push(m);
+                        // 移除生命值衰减使其常驻
+                        let triggered = false;
+                        for (const e of enemies) {
+                            if (e.isDead) continue;
+                            const dSq = (e.x - m.x)**2 + (e.y - m.y)**2;
+                            if (dSq < (m.radius + e.radius)**2) { triggered = true; break; }
                         }
+                        if (triggered) {
+                            m.state = 'explode'; m.timer = 0.4;
+                            for (const e2 of enemies) {
+                                if (e2.isDead) continue;
+                                if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) {
+                                    damageEnemy(e2, m.dmg, true, 'darkmine');
+                                }
+                            }
+                            playSound('bomb');
+                            screenShake = Math.max(screenShake, 15);
+                        }
+                        newMines.push(m);
                     } else if (m.state === 'explode') {
                         m.timer -= dt;
                         if (m.timer > 0) newMines.push(m);
@@ -1920,7 +1913,8 @@
                             if (e.isDead) continue;
                             const vX=e.x-l.x, vY=e.y-l.y, proj=vX*ldx+vY*ldy;
                             if (proj>0&&Math.abs(vX*ldy-vY*ldx)<cw/2+e.radius&&!l.hitSet.has(e.id)) {
-                                damageEnemy(e, l.dmg, true, 'isincos'); l.hitSet.add(e.id);
+                                damageEnemy(e, l.dmg, true, 'isincos');
+                                l.hitSet.add(e.id);
                             }
                         }
                     }
@@ -1928,22 +1922,31 @@
                 }
                 lasers=newLasers;
 
+                // 奇点轨道抢夺优先判定机制
                 const newOrbs=[];
+                const pickupSq = getPickupRange()**2;
+                const playerRadSq = (player.radius+8)**2;
+
                 for (const orb of expOrbs) {
                     orb.x+=orb.vx*dt; orb.y+=orb.vy*dt;
                     orb.vx*=0.85; orb.vy*=0.85;
-                    if (orb.targetS&&orb.targetS.life>0) {
+                    
+                    const dx=player.x-orb.x, dy=player.y-orb.y, dSq=dx*dx+dy*dy;
+                    
+                    if (dSq < playerRadSq) { 
+                        gainXP(orb.value); orb.collected=true; 
+                    } else if (dSq < pickupSq) { 
+                        const d=Math.sqrt(dSq); 
+                        orb.x+=(dx/d)*600*dt; orb.y+=(dy/d)*600*dt; 
+                        orb.targetS = null; // 强行解除奇点锁定
+                    } else if (orb.targetS && orb.targetS.life>0) {
                         orb.orbitAngle=(orb.orbitAngle||0)+dt*3;
                         const tx=orb.targetS.x+Math.cos(orb.orbitAngle)*(orb.orbitRadius||40);
                         const ty=orb.targetS.y+Math.sin(orb.orbitAngle)*(orb.orbitRadius||40);
-                        const dx=tx-orb.x, dy=ty-orb.y, dSq=dx*dx+dy*dy;
-                        if (dSq>16) { const d=Math.sqrt(dSq); orb.x+=(dx/d)*1200*dt; orb.y+=(dy/d)*1200*dt; }
-                    } else {
-                        orb.targetS=null;
-                        const dx=player.x-orb.x, dy=player.y-orb.y, dSq=dx*dx+dy*dy;
-                        if (dSq<(player.radius+8)**2) { gainXP(orb.value); orb.collected=true; }
-                        else if (dSq<getPickupRange()**2) { const d=Math.sqrt(dSq); orb.x+=(dx/d)*600*dt; orb.y+=(dy/d)*600*dt; }
+                        const sx=tx-orb.x, sy=ty-orb.y, sSq=sx*sx+sy*sy;
+                        if (sSq>16) { const sd=Math.sqrt(sSq); orb.x+=(sx/sd)*1200*dt; orb.y+=(sy/sd)*1200*dt; }
                     }
+                    
                     orb.life-=dt;
                     if (!orb.collected&&orb.life>0) newOrbs.push(orb);
                 }
@@ -1962,12 +1965,11 @@
             }
             shatterPieces = newPieces;
 
-            // 飘字动画核心 (支持抛物线和正弦波摇摆)
             textParticles=textParticles.filter(tp=>{
                 if (tp.isDmg) {
                     tp.x = tp.baseX + Math.sin(gameTime * tp.wobbleSpeed + tp.wobbleOffset) * 12;
                     tp.y += tp.vy * dt;
-                    tp.vy += 150 * dt; // 重力
+                    tp.vy += 150 * dt; 
                 } else {
                     tp.x += (tp.vx || 0) * dt; 
                     tp.y += (tp.vy || 0) * dt; 
@@ -2011,26 +2013,32 @@
                 ctx.globalAlpha=1;
             }
 
+            // 暗爆 (地雷)
             for (const m of darkmines) {
-                ctx.save(); ctx.translate(m.x, m.y);
+                ctx.save();
+                ctx.translate(m.x, m.y);
                 if (m.state === 'arming') {
                     const a = 1 - (m.timer / 0.8);
-                    ctx.globalAlpha = a; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2;
+                    ctx.globalAlpha = a * 0.5; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2;
                     ctx.beginPath(); ctx.arc(0, 0, m.radius * a, 0, Math.PI*2); ctx.stroke();
                 } else if (m.state === 'idle') {
-                    const a = m.life / m.maxLife;
-                    ctx.globalAlpha = a * 0.4; ctx.fillStyle = THEME.darkPurple;
+                    ctx.globalAlpha = 0.2; // 常驻低透明度
+                    ctx.fillStyle = THEME.darkPurple;
                     ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI*2); ctx.fill();
                     ctx.rotate(gameTime * 2);
                     ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.setLineDash([10, 15]);
                     ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI*2); ctx.stroke();
                 } else if (m.state === 'explode') {
-                    const a = m.timer / 0.4; ctx.globalAlpha = a;
+                    const a = m.timer / 0.4;
+                    ctx.globalAlpha = a;
                     const r = m.radius * 1.6 * (1.5 - 0.5 * a);
-                    ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = THEME.darkPurple;
+                    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#ff4500';
+                    ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill();
                 }
-                ctx.restore(); ctx.globalAlpha = 1;
+                ctx.restore();
+                ctx.globalAlpha = 1;
             }
 
             for (const t of trails) {
@@ -2072,6 +2080,7 @@
                 ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5; ctx.stroke();
             }
 
+            // 碎块渲染
             for (const p of shatterPieces) {
                 const a = p.life / p.maxLife;
                 ctx.globalAlpha = a; ctx.fillStyle = p.color;
@@ -2082,6 +2091,7 @@
             }
             ctx.globalAlpha = 1;
 
+            // 敌人渲染
             for (let i=0;i<enemies.length;i++) {
                 const e=enemies[i];
                 if (!isInView(e.x,e.y,250)) continue;
@@ -2096,10 +2106,12 @@
                     ctx.fill(); ctx.stroke();
                 } else if (e.hitTimer>0) {
                     ctx.fillStyle='rgba(220,50,30,0.85)';
-                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0); ctx.fill();
+                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0);
+                    ctx.fill();
                 } else {
                     ctx.fillStyle=THEME.main;
-                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0); ctx.fill();
+                    drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,baseAlpha, false, 0);
+                    ctx.fill();
                 }
                 ctx.globalAlpha=1;
 
@@ -2108,9 +2120,12 @@
                     for (let k=0;k<8;k++) {
                         const sparkAngle=(k/8)*Math.PI*2+phase;
                         const r=e.radius*(0.9+Math.sin(phase*2+k)*0.2);
-                        const sx2=e.x+Math.cos(sparkAngle)*r; const sy2=e.y+Math.sin(sparkAngle)*r;
+                        const sx2=e.x+Math.cos(sparkAngle)*r;
+                        const sy2=e.y+Math.sin(sparkAngle)*r;
                         const flicker=0.5+Math.sin(phase*5+k*1.3)*0.4;
-                        ctx.globalAlpha=flicker*0.85; ctx.fillStyle='rgba(180,0,255,0.75)';
+                        
+                        ctx.globalAlpha=flicker*0.85;
+                        ctx.fillStyle='rgba(180,0,255,0.75)';
                         ctx.beginPath(); ctx.arc(sx2,sy2,4+Math.sin(phase*4+k)*2,0,Math.PI*2); ctx.fill();
                         ctx.fillStyle='rgba(80,0,160,0.4)';
                         ctx.beginPath(); ctx.arc(sx2,sy2,7+Math.sin(phase*4+k)*2,0,Math.PI*2); ctx.fill();
@@ -2140,10 +2155,7 @@
                     ctx.globalAlpha=a; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=2;
                     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(3000,0); ctx.stroke();
                 } else {
-                    ctx.globalAlpha=a*0.6;
-                    const gradient=ctx.createLinearGradient(0,0,2000,0);
-                    gradient.addColorStop(0, THEME.main); gradient.addColorStop(0.3, '#d9381e'); gradient.addColorStop(1, 'rgba(217,56,30,0)');
-                    ctx.strokeStyle=gradient; ctx.lineWidth=cw; ctx.lineCap='round';
+                    ctx.globalAlpha=a*0.6; ctx.strokeStyle='rgba(217,56,30,0.8)'; ctx.lineWidth=cw; ctx.lineCap='round';
                     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(2000,0); ctx.stroke();
                 }
                 ctx.restore(); ctx.globalAlpha=1;
@@ -2178,7 +2190,9 @@
                         ctx.beginPath(); ctx.arc(b.x+Math.cos(fang)*fr,b.y+Math.sin(fang)*fr,3,0,Math.PI*2); ctx.fill();
                     }
                     ctx.globalAlpha=1; ctx.fillStyle='rgba(80,0,160,0.9)';
-                } else { ctx.fillStyle=THEME.main; }
+                } else {
+                    ctx.fillStyle=THEME.main;
+                }
                 ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill();
                 if (b.isDark) { ctx.strokeStyle='rgba(180,100,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke(); }
             }
@@ -2249,15 +2263,24 @@
 
                 ctx.save(); ctx.translate(px,py); ctx.rotate(gameTime*0.6);
                 let coreSize;
-                if (coreSkillCharge>0.1) coreSize=pr*0.38*(1+coreSkillCharge*0.7);
-                else if (coreShootPulse>0) coreSize=pr*0.38*(1+coreShootPulse*0.6);
-                else coreSize=pr*0.38*(0.88+Math.sin(coreBreathPhase)*0.1);
+                if (coreSkillCharge>0.1) {
+                    coreSize=pr*0.38*(1+coreSkillCharge*0.7);
+                } else if (coreShootPulse>0) {
+                    coreSize=pr*0.38*(1+coreShootPulse*0.6);
+                } else {
+                    coreSize=pr*0.38*(0.88+Math.sin(coreBreathPhase)*0.1);
+                }
                 coreSize=Math.min(coreSize, pr*0.72);
                 
                 const cColor=player.darksurgeDuration>0?'rgba(120,0,220,0.85)':THEME.damage;
                 ctx.strokeStyle=cColor; ctx.lineWidth=2;
                 ctx.fillStyle=player.darksurgeDuration>0?'rgba(80,0,160,0.5)':'rgba(217,56,30,0.35)';
-                ctx.beginPath(); ctx.moveTo(0,-coreSize); ctx.lineTo(coreSize*0.58,0); ctx.lineTo(0,coreSize); ctx.lineTo(-coreSize*0.58,0); ctx.closePath();
+                ctx.beginPath();
+                ctx.moveTo(0,-coreSize);
+                ctx.lineTo(coreSize*0.58,0);
+                ctx.lineTo(0,coreSize);
+                ctx.lineTo(-coreSize*0.58,0);
+                ctx.closePath();
                 ctx.fill(); ctx.stroke();
                 ctx.fillStyle='rgba(255,255,255,0.7)';
                 ctx.beginPath(); ctx.arc(0,0,coreSize*0.22,0,Math.PI*2); ctx.fill();
@@ -2269,10 +2292,17 @@
                 ctx.restore();
             }
 
-            // 渲染泰拉瑞亚飘字 (动态色相滑动)
+            ctx.restore();
+
+            // 渲染伤害飘字 (在最上层)
             for (const tp of textParticles) {
                 const a = tp.life / (tp.maxLife || 0.8);
                 ctx.globalAlpha = Math.max(0, a); 
+                
+                // 相机跟随平移抵消，让文字在屏幕上正确显示在世界坐标位置
+                let rx = tp.x - cam.x;
+                let ry = tp.y - cam.y;
+                
                 if (tp.isDmg) {
                     const curHue = tp.hueEnd + (tp.hueStart - tp.hueEnd) * a;
                     ctx.fillStyle = `hsl(${curHue}, 100%, ${tp.size > 16 ? 60 : 55}%)`;
@@ -2282,13 +2312,17 @@
                 ctx.font = `bold ${tp.size}px sans-serif`; 
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 
-                ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-                ctx.strokeText(tp.text, tp.x, tp.y);
-                ctx.fillText(tp.text, tp.x, tp.y);
+                ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+                ctx.strokeText(tp.text, rx, ry);
+                ctx.fillText(tp.text, rx, ry);
             }
             ctx.globalAlpha = 1;
 
-            ctx.restore();
+            // 全屏受伤泛红
+            if (screenRedFlash > 0) {
+                ctx.fillStyle = `rgba(217, 56, 30, ${screenRedFlash * 0.4})`;
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            }
 
         } catch(err) { console.error("Engine Error:",err); }
     }
