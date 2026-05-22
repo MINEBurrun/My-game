@@ -202,13 +202,12 @@
     .upload-single-btn { background: #d9381e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .upload-single-btn:active { transform: scale(0.9); }
 
-    /* 排行榜样式 */
-    #leaderboard-list { list-style: none; font-size: 14px; color: #555; max-height: 400px; overflow-y: auto; padding-right: 5px; font-weight: bold; }
-    #leaderboard-list li { display: flex; justify-content: space-between; padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; border-radius: 4px; }
-    #leaderboard-list li:hover { background: rgba(0,0,0,0.05); }
-    #leaderboard-list li span:last-child { color: #d9381e; font-family: monospace; font-size: 16px; }
+    /* 排行榜样式修正 */
+    #leaderboard-overlay .panel { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
     #leaderboard-list::-webkit-scrollbar { width: 4px; }
     #leaderboard-list::-webkit-scrollbar-thumb { background: rgba(42,29,19,0.3); border-radius: 2px; }
+    #leaderboard-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; border-radius: 4px; }
+    #leaderboard-list li:hover { background: rgba(0,0,0,0.05); }
 
     #info-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); pointer-events: auto; }
     #info-modal.active { display: flex; }
@@ -283,15 +282,38 @@
         </div>
       </div>
       
-      <!-- 独立的排行榜页面 -->
+      <!-- 独立的排行榜页面重构为抽屉式布局 -->
       <div class="overlay" id="leaderboard-overlay">
-        <div class="panel" style="max-width: 500px;">
-          <div class="section-title">🏆 维 度 排 行 榜</div>
-          <div style="font-size: 12px; color: #7a6b5d; margin-bottom: 10px;">点击玩家记录可查看详细的构型参数</div>
-          <ul id="leaderboard-list"><li style="justify-content: center; color: #999;">正在请求卫星数据...</li></ul>
-          <div class="btn-group">
-              <button id="refresh-lb-btn" class="secondary-btn" style="flex: 1;">刷 新 数 据</button>
-              <button class="primary-btn" id="close-leaderboard-btn" style="flex: 1;">返 回 菜 单</button>
+        <div class="panel" style="max-width: 850px; flex-direction: row; padding: 0; overflow: visible; background: transparent; border: none; box-shadow: none; align-items: stretch; height: 500px;">
+          <!-- 左侧：排行榜主界面 -->
+          <div style="flex: 1; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; z-index: 2; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+              <div class="section-title" style="margin-bottom: 5px;">🏆 维 度 排 行 榜</div>
+              
+              <div id="lb-tabs" style="display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;">
+                  <button class="diff-btn active" data-tab="ALL" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">ALL</button>
+                  <button class="diff-btn" data-tab="F" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">F</button>
+                  <button class="diff-btn" data-tab="E" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">E</button>
+                  <button class="diff-btn" data-tab="D" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">D</button>
+                  <button class="diff-btn" data-tab="C" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">C</button>
+                  <button class="diff-btn" data-tab="B" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">B</button>
+                  <button class="diff-btn" data-tab="A" style="font-size: 12px; padding: 4px 8px; min-width: 40px;">A</button>
+                  <button class="diff-btn" data-tab="S" style="font-size: 12px; padding: 4px 8px; min-width: 40px; color: #d9381e;">S</button>
+              </div>
+
+              <div style="font-size: 12px; color: #7a6b5d; margin-bottom: 10px; font-weight: bold;">点击玩家记录可从右侧滑出详细构型参数</div>
+              <ul id="leaderboard-list" style="flex: 1; margin-bottom: 10px; list-style: none; font-size: 14px; color: #555; max-height: 100%; overflow-y: auto; padding-right: 5px; font-weight: bold;"><li style="justify-content: center; color: #999;">正在请求卫星数据...</li></ul>
+              
+              <div class="btn-group">
+                  <button id="refresh-lb-btn" class="secondary-btn" style="flex: 1;">刷 新 数 据</button>
+                  <button class="primary-btn" id="close-leaderboard-btn" style="flex: 1;">返 回 菜 单</button>
+              </div>
+          </div>
+          
+          <!-- 右侧：抽屉详情区 -->
+          <div id="lb-drawer" style="width: 320px; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-left: none; border-radius: 0 8px 8px 0; padding: 20px; display: flex; flex-direction: column; transform: translateX(-100%); opacity: 0; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; margin-left: -5px; z-index: 1;">
+              <div class="section-title" style="font-size: 18px; margin-bottom: 10px; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 5px;">详 情 档 案</div>
+              <div id="lb-drawer-text" style="font-size: 13px; color: #555; white-space: pre-wrap; text-align: left; line-height: 1.5; flex: 1; overflow-y: auto; font-weight: bold;">请选择左侧记录</div>
+              <button class="secondary-btn" id="close-drawer-btn" style="margin-top: 10px; width: 100%;">关 闭 详 情</button>
           </div>
         </div>
       </div>
@@ -523,10 +545,14 @@
 
     // ========== 排行榜与战绩上传逻辑 ==========
     document.getElementById('open-leaderboard-btn').addEventListener('click', () => { document.getElementById('leaderboard-overlay').classList.add('active'); renderLeaderboard(); });
-    document.getElementById('close-leaderboard-btn').addEventListener('click', () => { document.getElementById('leaderboard-overlay').classList.remove('active'); });
+    document.getElementById('close-leaderboard-btn').addEventListener('click', () => { 
+        document.getElementById('leaderboard-overlay').classList.remove('active'); 
+        document.getElementById('lb-drawer').style.transform = 'translateX(-100%)';
+        document.getElementById('lb-drawer').style.opacity = '0';
+    });
     document.getElementById('refresh-lb-btn').addEventListener('click', () => { renderLeaderboard(); });
 
-    // 自动判定最高分上传 (依赖 player_name 而非强制依赖 user_id)
+    // 自动判定最高分上传
     async function autoUploadToLeaderboard(name, data) {
         if (!supabaseClientObj || isOfflineMode) return;
         try {
@@ -542,7 +568,11 @@
         } catch(err) {}
     }
     
+    // 依然保留给武器详情点击用
     window.showLeaderboardDetail = function(text) { document.getElementById('info-modal-text').textContent = text; document.getElementById('info-modal').classList.add('active'); };
+
+    let globalLbData = [];
+    let currentLbTab = 'ALL';
 
     async function renderLeaderboard() {
         const list = document.getElementById('leaderboard-list'); if (!list) return;
@@ -550,19 +580,71 @@
         if (!isDbUsable) { list.innerHTML='<li style="justify-content:center;color:#d9381e;">网络连接异常</li>'; return; }
         list.innerHTML = '<li style="justify-content: center; color: #999;">正在请求卫星数据...</li>';
         try {
-            const {data: top10, error} = await supabaseClientObj.from('leaderboard').select('*').order('score',{ascending:false}).limit(15); if (error) throw error;
-            if (!top10 || top10.length===0) { list.innerHTML='<li style="justify-content:center;color:#999;">暂无登顶记录</li>'; return; }
-            list.innerHTML = top10.map((item,i) => {
-                let tl = item.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
-                let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':'基础炮'}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}`;
-                return `<li data-detail="${detailHtml.replace(/"/g, '&quot;')}" onclick="showLeaderboardDetail(this.getAttribute('data-detail'))"><span>${['🥇','🥈','🥉'][i]||`${i+1}.`} ${item.player_name}</span><span>${item.score}</span></li>`;
-            }).join('');
+            const {data, error} = await supabaseClientObj.from('leaderboard').select('*').order('score',{ascending:false}).limit(100); 
+            if (error) throw error;
+            globalLbData = data || [];
+            updateLeaderboardList();
         } catch(e) { list.innerHTML='<li style="justify-content:center;color:#d9381e;font-size:12px;">拉取数据库失败</li>'; }
     }
 
+    function updateLeaderboardList() {
+        const list = document.getElementById('leaderboard-list');
+        let filtered = globalLbData;
+        if (currentLbTab !== 'ALL') {
+            filtered = globalLbData.filter(item => (item.difficulty || 'F') === currentLbTab);
+        }
+        if (filtered.length === 0) { list.innerHTML='<li style="justify-content:center;color:#999;font-size:12px;">该难度暂无登顶记录</li>'; return; }
+        
+        list.innerHTML = filtered.map((item,i) => {
+            let tl = item.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
+            let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':'基础炮'}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}`;
+            
+            let rankIcon = '';
+            if (i === 0) rankIcon = '🥇';
+            else if (i === 1) rankIcon = '🥈';
+            else if (i === 2) rankIcon = '🥉';
+            else rankIcon = `${i+1}.`;
+
+            let diffSpan = `<span style="color: #7a6b5d; font-size: 12px; margin-right: 10px; padding: 2px 6px; background: rgba(0,0,0,0.05); border-radius: 4px;">[${item.difficulty||'F'}]</span>`;
+
+            return `<li data-detail="${detailHtml.replace(/"/g, '&quot;')}" onclick="showLeaderboardDrawer(this.getAttribute('data-detail'), this)">
+                <span style="flex:1; text-align:left;">${rankIcon} ${item.player_name}</span>
+                <div style="display:flex; align-items:center;">
+                    ${diffSpan}
+                    <span style="color: #d9381e; font-family: monospace; font-size: 16px; font-weight: 900;">${item.score}</span>
+                </div>
+            </li>`;
+        }).join('');
+    }
+
+    window.showLeaderboardDrawer = function(text, el) { 
+        document.querySelectorAll('#leaderboard-list li').forEach(li => li.style.background = '');
+        if (el) el.style.background = 'rgba(0,0,0,0.08)';
+        document.getElementById('lb-drawer-text').textContent = text; 
+        const drawer = document.getElementById('lb-drawer');
+        drawer.style.transform = 'translateX(0)';
+        drawer.style.opacity = '1';
+    };
+
+    document.getElementById('close-drawer-btn').addEventListener('click', () => {
+        const drawer = document.getElementById('lb-drawer');
+        drawer.style.transform = 'translateX(-100%)';
+        drawer.style.opacity = '0';
+        document.querySelectorAll('#leaderboard-list li').forEach(li => li.style.background = '');
+    });
+
+    document.querySelectorAll('#lb-tabs .diff-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#lb-tabs .diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLbTab = btn.getAttribute('data-tab');
+            updateLeaderboardList();
+        });
+    });
+
     let matchHistory = []; let historyPage = 0; const HIST_PER_PAGE = 5;
 
-    // 获取并保存战绩全部改为本地化（保证绝对不会因为不存在云表而丢失）
+    // 获取并保存战绩全部改为本地化
     function loadLocalHistory() {
         try { const saved = localStorage.getItem('geo_match_history'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) matchHistory = parsed; else matchHistory = []; } else { matchHistory = []; } } catch(e) { matchHistory = []; }
     }
@@ -625,8 +707,8 @@
     document.getElementById('close-info-btn').addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); document.getElementById('info-modal').classList.remove('active'); });
     document.getElementById('info-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('info-modal')) document.getElementById('info-modal').classList.remove('active'); });
 
-    function checkDifficultyUnlocks() { let maxScore = getLocalMaxScore(); document.querySelectorAll('.diff-btn').forEach(btn => { let df = btn.dataset.diff; if(maxScore >= DIFF_CONFIG[df].req) btn.classList.remove('locked'); else btn.classList.add('locked'); }); }
-    document.querySelectorAll('.diff-btn').forEach(btn => { btn.addEventListener('click', () => { if(btn.classList.contains('locked')) { let df = btn.dataset.diff; alert(`需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该难度。`); return; } document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedDiff = btn.dataset.diff; document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc; }); });
+    function checkDifficultyUnlocks() { let maxScore = getLocalMaxScore(); document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { let df = btn.dataset.diff; if(maxScore >= DIFF_CONFIG[df].req) btn.classList.remove('locked'); else btn.classList.add('locked'); }); }
+    document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { btn.addEventListener('click', () => { if(btn.classList.contains('locked')) { let df = btn.dataset.diff; alert(`需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该难度。`); return; } document.querySelectorAll('#diff-box .diff-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedDiff = btn.dataset.diff; document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc; }); });
 
     let prevCtx = document.getElementById('preview-canvas').getContext('2d'); let prevTime = performance.now();
     function renderPreview(now) {
@@ -802,7 +884,8 @@
         if (e.hp <= 0) {
             e.isDead = true; spawnShatterPieces(e); 
             if (e.isBoss) { stats.bossesKilled++; screenShake = 30; playSound('bossRoar'); for (let k = 0; k < 40; k++) { expOrbs.push({ x: e.x, y: e.y, value: e.exp / 40, life: Infinity, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, targetS: null, ox: 0, oy: 0 }); } triggerEvent("领主被击破！核心结构瓦解。", "normal", 0); } else { stats.kills++; expOrbs.push({ x: e.x, y: e.y, value: e.exp, life: Infinity, vx: (Math.random() - 0.5) * 150, vy: (Math.random() - 0.5) * 150, targetS: null, ox: 0, oy: 0 }); if (Math.random() < 0.025) items.push({type: 'singularity', x: e.x, y: e.y, life: 20, rot: 0}); }
-            for (let k = 0; k < (e.isBoss ? 20 : 5); k++) { particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * (e.isBoss ? 400 : 220), vy: (Math.random() - 0.5) * (e.isBoss ? 400 : 220), life: 0.4, maxLife: 0.4, size: 2 + Math.random() * 4, color: THEME.main }); }
+            // 修复：爆破碎片的生命周期和抛射逻辑增强
+            for (let k = 0; k < (e.isBoss ? 40 : 8); k++) { particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), vy: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), life: e.isBoss ? 1.5 : 0.6, maxLife: e.isBoss ? 1.5 : 0.6, size: 2 + Math.random() * (e.isBoss ? 8 : 4), color: e.isBoss ? '#ff4500' : THEME.main }); }
             score += Math.floor(e.maxHp / 10); addScoreEffect(); playSound('kill');
         }
     }
@@ -812,8 +895,9 @@
         const mitigation = 100 / (100 + player.def); const fluctuation = 0.85 + Math.random() * 0.3; const finalDmg = amount * mitigation * fluctuation;
         player.hp -= finalDmg; player.invincibleTimer = 0.5; player.flashTimer = 0.2; screenShake = Math.max(screenShake, 25); screenRedFlash = 1.0; updateHPUI(); playSound('playerHurt'); comboCount = 0; document.getElementById('combo-display').classList.remove('active');
         if (player.hp <= 0 && !player.isDead) { 
-            player.hp = 0; player.isDead = true; playerDeadTimer = 2.5; screenShake = 60; playSound('bomb');
-            for(let k=0; k<60; k++) particles.push({x: player.x, y: player.y, vx: (Math.random()-0.5)*800, vy: (Math.random()-0.5)*800, life: 1.5, maxLife: 1.5, size: Math.random()*6+2, color: THEME.damage});
+            player.hp = 0; player.isDead = true; playerDeadTimer = 2.5; screenShake = 80; playSound('bomb');
+            // 修复：主角死亡核爆粒子
+            for(let k=0; k<100; k++) particles.push({x: player.x, y: player.y, vx: (Math.random()-0.5)*1200, vy: (Math.random()-0.5)*1200, life: 2.0, maxLife: 2.0, size: Math.random()*8+3, color: THEME.damage});
             document.getElementById('joystick-base').style.opacity = '0'; document.getElementById('pause-btn-wrap').style.display = 'none';
         }
     }
@@ -834,6 +918,7 @@
         }
     }
 
+    // 修复强化：加入全新的连招（黑洞、冲刺、扫射激光）
     function updateBossSystem(dt) {
         if (!bossSystem.active && !bossSystem.gathering && gameTime > 120) {
             if (Math.random() < (dt / 60)) { bossSystem.gathering = true; bossSystem.absorbedHp = 0; bossSystem.minTier = 99; bossSystem.maxTier = 0; let ang = Math.random() * Math.PI * 2; bossSystem.gatherPoint = { x: player.x + Math.cos(ang) * 500, y: player.y + Math.sin(ang) * 500 }; triggerEvent("警告：探测到极高浓度暗能反应！空间正在塌缩！", "elite", 10); playSound('bossRoar'); screenShake = 20; }
@@ -841,7 +926,6 @@
         if (bossSystem.gathering) {
             let allAbsorbed = true;
             for (let i = 0; i < enemies.length; i++) { let e = enemies[i]; if (e.isDead || e.isBoss) continue; let dx = bossSystem.gatherPoint.x - e.x, dy = bossSystem.gatherPoint.y - e.y, distSq = dx*dx + dy*dy; if (distSq < 1600) { bossSystem.absorbedHp += e.maxHp; if (e.sides < bossSystem.minTier) bossSystem.minTier = e.sides; if (e.sides > bossSystem.maxTier) bossSystem.maxTier = e.sides; e.isDead = true; } else { allAbsorbed = false; let dist = Math.sqrt(distSq); e.x += (dx / dist) * e.speed * 2.5 * dt; e.y += (dy / dist) * e.speed * 2.5 * dt; } }
-            ctx.save(); ctx.translate(safeNum(bossSystem.gatherPoint.x - cameraX), safeNum(bossSystem.gatherPoint.y - cameraY)); ctx.beginPath(); ctx.arc(0, 0, 100 + Math.sin(gameTime * 10) * 20, 0, Math.PI * 2); ctx.fillStyle = 'rgba(217, 56, 30, 0.3)'; ctx.fill(); ctx.restore();
             if (allAbsorbed || enemies.length === 0) {
                 bossSystem.gathering = false; bossSystem.active = true; bossSystem.introTimer = 2.0; if (bossSystem.minTier === 99) bossSystem.minTier = 3; if (bossSystem.maxTier === 0) bossSystem.maxTier = 5;
                 const cnf = DIFF_CONFIG[selectedDiff].mult; let finalHp = (50000 + bossSystem.absorbedHp * 4 + gameTime * 150) * cnf.hp; let finalRad = Math.min(200, 50 + finalHp / 2000); let finalDef = cnf.def * 2 + 50 + gameTime / 30;
@@ -853,15 +937,43 @@
             let b = bossSystem.bossEntity;
             if (b.isDead) { bossSystem.active = false; bossSystem.bossEntity = null; bossSystem.cooldown = 40 + Math.random() * 30; let hpUI = document.getElementById('boss-ui'); if(hpUI) hpUI.classList.remove('visible'); return; }
             b.phaseTimer -= dt;
-            if (b.phase === 'idle' && b.phaseTimer <= 0) { b.phase = Math.random() > 0.5 ? 'warn_spawn' : 'warn_laser'; b.phaseTimer = 1.5; } 
+            if (b.phase === 'idle' && b.phaseTimer <= 0) { 
+                let r = Math.random();
+                if (r < 0.15) { b.phase = 'warn_spawn'; b.phaseTimer = 1.5; } 
+                else if (r < 0.35) { b.phase = 'warn_laser'; b.phaseTimer = 1.2; }
+                else if (r < 0.55) { b.phase = 'warn_sweep'; b.phaseTimer = 1.5; b.targetAngle = Math.atan2(player.y - b.y, player.x - b.x); }
+                else if (r < 0.75) { b.phase = 'warn_dash'; b.phaseTimer = 1.0; }
+                else { b.phase = 'warn_blackhole'; b.phaseTimer = 1.2; triggerEvent("领主汇聚暗能：引力塌缩！", "normal", 0); }
+            } 
             else if (b.phase === 'warn_spawn') {
-                ctx.save(); ctx.translate(-cameraX, -cameraY); ctx.strokeStyle = 'rgba(217, 56, 30, 0.6)'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.arc(player.x, player.y, 200, 0, Math.PI*2); ctx.stroke(); ctx.restore();
                 if (b.phaseTimer <= 0) { b.phase = 'idle'; b.phaseTimer = 3; let spawnCount = 4 + Math.floor(Math.random() * 4); for(let i = 0; i < spawnCount; i++) { let ang = Math.random() * Math.PI * 2; let tx = player.x + Math.cos(ang) * 200; let ty = player.y + Math.sin(ang) * 200; let tier = bossSystem.minTier + Math.floor(Math.random() * (bossSystem.maxTier - bossSystem.minTier + 1)); tier = Math.max(3, tier); const cnf = DIFF_CONFIG[selectedDiff].mult; enemies.push({ id: enemyIdCounter++, x: tx, y: ty, sides: tier, radius: tier * 4, sizeMult: 1, speed: 120 * cnf.spd, def: cnf.def + 10, hp: tier * 50 * cnf.hp, maxHp: tier * 50 * cnf.hp, exp: tier * 10, atk: tier * 30 * cnf.atk, angle: 0, spin: 2, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: false, overlapCount: 0 }); particles.push({x: tx, y: ty, type: 'pulse', life: 0.5, maxLife: 0.5, radius: 40}); } playSound('bomb'); }
             } else if (b.phase === 'warn_laser') {
-                if (!b.targetAngle) b.targetAngle = Math.atan2(player.y - b.y, player.x - b.x); ctx.save(); ctx.translate(-cameraX, -cameraY); ctx.fillStyle = 'rgba(217, 56, 30, 0.15)'; ctx.translate(b.x, b.y); ctx.rotate(b.targetAngle); ctx.fillRect(0, -40, 3000, 80); ctx.restore();
+                if (!b.targetAngle) b.targetAngle = Math.atan2(player.y - b.y, player.x - b.x); 
                 if (b.phaseTimer <= 0) { b.phase = 'fire_laser'; b.phaseTimer = 0.5; lasers.push({ x: b.x, y: b.y, angle: b.targetAngle, life: 0.6, maxLife: 0.6, dmg: b.atk * 0.5, hitSet: new Set(), hitMap: new Map(), widthOffset: 1.5, bw: false, isEnemy: true }); screenShake = 15; playSound('laser_heavy'); }
             } else if (b.phase === 'fire_laser' && b.phaseTimer <= 0) {
-                b.laserCount = (b.laserCount || 0) + 1; if (b.laserCount >= 3) { b.laserCount = 0; b.phase = 'idle'; b.phaseTimer = 2.5; b.targetAngle = null; } else { b.phase = 'warn_laser'; b.phaseTimer = 0.8; b.targetAngle = null; }
+                b.laserCount = (b.laserCount || 0) + 1; if (b.laserCount >= 3) { b.laserCount = 0; b.phase = 'idle'; b.phaseTimer = 2.0; b.targetAngle = null; } else { b.phase = 'warn_laser'; b.phaseTimer = 0.6; b.targetAngle = null; }
+            } else if (b.phase === 'warn_sweep') {
+                if (b.phaseTimer <= 0) { b.phase = 'sweep'; b.phaseTimer = 2.5; b.sweepDir = Math.random() > 0.5 ? 1 : -1; playSound('laser_heavy'); }
+            } else if (b.phase === 'sweep') {
+                b.targetAngle += dt * 0.8 * b.sweepDir;
+                lasers.push({ x: b.x, y: b.y, angle: b.targetAngle, life: 0.15, maxLife: 0.15, dmg: b.atk * 0.3 * dt * 6, hitSet: new Set(), hitMap: new Map(), widthOffset: 2.0, bw: false, isEnemy: true });
+                screenShake = 5;
+                if (b.phaseTimer <= 0) { b.phase = 'idle'; b.phaseTimer = 2.0; }
+            } else if (b.phase === 'warn_dash') {
+                b.hitTimer = 0.1; // 闪烁红光警告
+                if (b.phaseTimer <= 0) { b.phase = 'dash'; b.phaseTimer = 0.8; b.dashAngle = Math.atan2(player.y - b.y, player.x - b.x); playSound('bomb'); triggerEvent("警告：领主高维跃迁撞击！", "normal", 0); }
+            } else if (b.phase === 'dash') {
+                b.x += Math.cos(b.dashAngle) * b.speed * 6 * dt; b.y += Math.sin(b.dashAngle) * b.speed * 6 * dt;
+                particles.push({x: b.x, y: b.y, type: 'pulse', life: 0.2, maxLife: 0.2, radius: b.radius, color: 'rgba(217, 56, 30, 0.5)'});
+                if (b.phaseTimer <= 0) { b.phase = 'idle'; b.phaseTimer = 2.0; }
+            } else if (b.phase === 'warn_blackhole') {
+                if (!b.bhTarget) b.bhTarget = { x: player.x, y: player.y };
+                if (b.phaseTimer <= 0) { 
+                    b.phase = 'idle'; b.phaseTimer = 2.0; 
+                    darkmines.push({ x: b.bhTarget.x, y: b.bhTarget.y, radius: 450, dmg: b.atk * 0.3, state: 'blackhole', timer: 4.0, life: Infinity, maxLife: Infinity });
+                    playSound('bossRoar'); 
+                    b.bhTarget = null;
+                }
             }
         }
     }
@@ -897,17 +1009,16 @@
     }
 
     // ==========================================
-    // 渲染总引擎 (恢复所有特效与实体绘制逻辑)
+    // 渲染总引擎修复：将绘制与逻辑严格分层，避免残影与层叠擦除
     // ==========================================
     function loop(now) {
         requestAnimationFrame(loop);
         try {
             let dt = (now - lastTime) / 1000; if (isNaN(dt) || dt < 0 || dt > 0.1) dt = 0.016; lastTime = now;
-            if (!gameRunning && !isPaused) { ctx.clearRect(0, 0, VIEW_W, VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H); updateAndDrawMenuBG(dt); }
             fpsFrames++; if (now - fpsLastTime >= 500) { currentFps = Math.round((fpsFrames * 1000) / (now - fpsLastTime)); document.getElementById('fps-display').textContent = `FPS: ${currentFps}`; fpsFrames = 0; fpsLastTime = now; }
-            if (isPaused) return;
-
-            if (gameRunning && !isGameOver && player) {
+            
+            // ============== 逻辑更新阶段 ==============
+            if (!isPaused && gameRunning && !isGameOver && player) {
                 gameTime += dt; document.getElementById('hud-time').textContent = formatTime(gameTime);
                 if (player.isDead) { playerDeadTimer -= dt; if(playerDeadTimer <= 0) { endGame(); return; } }
 
@@ -953,7 +1064,12 @@
                     const newItems = []; for (const it of items) { it.life -= dt; it.rot += 3 * dt; const d = Math.sqrt((player.x - it.x)**2 + (player.y - it.y)**2); if (d < player.radius + 20 && !player.isDead) { activeSingularities.push({x: it.x, y: it.y, life: 4, maxLife: 4, angle: 0}); triggerEvent("触发奇点：经验引力场！", "normal", 0); playSound('laser_pew'); } else if (it.life > 0) { newItems.push(it); } } items = newItems;
                     const newSings = []; for (const s of activeSingularities) { s.life -= dt; s.angle += dt * 2; if (s.life > 0) { newSings.push(s); for (const o of expOrbs) { if (!o.targetS) { o.targetS = s; o.orbitAngle = Math.random() * Math.PI * 2; o.orbitRadius = 30 + Math.random() * 50; } } } } activeSingularities = newSings;
                     const newRings = []; for (const ring of downgradeRings) { ring.radius += ring.speed * dt; ring.life -= dt; for (const e of enemies) { if (e.isDead || e.hitByRing.has(ring.id) || e.isBoss) continue; const dtr = Math.abs(Math.sqrt((e.x - ring.x)**2 + (e.y - ring.y)**2) - ring.radius); if (dtr < 30) { e.hitByRing.add(ring.id); if (e.sides > 3) { const dc = player.skills.downgrade; const oldS = e.sides; e.sides = Math.max(3, e.sides - dc); const drop = oldS - e.sides; if (drop > 0) { e.radius *= Math.pow(0.8, drop); e.speed *= Math.pow(1.25, drop); const oldMax = e.maxHp; e.maxHp *= Math.pow(0.6, drop); e.hp *= e.maxHp / oldMax; textParticles.push({ x: e.x, y: e.y, text: `DIM-${drop}`, life: 0.8, maxLife: 0.8, vy: -40, vx: 0, isDmg: false, color: '#4285f4', size: 16 }); } } } } if (ring.life > 0) newRings.push(ring); } downgradeRings = newRings;
-                    const newMines = []; for (const m of darkmines) { if (m.state === 'arming') { m.timer -= dt; if (m.timer <= 0) m.state = 'idle'; newMines.push(m); } else if (m.state === 'idle') { let triggered = false; for (const e of enemies) { if (e.isDead) continue; const dSq = (e.x - m.x)**2 + (e.y - m.y)**2; if (dSq < (m.radius + e.radius)**2) { triggered = true; break; } } if (triggered) { m.state = 'explode'; m.timer = 0.4; for (const e2 of enemies) { if (e2.isDead) continue; if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) { damageEnemy(e2, m.dmg, true, 'darkmine'); } } playSound('bomb'); screenShake = Math.max(screenShake, 15); } newMines.push(m); } else if (m.state === 'explode') { m.timer -= dt; if (m.timer > 0) newMines.push(m); } } darkmines = newMines;
+                    const newMines = []; for (const m of darkmines) { 
+                        if (m.state === 'arming') { m.timer -= dt; if (m.timer <= 0) m.state = 'idle'; newMines.push(m); } 
+                        else if (m.state === 'idle') { let triggered = false; for (const e of enemies) { if (e.isDead) continue; const dSq = (e.x - m.x)**2 + (e.y - m.y)**2; if (dSq < (m.radius + e.radius)**2) { triggered = true; break; } } if (triggered) { m.state = 'explode'; m.timer = 0.4; for (const e2 of enemies) { if (e2.isDead) continue; if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) { damageEnemy(e2, m.dmg, true, 'darkmine'); } } playSound('bomb'); screenShake = Math.max(screenShake, 15); } newMines.push(m); } 
+                        else if (m.state === 'explode') { m.timer -= dt; if (m.timer > 0) newMines.push(m); } 
+                        else if (m.state === 'blackhole') { m.timer -= dt; let dx = player.x - m.x, dy = player.y - m.y, d = Math.sqrt(dx*dx + dy*dy); if (d < m.radius && !player.isDead) { player.x -= (dx/d) * 150 * dt; player.y -= (dy/d) * 150 * dt; if (d < 50) damagePlayer(m.dmg * dt * 5); } if (m.timer > 0) newMines.push(m); }
+                    } darkmines = newMines;
                     const newBombs = []; for (const b of bombs) { b.life -= dt; if (b.life <= 0) { particles.push({x: b.tX, y: b.tY, type: 'blast', radius: b.range, life: 0.5, maxLife: 0.5}); floorTexts.push({x: b.tX, y: b.tY, text: b.text, life: 2.0, maxLife: 2.0}); for (const e of enemies) { if (!e.isDead && (e.x - b.tX)**2 + (e.y - b.tY)**2 < b.range * b.range) damageEnemy(e, b.dmg, true, 'bomb'); } } else { newBombs.push(b); } } bombs = newBombs; floorTexts = floorTexts.filter(f => { f.life -= dt; return f.life > 0; });
                     const newStrikes = []; for (const s of orbitalStrikes) { s.life -= dt; if (s.state === 'warn' && s.life <= 0) { s.state = 'fire'; s.life = 0.5; s.maxLife = 0.5; playSound('laser_heavy'); screenShake = Math.max(screenShake, 20); } else if (s.state === 'fire') { let dmgTick = s.dmg * dt * 2; for (const e of enemies) { if (!e.isDead && (e.x - s.x)**2 + (e.y - s.y)**2 < (s.radius + e.radius)**2) { damageEnemy(e, dmgTick, false, 'orbitalStrike', true); } } } if (s.life > 0) newStrikes.push(s); } orbitalStrikes = newStrikes;
                     const newRifts = []; for (const r of photonRifts) { r.life -= dt; r.fireTimer -= dt; if(r.fireTimer <= 0) { r.fireTimer = r.fireInterval; let ang = Math.random() * Math.PI * 2; lasers.push({ x: r.x, y: r.y, angle: ang, life: 0.15, maxLife: 0.15, dmg: r.dmg, hitSet: new Set(), hitMap: new Map(), widthOffset: 0.8, bw: false, isEnemy: false, isMainWeapon: false, isDark: true, skillKey: 'photonRift' }); playSound('laser_pew'); } if (r.life > 0) newRifts.push(r); } photonRifts = newRifts;
@@ -964,7 +1080,7 @@
                     for (let i = 0; i < enemies.length; i++) {
                         const e = enemies[i]; if (e.isDead) continue; let targetX = player.x, targetY = player.y; let sepX = 0, sepY = 0; e.overlapCount = 0;
                         for (let j = 0; j < enemies.length; j++) { if(i === j) continue; let e2 = enemies[j]; if (e2.isDead) continue; let dx2 = e.x - e2.x, dy2 = e.y - e2.y, distSq = dx2 * dx2 + dy2 * dy2, minDist = e.radius + e2.radius + 15; if (distSq < minDist * minDist && distSq > 0.1) { let dist = Math.sqrt(distSq); sepX += (dx2 / dist) * (minDist - dist); sepY += (dy2 / dist) * (minDist - dist); e.overlapCount++; } }
-                        if (!bossSystem.gathering) { const dx = targetX - e.x, dy = targetY - e.y, d = Math.sqrt(dx * dx + dy * dy); if (d > 0) { e.x += (dx / d) * e.speed * dt + sepX * dt * 3; e.y += (dy / d) * e.speed * dt + sepY * dt * 3; } }
+                        if (!bossSystem.gathering && (!e.isBoss || (e.isBoss && e.phase !== 'dash' && e.phase !== 'warn_dash'))) { const dx = targetX - e.x, dy = targetY - e.y, d = Math.sqrt(dx * dx + dy * dy); if (d > 0) { e.x += (dx / d) * e.speed * dt + sepX * dt * 3; e.y += (dy / d) * e.speed * dt + sepY * dt * 3; } }
                         e.angle += e.spin * dt; if (e.hitTimer > 0) e.hitTimer -= dt; if (e.isBoss) e.morphPhase = (e.morphPhase || 0) + dt; const pd = Math.sqrt((player.x - e.x)**2 + (player.y - e.y)**2); if (player.invincibleTimer <= 0 && pd < player.radius + e.radius && !player.isDead) damagePlayer(e.atk);
                     }
 
@@ -979,14 +1095,9 @@
                     const newLasers = [];
                     for (const l of lasers) {
                         l.life -= dt; 
-                        if(l.isMatrixBlade) { ctx.strokeStyle = 'rgba(217, 56, 30, 0.8)'; ctx.lineWidth = l.widthOffset * 30; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(safeNum(l.x), safeNum(l.y)); ctx.lineTo(safeNum(l.endX), safeNum(l.endY)); ctx.stroke(); continue; }
-                        const a = l.life / l.maxLife; const ldx = Math.cos(l.angle), ldy = Math.sin(l.angle); const cw = Math.pow(Math.max(0.01, Math.sin((l.life / l.maxLife) * Math.PI)), 0.4) * 100 * l.widthOffset;
-                        ctx.save(); ctx.translate(safeNum(l.x), safeNum(l.y)); ctx.rotate(safeNum(l.angle));
-                        if (l.bw) { ctx.globalAlpha = a * 0.15; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(1000, 0, 1000, cw * 1.5, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = a * 0.85; ctx.fillStyle = 'rgba(10,10,10,0.95)'; ctx.beginPath(); ctx.moveTo(0, -cw / 2); ctx.lineTo(3000, -cw / 8); ctx.lineTo(3000, cw / 8); ctx.lineTo(0, cw / 2); ctx.closePath(); ctx.fill(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(3000, 0); ctx.stroke(); } 
-                        else if(l.isMainWeapon) { ctx.globalAlpha = a * 0.8; ctx.strokeStyle = l.isDark ? 'rgba(150,0,255,0.9)' : 'rgba(217,56,30,0.9)'; ctx.lineWidth = Math.max(2, cw * 0.3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = Math.max(1, cw * 0.1); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); } 
-                        else { ctx.globalAlpha = a * 0.6; ctx.strokeStyle = 'rgba(217,56,30,0.8)'; ctx.lineWidth = cw; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); } ctx.restore(); ctx.globalAlpha = 1;
-                        if(l.isEnemy) { const vX = player.x - l.x, vY = player.y - l.y, proj = vX * ldx + vY * ldy; if (proj > 0 && Math.abs(vX * ldy - vY * ldx) < cw / 2 + player.radius && !l.hitSet.has(99999)) { damagePlayer(l.dmg); l.hitSet.add(99999); } } 
-                        else { for (const e of enemies) { if (e.isDead) continue; const vX = e.x - l.x, vY = e.y - l.y, proj = vX * ldx + vY * ldy; if (proj > 0 && Math.abs(vX * ldy - vY * ldx) < cw / 2 + e.radius) { let hitLastTime = l.hitMap ? (l.hitMap.get(e.id) || 0) : 0; if (gameTime - hitLastTime > 0.25) { damageEnemy(e, l.dmg, true, l.skillKey || (l.isMainWeapon ? 'weapon_laser' : 'isincos')); if(l.hitMap) l.hitMap.set(e.id, gameTime); } } } } if (l.life > 0) newLasers.push(l);
+                        if(l.isEnemy) { const ldx = Math.cos(l.angle), ldy = Math.sin(l.angle); const cw = 100 * l.widthOffset; const vX = player.x - l.x, vY = player.y - l.y, proj = vX * ldx + vY * ldy; if (proj > 0 && Math.abs(vX * ldy - vY * ldx) < cw / 2 + player.radius && !l.hitSet.has(99999)) { damagePlayer(l.dmg); l.hitSet.add(99999); } } 
+                        else if (!l.isMatrixBlade) { const ldx = Math.cos(l.angle), ldy = Math.sin(l.angle); const cw = 100 * l.widthOffset; for (const e of enemies) { if (e.isDead) continue; const vX = e.x - l.x, vY = e.y - l.y, proj = vX * ldx + vY * ldy; if (proj > 0 && Math.abs(vX * ldy - vY * ldx) < cw / 2 + e.radius) { let hitLastTime = l.hitMap ? (l.hitMap.get(e.id) || 0) : 0; if (gameTime - hitLastTime > 0.25) { damageEnemy(e, l.dmg, true, l.skillKey || (l.isMainWeapon ? 'weapon_laser' : 'isincos')); if(l.hitMap) l.hitMap.set(e.id, gameTime); } } } } 
+                        if (l.life > 0) newLasers.push(l);
                     } lasers = newLasers;
 
                     const newOrbs = []; const pickupSq = getPickupRange() ** 2; const playerRadSq = (player.radius + 8) ** 2;
@@ -1002,14 +1113,20 @@
                 const newPieces = []; for(const p of shatterPieces) { p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt; p.life -= dt; if(p.life > 0) newPieces.push(p); } shatterPieces = newPieces;
                 textParticles = textParticles.filter(tp => { if (tp.isDmg) { tp.x = tp.baseX + Math.sin(gameTime * tp.wobbleSpeed + tp.wobbleOffset) * 12; tp.y += tp.vy * dt; tp.vy += 150 * dt; } else { tp.x += (tp.vx || 0) * dt; tp.y += (tp.vy || 0) * dt; tp.vy += 150 * dt; } tp.life -= dt; return tp.life > 0; });
                 chainEffects = chainEffects.filter(c => { c.life -= dt; return c.life > 0; }); if (screenShake > 0) { screenShake -= dt * 55; if(screenShake < 0) screenShake = 0; }
+            }
 
-                ctx.clearRect(0, 0, VIEW_W, VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-                
-                if (isUpgrading) {
-                    if (Math.random() < 0.3) { upgradeParticles.push({ x: Math.random() * VIEW_W, y: VIEW_H + 50, vx: (Math.random() - 0.5) * 10, vy: -40 - Math.random() * 60, size: Math.random() * 15 + 10, rot: 0, spin: (Math.random() - 0.5) * 2, alpha: 0 }); }
-                    ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 1.5; upgradeParticles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt; if(p.alpha < 0.25) p.alpha += dt; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); ctx.globalAlpha = safeNum(p.alpha, 0); ctx.beginPath(); for(let i=0; i<6; i++) { let ang = (i / 6) * Math.PI * 2; if(i===0) ctx.moveTo(Math.cos(ang)*p.size, Math.sin(ang)*p.size); else ctx.lineTo(Math.cos(ang)*p.size, Math.sin(ang)*p.size); } ctx.closePath(); ctx.stroke(); ctx.restore(); }); upgradeParticles = upgradeParticles.filter(p => p.y > -50);
-                }
+            // ============== 渲染清屏阶段 ==============
+            ctx.clearRect(0, 0, VIEW_W, VIEW_H); ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            
+            if (!gameRunning && !isPaused) { updateAndDrawMenuBG(dt); }
 
+            // ============== 主渲染绘制阶段 ==============
+            if (isUpgrading) {
+                if (Math.random() < 0.3) { upgradeParticles.push({ x: Math.random() * VIEW_W, y: VIEW_H + 50, vx: (Math.random() - 0.5) * 10, vy: -40 - Math.random() * 60, size: Math.random() * 15 + 10, rot: 0, spin: (Math.random() - 0.5) * 2, alpha: 0 }); }
+                ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 1.5; upgradeParticles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt; if(p.alpha < 0.25) p.alpha += dt; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); ctx.globalAlpha = safeNum(p.alpha, 0); ctx.beginPath(); for(let i=0; i<6; i++) { let ang = (i / 6) * Math.PI * 2; if(i===0) ctx.moveTo(Math.cos(ang)*p.size, Math.sin(ang)*p.size); else ctx.lineTo(Math.cos(ang)*p.size, Math.sin(ang)*p.size); } ctx.closePath(); ctx.stroke(); ctx.restore(); }); upgradeParticles = upgradeParticles.filter(p => p.y > -50);
+            }
+
+            if ((gameRunning || isGameOver) && player) {
                 const cam = getCamera(); ctx.save(); if (screenShake > 0) ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); ctx.translate(-safeNum(cam.x), -safeNum(cam.y));
                 ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1; for (let x = Math.floor(cam.x / 100) * 100; x < cam.x + VIEW_W; x += 100) { ctx.beginPath(); ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y + VIEW_H); ctx.stroke(); } for (let y = Math.floor(cam.y / 100) * 100; y < cam.y + VIEW_H; y += 100) { ctx.beginPath(); ctx.moveTo(cam.x, y); ctx.lineTo(cam.x + VIEW_W, y); ctx.stroke(); }
 
@@ -1019,9 +1136,8 @@
                 for (const nv of supernovas) { const a = 1 - (nv.life / nv.maxLife); ctx.globalAlpha = a * 0.8; ctx.strokeStyle = 'rgba(255, 200, 50, 0.9)'; ctx.lineWidth = 15 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius), 0, Math.PI*2); ctx.stroke(); ctx.strokeStyle = 'rgba(217, 56, 30, 0.6)'; ctx.lineWidth = 30 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius * 0.9), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
                 for (const r of downgradeRings) { const a = r.life / 5; ctx.globalAlpha = a * 0.9; ctx.strokeStyle = '#4285f4'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(safeNum(r.x), safeNum(r.y), safeNum(r.radius), 0, Math.PI*2); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(100,180,255,0.7)'; ctx.beginPath(); ctx.arc(safeNum(r.x), safeNum(r.y), safeNum(r.radius + 4), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
                 
-                for (const m of darkmines) { ctx.save(); ctx.translate(safeNum(m.x), safeNum(m.y)); if (m.state === 'arming') { const a = 1 - (m.timer / 0.8); ctx.globalAlpha = a * 0.5; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, m.radius * a, 0, Math.PI*2); ctx.stroke(); } else if (m.state === 'idle') { ctx.globalAlpha = 0.25; const pulseRadius = m.radius * (1 + Math.sin(gameTime * 4) * 0.05); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.fill(); ctx.rotate(gameTime * 2); ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.setLineDash([10, 15]); ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.stroke(); } else if (m.state === 'explode') { const a = m.timer / 0.4; ctx.globalAlpha = a; const r = m.radius * 1.6 * (1.5 - 0.5 * a); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill(); } ctx.restore(); ctx.globalAlpha = 1; }
+                for (const m of darkmines) { ctx.save(); ctx.translate(safeNum(m.x), safeNum(m.y)); if (m.state === 'arming') { const a = 1 - (m.timer / 0.8); ctx.globalAlpha = a * 0.5; ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, m.radius * a, 0, Math.PI*2); ctx.stroke(); } else if (m.state === 'idle') { ctx.globalAlpha = 0.25; const pulseRadius = m.radius * (1 + Math.sin(gameTime * 4) * 0.05); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.fill(); ctx.rotate(gameTime * 2); ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 2; ctx.setLineDash([10, 15]); ctx.beginPath(); ctx.arc(0, 0, pulseRadius, 0, Math.PI*2); ctx.stroke(); } else if (m.state === 'explode') { const a = m.timer / 0.4; ctx.globalAlpha = a; const r = m.radius * 1.6 * (1.5 - 0.5 * a); ctx.fillStyle = THEME.darkPurple; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI*2); ctx.fill(); } else if (m.state === 'blackhole') { const a = Math.min(1, m.timer / 0.5); ctx.globalAlpha = a * 0.8; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, 0, 40 + Math.sin(gameTime*10)*10, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = THEME.darkPurple; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, m.radius, 0, Math.PI*2); ctx.stroke(); ctx.rotate(-gameTime * 3); for(let i=0; i<3; i++) { ctx.beginPath(); ctx.arc(0, 0, m.radius * (0.3 + i*0.2) + Math.sin(gameTime*5)*10, 0, Math.PI*2); ctx.stroke(); } } ctx.restore(); ctx.globalAlpha = 1; }
                 
-                // 实体渲染层：炸弹、子弹轨迹、子弹、连锁闪电
                 for (const b of bombs) { const t = 1 - (b.life / b.maxLife); const bx = b.startX + (b.tX - b.startX) * t; const by = b.startY + (b.tY - b.startY) * t - Math.sin(t * Math.PI) * 110; ctx.fillStyle = THEME.main; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.text, safeNum(bx), safeNum(by)); ctx.globalAlpha = 0.08; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.beginPath(); ctx.ellipse(safeNum(bx), safeNum(b.tY), Math.max(0.1, 18 * (1 - t)), Math.max(0.1, 6 * (1 - t)), 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
                 for (const bt of bulletTrails) { const a = bt.life / bt.maxLife; ctx.globalAlpha = a * 0.45; ctx.fillStyle = bt.isDark ? 'rgba(120,0,200,0.8)' : THEME.main; ctx.beginPath(); ctx.arc(safeNum(bt.x), safeNum(bt.y), safeNum(bt.r * a), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
                 for (const b of bullets) { if (b.isDark) { const fc = 4; for (let f = 0; f < fc; f++) { const fang = (gameTime * 7 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = b.radius + 5; ctx.globalAlpha = 0.55; ctx.fillStyle = 'rgba(120,0,200,0.8)'; ctx.beginPath(); ctx.arc(safeNum(b.x + Math.cos(fang) * fr), safeNum(b.y + Math.sin(fang) * fr), 3, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(80,0,160,0.9)'; } else { ctx.fillStyle = THEME.main; } ctx.beginPath(); ctx.arc(safeNum(b.x), safeNum(b.y), safeNum(b.radius), 0, Math.PI*2); ctx.fill(); if (b.isDark) { ctx.strokeStyle = 'rgba(180,100,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke(); } }
@@ -1035,6 +1151,16 @@
                 for (const orb of expOrbs) { ctx.globalAlpha = 0.3; ctx.fillStyle = THEME.xp; const shadowR = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x - (orb.vx || 0) * 0.02), safeNum(orb.y - (orb.vy || 0) * 0.02), shadowR * 0.8, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
                 for (const orb of expOrbs) { ctx.fillStyle = THEME.xp; const br = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x), safeNum(orb.y), br, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke(); }
                 for (const p of shatterPieces) { const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(safeNum(p.p1x), safeNum(p.p1y)); ctx.lineTo(safeNum(p.p2x), safeNum(p.p2y)); ctx.closePath(); ctx.fill(); ctx.restore(); } ctx.globalAlpha = 1;
+
+                // 激光绘制提升：保证激光不被其他特效挡住
+                for (const l of lasers) {
+                    if(l.isMatrixBlade) { ctx.strokeStyle = 'rgba(217, 56, 30, 0.8)'; ctx.lineWidth = l.widthOffset * 30; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(safeNum(l.x), safeNum(l.y)); ctx.lineTo(safeNum(l.endX), safeNum(l.endY)); ctx.stroke(); continue; }
+                    const a = l.life / l.maxLife; const cw = Math.pow(Math.max(0.01, Math.sin((l.life / l.maxLife) * Math.PI)), 0.4) * 100 * l.widthOffset;
+                    ctx.save(); ctx.translate(safeNum(l.x), safeNum(l.y)); ctx.rotate(safeNum(l.angle));
+                    if (l.bw) { ctx.globalAlpha = a * 0.15; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(1000, 0, 1000, cw * 1.5, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = a * 0.85; ctx.fillStyle = 'rgba(10,10,10,0.95)'; ctx.beginPath(); ctx.moveTo(0, -cw / 2); ctx.lineTo(3000, -cw / 8); ctx.lineTo(3000, cw / 8); ctx.lineTo(0, cw / 2); ctx.closePath(); ctx.fill(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(3000, 0); ctx.stroke(); } 
+                    else if(l.isMainWeapon) { ctx.globalAlpha = a * 0.8; ctx.strokeStyle = l.isDark ? 'rgba(150,0,255,0.9)' : 'rgba(217,56,30,0.9)'; ctx.lineWidth = Math.max(2, cw * 0.3); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = Math.max(1, cw * 0.1); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); } 
+                    else { ctx.globalAlpha = a * 0.6; ctx.strokeStyle = 'rgba(217,56,30,0.8)'; ctx.lineWidth = cw; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(2000, 0); ctx.stroke(); } ctx.restore(); ctx.globalAlpha = 1;
+                }
 
                 for (let i = 0; i < enemies.length; i++) {
                     const e = enemies[i]; if (!isInView(e.x, e.y, 250)) continue; const baseAlpha = Math.max(0.35, 1 - (e.overlapCount || 0) * 0.18); ctx.globalAlpha = baseAlpha;
@@ -1055,6 +1181,14 @@
                     const cColor = player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.85)' : THEME.damage; ctx.strokeStyle = cColor; ctx.lineWidth = 2; ctx.fillStyle = player.darksurgeDuration > 0 ? 'rgba(80,0,160,0.5)' : 'rgba(217,56,30,0.35)'; ctx.beginPath(); ctx.moveTo(0, -coreSize); ctx.lineTo(coreSize * 0.58, 0); ctx.lineTo(0, coreSize); ctx.lineTo(-coreSize * 0.58, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(0, 0, coreSize * 0.22, 0, Math.PI*2); ctx.fill(); ctx.restore();
                     ctx.save(); ctx.translate(safeNum(px), safeNum(py)); ctx.rotate(safeNum(player.aimAngle || 0)); ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.moveTo(pr + 14, 0); ctx.lineTo(pr + 5, -5); ctx.lineTo(pr + 5, 5); ctx.closePath(); ctx.fill(); ctx.restore();
                 } 
+
+                // 最后绘制最上层爆炸与特效粒子
+                for (const p of particles) {
+                    if (p.type === 'blast') { const a = p.life / p.maxLife; ctx.globalAlpha = a * 0.5; ctx.fillStyle = THEME.damage; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius), 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = THEME.damage; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * 1.1), 0, Math.PI*2); ctx.stroke(); } 
+                    else if (p.type === 'pulse') { const a = p.life / p.maxLife; ctx.globalAlpha = a * 0.8; ctx.strokeStyle = p.color || THEME.main; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * (1 - a)), 0, Math.PI*2); ctx.stroke(); } 
+                    else { const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.size), 0, Math.PI*2); ctx.fill(); }
+                } ctx.globalAlpha = 1;
+
                 ctx.restore();
 
                 if (bossSystem.active && bossSystem.bossEntity && !bossSystem.bossEntity.isDead) {
