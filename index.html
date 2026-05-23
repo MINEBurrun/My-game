@@ -199,8 +199,7 @@
     .page-btn { background: transparent; border: 2px solid #2a1d13; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: bold; }
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* 排行榜样式重构为抽屉式布局 */
-    #leaderboard-overlay .panel { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    /* 排行榜动态伸缩居中样式 */
     #leaderboard-list::-webkit-scrollbar { width: 4px; }
     #leaderboard-list::-webkit-scrollbar-thumb { background: rgba(42,29,19,0.3); border-radius: 2px; }
     #leaderboard-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; border-radius: 4px; }
@@ -278,7 +277,7 @@
       <!-- 主菜单 -->
       <div class="overlay" id="main-menu">
         <div class="panel" style="max-width: 500px;">
-          <div class="version-txt">v12.5.0 Magic Array</div>
+          <div class="version-txt">v13.0.0 Sync</div>
           <div id="user-status-bar" style="font-size:12px; font-weight:bold; color:#555; margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:2px dashed rgba(42,29,19,0.2); padding-bottom:5px;">
               <span id="current-user-name">读取中...</span><span id="login-logout-btn" style="color:#d9381e; cursor:pointer; text-decoration:underline;">注销系统</span>
           </div>
@@ -355,11 +354,11 @@
         </div>
       </div>
       
-      <!-- 独立的排行榜页面重构为抽屉式布局 -->
+      <!-- 排行榜页面（抽屉动态伸缩容器） -->
       <div class="overlay" id="leaderboard-overlay">
-        <div class="panel" style="max-width: 850px; flex-direction: row; padding: 0; overflow: visible; background: transparent; border: none; box-shadow: none; align-items: stretch; height: 500px;">
+        <div class="panel" id="lb-wrapper" style="width: 95%; max-width: 500px; flex-direction: row; padding: 0; overflow: visible; background: transparent; border: none; box-shadow: none; align-items: stretch; height: 550px; transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); margin: 0 auto;">
           <!-- 左侧：排行榜主界面 -->
-          <div style="flex: 1; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; z-index: 2; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+          <div style="flex: 1; min-width: 320px; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; z-index: 2; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
               <div class="section-title" style="margin-bottom: 5px;">🏆 维 度 排 行 榜</div>
               
               <div id="lb-tabs" style="display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;">
@@ -383,10 +382,12 @@
           </div>
           
           <!-- 右侧：抽屉详情区 -->
-          <div id="lb-drawer" style="width: 320px; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-left: none; border-radius: 0 8px 8px 0; padding: 20px; display: flex; flex-direction: column; transform: translateX(-100%); opacity: 0; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; margin-left: -5px; z-index: 1;">
-              <div class="section-title" style="font-size: 18px; margin-bottom: 10px; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 5px;">详 情 档 案</div>
-              <div id="lb-drawer-text" style="font-size: 13px; color: #555; white-space: pre-wrap; text-align: left; line-height: 1.5; flex: 1; overflow-y: auto; font-weight: bold;">请选择左侧记录</div>
-              <button class="secondary-btn" id="close-drawer-btn" style="margin-top: 10px; width: 100%;">关 闭 详 情</button>
+          <div id="lb-drawer" style="width: 0px; background: rgba(250,249,246,0.95); border: 3px solid #2a1d13; border-left: none; border-radius: 0 8px 8px 0; padding: 20px 0; display: flex; flex-direction: column; opacity: 0; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); margin-left: -5px; z-index: 1; pointer-events: none; overflow: hidden; white-space: nowrap;">
+              <div style="min-width: 280px; height: 100%; display: flex; flex-direction: column; padding: 0 20px;">
+                  <div class="section-title" style="font-size: 18px; margin-bottom: 10px; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 5px;">详 情 档 案</div>
+                  <div id="lb-drawer-text" style="font-size: 13px; color: #555; white-space: pre-wrap; text-align: left; line-height: 1.5; flex: 1; overflow-y: auto; font-weight: bold;">请选择左侧记录</div>
+                  <button class="secondary-btn" id="close-drawer-btn" style="margin-top: 10px; width: 100%;">关 闭 详 情</button>
+              </div>
           </div>
         </div>
       </div>
@@ -431,7 +432,7 @@
         <div class="panel" style="max-width: 650px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 10px;">
               <div class="section-title" style="margin-bottom:0; font-size: 20px;">个 人 战 绩 库</div>
-              <div style="font-size:12px; font-weight:bold; color:#7a6b5d;">战绩将自动云端同步备份</div>
+              <div style="font-size:12px; font-weight:bold; color:#7a6b5d;">已与中央数据库全量同步</div>
           </div>
           <div id="history-content">
               <div style="display:flex; gap: 15px; height: 320px;">
@@ -497,6 +498,7 @@
     
     // ==== 全局云端用户资产数据 ====
     let userProfile = { cores: 0, unlockedDiffs: ['F'], maxScores: {}, inventory: { potions: 0 }, bonusTalents: 0 };
+    let matchHistory = []; let historyPage = 0; const HIST_PER_PAGE = 5;
 
     const DIFF_CONFIG = {
         F: { req: 0, desc: "F级: 基础难度，适合初次链接。", mult: { hp: 1.0, atk: 1.0, def: 0, spd: 1.0, spawn: 1.0 } },
@@ -587,6 +589,7 @@
     async function fetchUserProfile() {
         if (isOfflineMode || !isDbUsable || !currentUser) return;
         try {
+            // 获取核心资产与解锁信息
             const { data, error } = await supabaseClientObj.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
             if (data) {
                 userProfile.cores = data.cores || 0;
@@ -599,6 +602,25 @@
                 userProfile = { cores: 0, unlockedDiffs: ['F'], maxScores: {}, inventory: { potions: 0 }, bonusTalents: 0 };
             }
             updateBagAndShopUI();
+
+            // 主动拉取云端战绩记录，覆盖本地缓存，确保换设备依然数据同步！
+            const { data: records } = await supabaseClientObj.from('match_records').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+            if (records && records.length > 0) {
+                matchHistory = records.map(r => ({
+                    date: new Date(r.created_at).toLocaleString(),
+                    score: r.score,
+                    time: r.survive_time,
+                    kills: r.kills,
+                    bosses: r.bosses,
+                    dmg: r.total_damage,
+                    level: r.level,
+                    diff: r.difficulty,
+                    weapon: r.weapon,
+                    talents: r.talents,
+                    skills: r.skills
+                }));
+                localStorage.setItem('geo_match_history', JSON.stringify(matchHistory));
+            }
         } catch(e) { console.error("获取用户档案失败", e); }
     }
 
@@ -713,8 +735,13 @@
     document.getElementById('open-leaderboard-btn').addEventListener('click', () => { document.getElementById('leaderboard-overlay').classList.add('active'); renderLeaderboard(); });
     document.getElementById('close-leaderboard-btn').addEventListener('click', () => { 
         document.getElementById('leaderboard-overlay').classList.remove('active'); 
-        document.getElementById('lb-drawer').style.transform = 'translateX(-100%)';
-        document.getElementById('lb-drawer').style.opacity = '0';
+        document.getElementById('lb-wrapper').style.maxWidth = '500px';
+        const drawer = document.getElementById('lb-drawer');
+        drawer.style.width = '0px';
+        drawer.style.padding = '20px 0';
+        drawer.style.opacity = '0';
+        drawer.style.pointerEvents = 'none';
+        document.querySelectorAll('#leaderboard-list li').forEach(li => li.style.background = '');
     });
     document.getElementById('refresh-lb-btn').addEventListener('click', () => { renderLeaderboard(); });
 
@@ -777,7 +804,8 @@
         
         list.innerHTML = filtered.map((item,i) => {
             let tl = item.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
-            let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':(item.weapon==='magic_star'?'星芒法绘':'基础炮')}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}`;
+            let uploadTime = item.created_at ? new Date(item.created_at).toLocaleString() : '未知时间';
+            let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':(item.weapon==='magic_star'?'星芒法绘':'基础炮')}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}\n\n【上传时间】\n${uploadTime}`;
             
             let rankIcon = '';
             if (i === 0) rankIcon = '🥇';
@@ -801,15 +829,22 @@
         document.querySelectorAll('#leaderboard-list li').forEach(li => li.style.background = '');
         if (el) el.style.background = 'rgba(0,0,0,0.08)';
         document.getElementById('lb-drawer-text').textContent = text; 
+        
+        document.getElementById('lb-wrapper').style.maxWidth = '850px';
         const drawer = document.getElementById('lb-drawer');
-        drawer.style.transform = 'translateX(0)';
+        drawer.style.width = '340px';
+        drawer.style.padding = '20px';
         drawer.style.opacity = '1';
+        drawer.style.pointerEvents = 'auto';
     };
 
     document.getElementById('close-drawer-btn').addEventListener('click', () => {
+        document.getElementById('lb-wrapper').style.maxWidth = '500px';
         const drawer = document.getElementById('lb-drawer');
-        drawer.style.transform = 'translateX(-100%)';
+        drawer.style.width = '0px';
+        drawer.style.padding = '20px 0';
         drawer.style.opacity = '0';
+        drawer.style.pointerEvents = 'none';
         document.querySelectorAll('#leaderboard-list li').forEach(li => li.style.background = '');
     });
 
@@ -822,9 +857,7 @@
         });
     });
 
-    let matchHistory = []; let historyPage = 0; const HIST_PER_PAGE = 5;
-
-    // 获取并保存战绩本地化备份
+    // 获取本地备份记录或直接渲染云端同步好的记录
     function loadLocalHistory() {
         try { const saved = localStorage.getItem('geo_match_history'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) matchHistory = parsed; else matchHistory = []; } else { matchHistory = []; } } catch(e) { matchHistory = []; }
     }
@@ -841,7 +874,7 @@
 
     function renderHistoryUI() {
         const list = document.getElementById('history-list-ui'); const detail = document.getElementById('history-detail-ui'); list.innerHTML = ''; detail.innerHTML = '<div class="hd-full" style="text-align:center; color:#999; margin-top:50px;">请在左侧选择一条记录查看详细数据</div>';
-        if (!Array.isArray(matchHistory) || matchHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无本地战斗数据</div>'; return; }
+        if (!Array.isArray(matchHistory) || matchHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无战斗数据</div>'; return; }
         let totalPages = Math.ceil(matchHistory.length / HIST_PER_PAGE); if (historyPage >= totalPages) historyPage = Math.max(0, totalPages - 1);
         document.getElementById('hist-page-txt').textContent = `${historyPage + 1} / ${totalPages}`; document.getElementById('hist-prev').disabled = historyPage === 0; document.getElementById('hist-next').disabled = historyPage >= totalPages - 1;
         let start = historyPage * HIST_PER_PAGE; let end = Math.min(start + HIST_PER_PAGE, matchHistory.length);
@@ -854,7 +887,7 @@
                 <div style="display:flex; flex-direction:column; align-items:flex-end; gap: 4px;"><div style="font-size:12px; font-weight:bold;">${formatTime(m.time || 0)}</div></div>
             </div>`;
             
-            item.onclick = () => { document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active')); item.classList.add('active'); let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`; detail.innerHTML = `<div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div><div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div><div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div><div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${wpnStr}</span></div><div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div><div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div><div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div><div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div><div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div>`; }; list.appendChild(item);
+            item.onclick = () => { document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active')); item.classList.add('active'); let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`; detail.innerHTML = `<div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div><div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div><div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div><div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${wpnStr}</span></div><div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div><div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div><div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div><div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div><div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div><div class="hd-full"><span style="color:#7a6b5d">完成时间</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.date || '未知时间'}</span></div>`; }; list.appendChild(item);
         }
     }
 
@@ -897,7 +930,6 @@
     document.getElementById('close-info-btn').addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); document.getElementById('info-modal').classList.remove('active'); });
     document.getElementById('info-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('info-modal')) document.getElementById('info-modal').classList.remove('active'); });
 
-    // 解锁难度依靠云端或本地最高分判断
     function checkDifficultyUnlocks() { 
         let maxScore = getLocalMaxScore(); 
         document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { 
@@ -1053,8 +1085,8 @@
             // 基础得分项 = (分数/200) + 击杀*0.2 + 特殊击杀*3 + 精英击杀*10 + 首领击杀*100 + 存活时间/5 + 最终等级*5
             // 最终收益 = 基础得分项 ^ 0.9 * 3 （指数0.9用于平滑压制后期指数级膨胀的分数，避免货币彻底崩溃）
             // ==========================================
-            let baseFormula = (score / 200) + stats.kills * 0.2 + stats.specialKills * 3 + stats.eliteKills * 10 + stats.bossesKilled * 100 + (gameTime / 5) + level * 5;
-            let earnedCores = Math.floor(Math.pow(baseFormula, 0.9) * 3);
+            let baseFormula = (safeNum(score) / 200) + safeNum(stats.kills) * 0.2 + safeNum(stats.specialKills) * 3 + safeNum(stats.eliteKills) * 10 + safeNum(stats.bossesKilled) * 100 + (safeNum(gameTime) / 5) + safeNum(level) * 5;
+            let earnedCores = Math.floor(Math.pow(Math.max(0, baseFormula), 0.9) * 3);
             if (isNaN(earnedCores) || earnedCores < 0 || isOfflineMode) earnedCores = 0;
 
             document.getElementById('end-time').textContent = formatTime(gameTime); document.getElementById('end-score').textContent = score; document.getElementById('end-level').textContent = `Lv.${level}`; document.getElementById('end-kills').textContent = `${stats.kills} | ${stats.bossesKilled}`; document.getElementById('end-setup').textContent = `${selectedDiff} | ${selectedWeapon==='laser'?'激光':(selectedWeapon==='magic_star'?'星芒法绘':'基础炮')}`; document.getElementById('end-damage').textContent = Math.floor(stats.totalDamage).toLocaleString(); document.getElementById('end-talents').textContent = `HP:${currentTalents.hp} ATK:${currentTalents.atk} REG:${currentTalents.regen} SPD:${currentTalents.spd} DEF:${currentTalents.def}`; document.getElementById('end-skills').textContent = skillStr; 
@@ -1847,6 +1879,7 @@
                 }
                 for (const p of shatterPieces) { const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(safeNum(p.p1x), safeNum(p.p1y)); ctx.lineTo(safeNum(p.p2x), safeNum(p.p2y)); ctx.closePath(); ctx.fill(); ctx.restore(); } ctx.globalAlpha = 1;
 
+                // 激光绘制提升：保证激光不被其他特效挡住
                 for (const l of lasers) {
                     if(l.isMatrixBlade) { ctx.strokeStyle = 'rgba(217, 56, 30, 0.8)'; ctx.lineWidth = l.widthOffset * 30; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(safeNum(l.x), safeNum(l.y)); ctx.lineTo(safeNum(l.endX), safeNum(l.endY)); ctx.stroke(); continue; }
                     const a = l.life / l.maxLife; const cw = Math.pow(Math.max(0.01, Math.sin((l.life / l.maxLife) * Math.PI)), 0.4) * 100 * l.widthOffset;
