@@ -198,16 +198,25 @@
     .pagination { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; margin-top: 5px; }
     .page-btn { background: transparent; border: 2px solid #2a1d13; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: bold; }
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    
-    .upload-single-btn { background: #d9381e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .upload-single-btn:active { transform: scale(0.9); }
 
-    /* 排行榜样式修正 */
+    /* 排行榜样式重构为抽屉式布局 */
     #leaderboard-overlay .panel { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
     #leaderboard-list::-webkit-scrollbar { width: 4px; }
     #leaderboard-list::-webkit-scrollbar-thumb { background: rgba(42,29,19,0.3); border-radius: 2px; }
     #leaderboard-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; border-radius: 4px; }
     #leaderboard-list li:hover { background: rgba(0,0,0,0.05); }
+
+    /* 背包与商店 UI */
+    .bag-grid-slot { background: rgba(42,29,19,0.05); border: 2px solid rgba(42,29,19,0.2); border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; position: relative; font-size: 11px; font-weight: bold; color: #2a1d13; text-align: center; }
+    .bag-grid-slot:hover { border-color: #2a1d13; background: rgba(42,29,19,0.1); }
+    .bag-item-icon { font-size: 24px; margin-bottom: 2px; }
+    .bag-item-count { position: absolute; bottom: 2px; right: 4px; font-family: monospace; font-size: 12px; color: #d9381e; }
+    .shop-item { background: #fff; border: 2px solid rgba(42,29,19,0.2); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .shop-item-info { text-align: left; }
+    .shop-item-name { font-weight: 900; font-size: 14px; color: #d9381e; margin-bottom: 4px; }
+    .shop-item-desc { font-size: 11px; color: #7a6b5d; font-weight: bold; }
+    .shop-btn { background: #2a1d13; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; transition: transform 0.1s; }
+    .shop-btn:active { transform: scale(0.9); }
 
     #info-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); pointer-events: auto; }
     #info-modal.active { display: flex; }
@@ -252,7 +261,7 @@
       <div class="overlay active" id="auth-screen">
           <div class="panel" style="max-width: 380px;">
               <div class="section-title" id="auth-title" style="font-size: 26px; margin-bottom: 5px;">系 统 登 录</div>
-              <div style="font-size:12px; color:#7a6b5d; margin-bottom:15px; font-weight:bold;">连接中央数据库以同步战绩</div>
+              <div style="font-size:12px; color:#7a6b5d; margin-bottom:15px; font-weight:bold;">连接中央数据库以同步战绩与核心货币</div>
               <input type="text" id="auth-email" class="auth-input" placeholder="邮箱账号 (Email)">
               <input type="password" id="auth-pwd" class="auth-input" placeholder="密码 (Password)">
               <input type="text" id="auth-name" class="auth-input" placeholder="行者代号 (仅注册需填)" style="display:none;">
@@ -262,23 +271,87 @@
               <div class="auth-toggle" id="auth-toggle-btn">没有档案？点击注册</div>
               
               <div style="border-top: 2px dashed rgba(42,29,19,0.2); margin: 10px 0;"></div>
-              <button class="secondary-btn" id="auth-guest-btn">游 客 模 式 (仅本地保存)</button>
+              <button class="secondary-btn" id="auth-guest-btn">游 客 模 式 (仅本地保存, 无法获取核心)</button>
           </div>
       </div>
 
       <!-- 主菜单 -->
       <div class="overlay" id="main-menu">
-        <div class="panel">
-          <div class="version-txt">v11.1.5 Alpha</div>
+        <div class="panel" style="max-width: 500px;">
+          <div class="version-txt">v12.5.0 Magic Array</div>
           <div id="user-status-bar" style="font-size:12px; font-weight:bold; color:#555; margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:2px dashed rgba(42,29,19,0.2); padding-bottom:5px;">
               <span id="current-user-name">读取中...</span><span id="login-logout-btn" style="color:#d9381e; cursor:pointer; text-decoration:underline;">注销系统</span>
           </div>
           <div class="section-title" style="font-size:36px; line-height: 1.3; margin-bottom: 20px;">几何碰撞<br><span class="dynamic-subtitle" style="font-size:18px; color: #d9381e; font-family: monospace; letter-spacing: 6px;">□◇○△☆▽◁</span></div>
           <div class="btn-group" style="flex-direction: column;">
               <button class="primary-btn" id="start-prep-btn" style="width: 100%;">开 始 准 备</button>
+              <div style="display: flex; gap: 10px; width: 100%;">
+                 <button class="primary-btn" id="bag-btn" style="flex:1; background:#8e44ad;">行 者 背 包</button>
+                 <button class="primary-btn" id="shop-btn" style="flex:1; background:#f39c12;">维 度 商 店</button>
+              </div>
               <button class="primary-btn" id="open-leaderboard-btn" style="width: 100%; background: #4285f4; border-color: #4285f4;">维 度 排 行 榜</button>
               <button class="secondary-btn" id="local-stats-btn" style="width: 100%; border-color: #7a6b5d; color: #7a6b5d;">个 人 战 绩 库</button>
           </div>
+        </div>
+      </div>
+
+      <!-- 行者背包界面 -->
+      <div class="overlay" id="bag-overlay">
+        <div class="panel" style="max-width: 700px; background: #fdfdfa; border: 4px solid #2a1d13; color: #2a1d13;">
+          <div style="display:flex; justify-content: space-between; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 10px; align-items: flex-end;">
+             <span class="section-title" style="margin-bottom:0; font-size:24px;">行 者 背 包</span>
+             <span style="font-size: 16px; font-weight: 900; color: #d9381e; font-family: monospace;">核心碎片: <span id="bag-cores">0</span></span>
+          </div>
+          <div style="display: flex; gap: 15px; margin-top: 15px;">
+             <!-- 左侧投影区 -->
+             <div style="flex: 1; background: #fff; border: 2px solid rgba(42,29,19,0.2); border-radius: 8px; padding: 15px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="text-align:left; width:100%; margin-bottom: 10px; font-weight:bold; font-size:12px; color:#555;">
+                   <div style="margin-bottom:4px;">当前构型: <span style="color:#2a1d13; font-weight:900;">基础原生体</span></div>
+                   <div>综合评级: <span style="color:#f39c12;">⭐⭐</span></div>
+                </div>
+                <div style="width: 120px; height: 160px; border: 2px dashed rgba(42,29,19,0.3); border-radius: 6px; display:flex; justify-content:center; align-items:center; font-weight:900; color: #ccc; font-size:14px; background: #faf9f6;">模型投影<br>(待装载)</div>
+             </div>
+             <!-- 右侧网格区 -->
+             <div id="bag-grid" style="flex: 2; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 65px; gap: 8px; background: #fff; padding: 15px; border-radius: 8px; border: 2px solid rgba(42,29,19,0.2);">
+                <!-- 动态生成物品栏 -->
+             </div>
+          </div>
+          <button class="secondary-btn" id="close-bag-btn" style="margin-top: 15px;">关 闭 背 包</button>
+        </div>
+      </div>
+
+      <!-- 维度商店界面 -->
+      <div class="overlay" id="shop-overlay">
+        <div class="panel" style="max-width: 500px; background: #fdfdfa; border: 4px solid #2a1d13;">
+          <div style="display:flex; justify-content: space-between; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 10px; align-items: flex-end;">
+             <span class="section-title" style="margin-bottom:0; font-size:24px; color:#f39c12;">维 度 商 店</span>
+             <span style="font-size: 16px; font-weight: 900; color: #d9381e; font-family: monospace;">持存核心: <span id="shop-cores">0</span></span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding-right: 5px;">
+             <!-- 商品列表 -->
+             <div class="shop-item">
+                 <div class="shop-item-info">
+                     <div class="shop-item-name">潜能药剂</div>
+                     <div class="shop-item-desc">在背包中使用。下次出击时，提供额外的 2 点潜能点。</div>
+                 </div>
+                 <button class="shop-btn" id="buy-potion-btn" style="background:#2ecc71;">3000 核心</button>
+             </div>
+             <div class="shop-item">
+                 <div class="shop-item-info">
+                     <div class="shop-item-name">武器蓝图：高频光束</div>
+                     <div class="shop-item-desc">解锁全新的主武器构型</div>
+                 </div>
+                 <button class="shop-btn" style="background:#666; cursor:not-allowed;">开发中...</button>
+             </div>
+             <div class="shop-item">
+                 <div class="shop-item-info">
+                     <div class="shop-item-name">视觉投影：暗黑几何</div>
+                     <div class="shop-item-desc">更改你的基础外观模型</div>
+                 </div>
+                 <button class="shop-btn" style="background:#666; cursor:not-allowed;">开发中...</button>
+             </div>
+          </div>
+          <button class="secondary-btn" id="close-shop-btn" style="margin-top: 15px;">离 开 商 店</button>
         </div>
       </div>
       
@@ -326,7 +399,7 @@
                   <div class="prep-layout-top">
                       <div id="preview-box"><canvas id="preview-canvas" width="400" height="400"></canvas></div>
                       <div id="talent-box">
-                          <div class="talent-header"><span>潜能重组</span><span style="color:#d9381e;">余点: <span id="tp-left">10</span>/10</span></div>
+                          <div class="talent-header"><span>潜能重组</span><span style="color:#d9381e;">余点: <span id="tp-left">10</span>/<span id="tp-max">10</span></span></div>
                           <div class="talent-row"><div class="talent-label">生命(+50)</div><input type="range" class="talent-slider" data-id="hp" min="0" max="10" value="0"><input type="number" class="talent-num" data-id="hp" min="0" max="10" value="0"></div>
                           <div class="talent-row"><div class="talent-label">攻击(+2)</div><input type="range" class="talent-slider" data-id="atk" min="0" max="10" value="0"><input type="number" class="talent-num" data-id="atk" min="0" max="10" value="0"></div>
                           <div class="talent-row"><div class="talent-label">自愈(+0.5)</div><input type="range" class="talent-slider" data-id="regen" min="0" max="10" value="0"><input type="number" class="talent-num" data-id="regen" min="0" max="10" value="0"></div>
@@ -339,6 +412,7 @@
                       <div class="weapon-list">
                           <div class="weapon-card active" data-wid="basic"><div class="weapon-icon">☄️</div><div class="weapon-name">基础粒子炮</div><div class="weapon-info-btn" data-info="【基础粒子炮】\n动能实体武器。\n基础伤害：30\n基础射速：0.32秒/发\n特性：完美兼容装载【分裂弹】、【散射】、【连射】等全套物理弹道学技能。">?</div></div>
                           <div class="weapon-card" data-wid="laser"><div class="weapon-icon">⚡</div><div class="weapon-name">高能激光</div><div class="weapon-info-btn" data-info="【高能激光】\n贯穿维度的光束武器。\n基础伤害：10\n基础射速：0.50秒/发\n特性：瞬间穿透。解锁专属【天基打击】、【光子裂隙】、【矩阵光刃】、【超新星】与【浮游伴星】！">?</div></div>
+                          <div class="weapon-card" data-wid="magic_star"><div class="weapon-icon">✡️</div><div class="weapon-name" style="color:#8e44ad;">星芒法绘</div><div class="weapon-info-btn" data-info="【星芒法绘】\n维度咒印武器。\n基础爆炸伤害：40\n基础绘制速度：0.65秒/发\n特性：锁定敌人并在其脚下绘制法阵，绘制完成引发爆炸并必定附加【暗灼】。解锁专属技能池：【唤灵光环】、【星耀禁锢】、【群星坠落】等！">?</div></div>
                       </div>
                   </div>
                   <div style="font-weight: 900; font-size: 14px; text-align: left; color:#2a1d13; margin-top: 5px;">危机层级协议</div>
@@ -357,7 +431,7 @@
         <div class="panel" style="max-width: 650px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 2px dashed rgba(42,29,19,0.2); padding-bottom: 10px;">
               <div class="section-title" style="margin-bottom:0; font-size: 20px;">个 人 战 绩 库</div>
-              <button class="secondary-btn" id="upload-best-btn" style="padding: 6px 10px; font-size: 12px; border-color: #d9381e; color: #d9381e;">自动提交最佳战绩</button>
+              <div style="font-size:12px; font-weight:bold; color:#7a6b5d;">战绩将自动云端同步备份</div>
           </div>
           <div id="history-content">
               <div style="display:flex; gap: 15px; height: 320px;">
@@ -382,12 +456,13 @@
           <div class="section-title" style="font-size:28px;">系 统 停 机</div>
           <div class="stat-grid">
             <div class="stat-box"><div class="stat-label">存活时间</div><div class="stat-val" id="end-time">00:00</div></div><div class="stat-box"><div class="stat-label">同化碎片 (得分)</div><div class="stat-val" id="end-score" style="color: #d9381e;">0</div></div>
-            <div class="stat-box"><div class="stat-label">难度 | 武器</div><div class="stat-val" id="end-setup" style="font-size: 14px;">F | 基础炮</div></div><div class="stat-box"><div class="stat-label">斩杀敌怪 | 领主</div><div class="stat-val" id="end-kills">0 | 0</div></div>
+            <div class="stat-box"><div class="stat-label">难度 | 武器</div><div class="stat-val" id="end-setup" style="font-size: 14px;">F | 基础炮</div></div><div class="stat-box"><div class="stat-label">斩杀总计 (精怪/首领)</div><div class="stat-val" id="end-kills">0 | 0</div></div>
             <div class="stat-box stat-skills"><div class="stat-label">总输出伤害</div><div class="stat-val" id="end-damage">0</div></div>
+            <div class="stat-box" style="background:#fceceb; border-color:#e74c3c;"><div class="stat-label" style="color:#c0392b;">获得核心货币</div><div class="stat-val" id="end-cores" style="color:#c0392b; font-size:22px;">+0</div></div>
             <div class="stat-box stat-skills"><div class="stat-label">潜能分配</div><div class="stat-skills-list" id="end-talents" style="color:#d9381e;">HP:0 ATK:0 REG:0 SPD:0 DEF:0</div></div>
             <div class="stat-box stat-skills"><div class="stat-label">装载技能构型</div><div class="stat-skills-list" id="end-skills">无</div></div>
           </div>
-          <div style="font-size:12px; font-weight:bold; color:#d9381e; margin-bottom: 5px;">注: 战绩已自动备份至本地。若高于你的云端最高分将自动登榜。</div>
+          <div style="font-size:12px; font-weight:bold; color:#d9381e; margin-bottom: 5px;">注: 战绩已自动备份至本地与云端。并在难度记录中刷新您的最高排位。附加潜能点已重置。</div>
           <button class="primary-btn" id="restart-btn" style="width:100%; margin-bottom:5px;">返 回 准 备 舱</button><button class="secondary-btn" id="return-menu-btn" style="width:100%;">返回主菜单</button>
         </div>
       </div>
@@ -404,13 +479,14 @@
     let gameRunning=false, isGameOver=false, isPaused=false, isUpgrading=false, screenShake=0, screenRedFlash=0;
     let gameTime=0, level=1, xp=0, xpToNext=50, score=0, enemyIdCounter=0, spawnTimer=0, activeEvent=null, eventTimer=0;
     let eventsTriggered = { 60:false,120:false,180:false,240:false,300:false };
-    let stats = { kills: 0, totalDamage: 0, bossesKilled: 0 }; let damageStats = {}; let recentDamageList = []; let currentDps = 0;
+    let stats = { kills: 0, totalDamage: 0, bossesKilled: 0, eliteKills: 0, specialKills: 0 }; let damageStats = {}; let recentDamageList = []; let currentDps = 0;
     let fpsFrames=0, fpsLastTime=performance.now(), currentFps=60, lastTime=performance.now(), comboCount=0, comboTimer=0;
     let player=null, playerDeadTimer=0; 
     
-    let enemies=[], bullets=[], particles=[], textParticles=[], expOrbs=[], trails=[], lasers=[], bombs=[], downgradeRings=[];
+    let enemies=[], bullets=[], enemyBullets=[], particles=[], textParticles=[], expOrbs=[], trails=[], lasers=[], bombs=[], downgradeRings=[];
     let floorTexts=[], items=[], activeSingularities=[], chainEffects=[], bulletTrails=[], shatterPieces=[], darkmines=[], burstQueue=[];
     let menuParticles=[], upgradeParticles=[], orbitalStrikes=[], photonRifts=[], supernovas=[], drones=[];
+    let magicArrays=[], friendlyRings=[], meteorShowers=[], voidVortexes=[];
     
     let bossSystem = { active: false, gathering: false, gatherPoint: {x:0,y:0}, cooldown: 5, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null, introTimer: 0 };
     let coreBreathPhase=0, coreShootPulse=0, coreSkillCharge=0, coreChargeActive=false;
@@ -419,6 +495,9 @@
     let cameraX=0, cameraY=0, targetCameraX=0, targetCameraY=0;
     let selectedWeapon='basic', selectedDiff='F', currentTalents = { hp: 0, atk: 0, regen: 0, spd: 0, def: 0 };
     
+    // ==== 全局云端用户资产数据 ====
+    let userProfile = { cores: 0, unlockedDiffs: ['F'], maxScores: {}, inventory: { potions: 0 }, bonusTalents: 0 };
+
     const DIFF_CONFIG = {
         F: { req: 0, desc: "F级: 基础难度，适合初次链接。", mult: { hp: 1.0, atk: 1.0, def: 0, spd: 1.0, spawn: 1.0 } },
         E: { req: 15000, desc: "E级: 敌怪耐久提升，小幅装甲附加。", mult: { hp: 1.5, atk: 1.2, def: 5, spd: 1.1, spawn: 1.2 } },
@@ -429,11 +508,18 @@
         S: { req: 1000000, desc: "S级: 维度主宰挑战，数据风暴碾压一切！", mult: { hp: 15.0, atk: 10.0, def: 65, spd: 1.5, spawn: 4.5 } }
     };
 
-    const SKILL_NAMES = { weapon_basic: '基础粒子炮', weapon_laser: '高能主激光', skill_split: '触发-分裂弹', expansion:'扩张', refinement:'精炼', gravity:'引力', drawSpeed:'加速', regen:'自愈', maxHpUp:'扩容', lifesteal:'吸血', bulletPower:'火力强化', fireRate:'射速强化', agility:'轻捷', isincos:'isincos射线', bomb:'X^x炸弹', downgrade:'降维打击', darksurge:'暗能连锁', darkburn:'暗能灼烧', darkmine:'暗爆地雷', splitShot:'分裂弹', burstShot:'连射', scatter:'散射', orbitalStrike:'天基打击', photonRift:'光子裂隙', matrixBlade:'矩阵光刃', supernova:'超新星', laserDrone:'浮游伴星', overcharge:'增压激光', prism:'折射棱镜' };
+    const SKILL_NAMES = { 
+        weapon_basic: '基础粒子炮', weapon_laser: '高能主激光', weapon_magic: '星芒爆破', skill_split: '触发-分裂弹', expansion:'扩张', refinement:'精炼', gravity:'引力', drawSpeed:'加速', regen:'自愈', maxHpUp:'扩容', lifesteal:'吸血', bulletPower:'火力强化', fireRate:'射速强化', agility:'轻捷', 
+        isincos:'isincos射线', bomb:'X^x炸弹', downgrade:'降维打击', darksurge:'暗能连锁', darkburn:'暗能灼烧', darkmine:'暗爆地雷', splitShot:'分裂弹', burstShot:'连射', scatter:'散射', orbitalStrike:'天基打击', photonRift:'光子裂隙', matrixBlade:'矩阵光刃', supernova:'超新星', laserDrone:'浮游伴星', overcharge:'增压激光', prism:'折射棱镜', 
+        summon_ring:'唤灵光环', star_prison:'星耀禁锢', meteor_shower:'群星坠落', void_vortex:'虚空坍引', astral_shield:'星芒护体', rapid_draw:'极速铭刻', twin_stars:'双子星', starlight_echo:'星光余音', star_chain:'星辰连结', star_resonance:'星芒共振' 
+    };
+    
     const ALL_UPGRADES = [
         {id:'bulletPower',category:'stat',type:'common',name:'常驻-火力强化',max:99,descs:Array(99).fill(0).map((_,i)=>`全伤害基础加成+${(i+1)*5}%`)},{id:'fireRate',category:'stat',type:'common',name:'常驻-射速强化',max:7,descs:Array(7).fill(0).map((_,i)=>`主武器射速+${(i+1)*10}%`)},{id:'agility',category:'stat',type:'common',name:'常驻-轻捷',max:99,descs:Array(99).fill(0).map((_,i)=>`移动速度+${(i+1)*5}%`)},{id:'expansion',category:'stat',type:'common',name:'常驻-扩张',max:5,descs:['技能范围+10%','技能范围+20%','技能范围+30%','技能范围+40%','技能范围+50%']},{id:'refinement',category:'stat',type:'common',name:'常驻-精炼',max:5,descs:['获取EXP+20%','获取EXP+25%','获取EXP+30%','获取EXP+35%','获取EXP+40%']},{id:'gravity',category:'stat',type:'common',name:'常驻-引力',max:5,descs:['晶体吸附+30%','晶体吸附+40%','晶体吸附+50%','晶体吸附+60%','晶体吸附+70%']},{id:'drawSpeed',category:'stat',type:'common',name:'常驻-加速',max:5,descs:['技能冷却-10%','技能冷却-15%','技能冷却-20%','技能冷却-25%','技能冷却-30%']},{id:'regen',category:'stat',type:'common',name:'常驻-自愈',max:5,descs:['缓慢恢复2HP/s','恢复4HP/s','恢复6HP/s','恢复8HP/s','恢复12HP/s']},{id:'maxHpUp',category:'stat',type:'common',name:'常驻-扩容',max:5,descs:['生命上限+200','生命上限+400','生命上限+600','生命上限+800','生命上限+1000']},{id:'lifesteal',category:'stat',type:'common',name:'常驻-吸血',max:5,descs:['攻击5%概率吸血','10%概率吸血','15%概率吸血','20%概率吸血','30%概率吸血']},
-        {id:'isincos',category:'active',type:'basic',name:'主动-isincos',max:5,descs:['释放1发黑体射线','强化射线,降CD','释放2发射线','强化双射线,降CD','释放3发毁灭射线']},{id:'bomb',category:'active',type:'basic',name:'主动-X^x',max:5,descs:['抛出数学炸弹','炸弹抛出量+1','炸弹伤害提升,减CD','炸弹抛出量+1','炸弹伤害毁灭']},{id:'downgrade',category:'active',type:'basic',name:'主动-R^n-1',max:2,descs:['光环使敌怪降1级','强化光环连降2级']},{id:'darkmine',category:'active',type:'basic',name:'主动-暗爆',max:5,descs:['随机部署地雷1枚','每次部署2枚','每次部署2枚，高伤','每次部署3枚','每次部署4枚，毁天灭地']},{id:'darksurge',category:'passive',type:'basic',name:'被动-暗能连锁',max:5,descs:['攻击附带暗能连锁','连锁次数+1','连锁次数+1,降CD','衰减减弱','常驻无冷却满伤折射']},{id:'darkburn',category:'passive',type:'basic',name:'被动-暗灼',max:5,descs:['攻击附带灼烧2s','灼烧3s,伤害提升','灼烧4s,伤害提升','灼烧5s,伤害提升','无限灼烧,伤害剧增']},{id:'splitShot',category:'passive',type:'basic',name:'被动-分裂弹',max:5,descs:['分裂1弹(30%伤)','分裂1弹(40%伤)','分裂2弹(40%伤)','分裂2弹(50%伤)','分裂3弹(70%伤)']},{id:'burstShot',category:'passive',type:'basic',name:'被动-连射',max:3,descs:['主炮连射+1','主炮连射+2','主炮连射+3']},{id:'scatter',category:'passive',type:'basic',name:'被动-散射',max:3,descs:['一次发2颗','一次发3颗','一次发4颗']},
-        {id:'orbitalStrike',category:'active',type:'laser',name:'主动-天基打击',max:5,descs:['呼叫轨道巨炮','范围增加,降CD','连续轰击2次','伤害巨幅提升','轰击3次毁灭打击']},{id:'photonRift',category:'active',type:'laser',name:'主动-光子裂隙',max:5,descs:['产生裂隙散射激光','存在时间增加','发射频率加快','伤害巨幅提升','疯狂扫射一切']},{id:'matrixBlade',category:'active',type:'laser',name:'主动-矩阵光刃',max:5,descs:['生成2道光刃','光刃增至4道','转速加快,降CD','增至6道,范围扩大','光刃始终常驻且致命']},{id:'supernova',category:'active',type:'laser',name:'主动-超新星',max:5,descs:['释放扫荡全屏','扩散极快','造成2次重叠判定','致盲减速,降CD','终极爆发直接扫除']},{id:'laserDrone',category:'active',type:'laser',name:'主动-浮游伴星',max:5,descs:['召唤1台光子无人机','增至2台','射速翻倍,降CD','增至4台','发射极高能穿透射线']},{id:'overcharge',category:'passive',type:'laser',name:'被动-增压激光',max:5,descs:['变宽, 伤害+30%','伤害+60%','伤害+100%','伤害+150%','极宽, 伤害+250%']},{id:'prism',category:'passive',type:'laser',name:'被动-折射棱镜',max:5,descs:['同时射第2道主激光','射第3道','射第4道','射第5道','全方位6道无死角']}
+        {id:'isincos',category:'active',type:'basic',name:'主动-isincos',max:5,descs:['释放1发黑体射线','强化射线,降CD','释放2发射线','强化双射线,降CD','释放3发毁灭射线']},{id:'bomb',category:'active',type:'basic',name:'主动-X^x',max:5,descs:['抛出数学炸弹','炸弹抛出量+1','炸弹伤害提升,减CD','炸弹抛出量+1','炸弹伤害毁灭']},{id:'downgrade',category:'active',type:'basic',name:'主动-R^n-1',max:2,descs:['光环使敌怪降1级','强化光环连降2级']},{id:'darkmine',category:'active',type:'basic',name:'主动-暗爆',max:5,descs:['随机部署地雷1枚','每次部署2枚','每次部署2枚，高伤','每次部署3枚','每次部署4枚，毁天灭地']},{id:'darksurge',category:'passive',type:'basic',name:'被动-暗能连锁',max:5,descs:['攻击附带暗能连锁','连锁次数+1','连锁次数+1,降CD','衰减减弱','常驻无冷却满伤折射']},{id:'darkburn',category:'passive',type:'common',name:'被动-暗能灼烧',max:5,descs:['攻击必定附带暗灼并可叠加1层','最大叠加层数增至2，伤害提升','叠加层数增至3，满层爆炸传染','叠加增至4，满层伤害翻倍','无限叠加，满层伤害呈指数级毁灭']},{id:'splitShot',category:'passive',type:'basic',name:'被动-分裂弹',max:5,descs:['分裂1弹(30%伤)','分裂1弹(40%伤)','分裂2弹(40%伤)','分裂2弹(50%伤)','分裂3弹(70%伤)']},{id:'burstShot',category:'passive',type:'basic',name:'被动-连射',max:3,descs:['主炮连射+1','主炮连射+2','主炮连射+3']},{id:'scatter',category:'passive',type:'basic',name:'被动-散射',max:3,descs:['一次发2颗','一次发3颗','一次发4颗']},
+        {id:'orbitalStrike',category:'active',type:'laser',name:'主动-天基打击',max:5,descs:['呼叫轨道巨炮','范围增加,降CD','连续轰击2次','伤害巨幅提升','轰击3次毁灭打击']},{id:'photonRift',category:'active',type:'laser',name:'主动-光子裂隙',max:5,descs:['产生裂隙散射激光','存在时间增加','发射频率加快','伤害巨幅提升','疯狂扫射一切']},{id:'matrixBlade',category:'active',type:'laser',name:'主动-矩阵光刃',max:5,descs:['生成2道光刃','光刃增至4道','转速加快,降CD','增至6道,范围扩大','光刃始终常驻且致命']},{id:'supernova',category:'active',type:'laser',name:'主动-超新星',max:5,descs:['释放扫荡全屏','扩散极快','造成2次重叠判定','致盲减速,降CD','终极爆发直接扫除']},{id:'laserDrone',category:'active',type:'laser',name:'主动-浮游伴星',max:5,descs:['召唤1台光子无人机','增至2台','射速翻倍,降CD','增至4台','发射极高能穿透射线']},{id:'overcharge',category:'passive',type:'laser',name:'被动-增压激光',max:5,descs:['变宽, 伤害+30%','伤害+60%','伤害+100%','伤害+150%','极宽, 伤害+250%']},{id:'prism',category:'passive',type:'laser',name:'被动-折射棱镜',max:5,descs:['同时射第2道主激光','射第3道','射第4道','射第5道','全方位6道无死角']},
+        {id:'summon_ring',category:'active',type:'magic_star',name:'主动-唤灵光环',max:5,descs:['召唤1个友军灵环撞击敌人','召唤量+1','伤害提升,降CD','召唤量增至3个','灵环可穿透且伤害翻倍']},{id:'star_prison',category:'active',type:'magic_star',name:'主动-星耀禁锢',max:5,descs:['大范围定身敌人2秒','定身3秒','范围增大,附加伤害','定身4秒','全屏定身且高伤']},{id:'meteor_shower',category:'active',type:'magic_star',name:'主动-群星坠落',max:5,descs:['周围随机坠落3颗陨星','坠落5颗','伤害提升,坠落加快','坠落8颗','漫天流星雨持续轰炸']},{id:'void_vortex',category:'active',type:'magic_star',name:'主动-虚空坍引',max:5,descs:['生成黑洞牵引周围敌人','黑洞存在时间延长','范围与吸力增强','爆炸伤害大幅提升','形成无法逃逸的超大黑洞']},{id:'astral_shield',category:'active',type:'magic_star',name:'主动-星芒护体',max:5,descs:['生成持续2秒的护盾','护盾持续3秒','护盾破碎时击退敌人','护盾持续4秒','护盾破碎时造成全屏高伤']},
+        {id:'rapid_draw',category:'passive',type:'magic_star',name:'被动-极速铭刻',max:5,descs:['法绘铭刻速度提升15%','铭刻速度提升30%','铭刻速度提升45%','铭刻速度提升60%','铭刻速度提升80%']},{id:'twin_stars',category:'passive',type:'magic_star',name:'被动-双子星',max:5,descs:['10%概率同时铭刻第二个法阵','20%概率','30%概率','40%概率','必定同时铭刻两个法阵']},{id:'starlight_echo',category:'passive',type:'magic_star',name:'被动-星光余音',max:5,descs:['法绘爆炸后留下持续1秒的伤害区','持续2秒','伤害频率提升','持续3秒','伤害区极大且附带减速']},{id:'star_chain',category:'passive',type:'magic_star',name:'被动-星辰连结',max:5,descs:['法阵爆炸触发2连闪电','闪电弹射3次','伤害提升','弹射4次','弹射5次且伤害不衰减']},{id:'star_resonance',category:'passive',type:'magic_star',name:'被动-星芒共振',max:5,descs:['根据敌方暗灼层数增加爆炸范围','范围增益效果加倍','同时根据层数增加额外爆炸伤害','伤害增益效果加倍','满层暗灼直接引发全屏星芒共鸣']}
     ];
 
     setInterval(() => { document.querySelectorAll('.dynamic-subtitle').forEach(el => { const chars=['□','◇','○','△','☆','▽','◁']; let str=''; for(let i=0;i<7;i++) str+=chars[Math.floor(Math.random()*chars.length)]; el.textContent=str; }); }, 150);
@@ -485,6 +571,7 @@
             
             if(session) {
                 currentUser = session.user; isOfflineMode = false;
+                await fetchUserProfile();
                 switchScreen('auth-screen', 'main-menu', 'IDENTITY', 'VERIFIED', () => { updateUserStatusBar(); });
             } else {
                 btn.textContent = '授 权 登 录'; btn.disabled = false;
@@ -497,9 +584,66 @@
     }
     initialNetworkCheck();
 
+    async function fetchUserProfile() {
+        if (isOfflineMode || !isDbUsable || !currentUser) return;
+        try {
+            const { data, error } = await supabaseClientObj.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
+            if (data) {
+                userProfile.cores = data.cores || 0;
+                userProfile.maxScores = data.max_scores || {};
+                userProfile.unlockedDiffs = data.unlocked_diffs || ['F'];
+                userProfile.inventory = data.inventory || { potions: 0 };
+            } else {
+                let initialData = { user_id: currentUser.id, player_name: currentUser.user_metadata?.display_name || currentUser.email.split('@')[0], cores: 0, unlocked_diffs: ['F'], max_scores: {}, inventory: { potions: 0 } };
+                await supabaseClientObj.from('user_profiles').insert([initialData]);
+                userProfile = { cores: 0, unlockedDiffs: ['F'], maxScores: {}, inventory: { potions: 0 }, bonusTalents: 0 };
+            }
+            updateBagAndShopUI();
+        } catch(e) { console.error("获取用户档案失败", e); }
+    }
+
+    async function updateUserProfileData() {
+        if (isOfflineMode || !isDbUsable || !currentUser) return;
+        try {
+            await supabaseClientObj.from('user_profiles').update({
+                cores: userProfile.cores,
+                max_scores: userProfile.maxScores,
+                unlocked_diffs: userProfile.unlockedDiffs,
+                inventory: userProfile.inventory,
+                updated_at: new Date().toISOString()
+            }).eq('user_id', currentUser.id);
+        } catch(e) {}
+    }
+
+    function updateBagAndShopUI() {
+        document.getElementById('bag-cores').textContent = userProfile.cores.toLocaleString();
+        document.getElementById('shop-cores').textContent = userProfile.cores.toLocaleString();
+        
+        let grid = document.getElementById('bag-grid');
+        let html = '';
+        if (userProfile.inventory && userProfile.inventory.potions > 0) {
+            html += `<div class="bag-grid-slot" onclick="usePotion()"><div class="bag-item-icon">🧪</div><div>潜能药剂</div><div class="bag-item-count">x${userProfile.inventory.potions}</div></div>`;
+        }
+        for(let i = (userProfile.inventory && userProfile.inventory.potions > 0 ? 1 : 0); i < 12; i++) {
+            html += `<div class="bag-grid-slot"></div>`;
+        }
+        grid.innerHTML = html;
+        updateTalentUI();
+    }
+
+    window.usePotion = function() {
+        if (userProfile.inventory.potions > 0) {
+            userProfile.inventory.potions--;
+            userProfile.bonusTalents = (userProfile.bonusTalents || 0) + 2;
+            updateUserProfileData();
+            updateBagAndShopUI();
+            alert(`使用了1瓶潜能药剂！\n本次出击可用潜能点 +2 (当前总计: ${10 + userProfile.bonusTalents})`);
+        }
+    }
+
     function updateUserStatusBar() {
         if(isOfflineMode) { document.getElementById('current-user-name').textContent = '未登录游客 (本地模式)'; document.getElementById('login-logout-btn').textContent = '[返回认证]'; } 
-        else { let name = currentUser?.user_metadata?.display_name || currentUser?.email?.split('@')[0] || '行者'; document.getElementById('current-user-name').textContent = `行者: ${name} (云端同步)`; document.getElementById('login-logout-btn').textContent = '[注销并返回]'; }
+        else { let name = currentUser?.user_metadata?.display_name || currentUser?.email?.split('@')[0] || '行者'; document.getElementById('current-user-name').textContent = `行者: ${name} (已同步)`; document.getElementById('login-logout-btn').textContent = '[注销并返回]'; }
     }
 
     document.getElementById('login-logout-btn').addEventListener('click', async () => {
@@ -529,17 +673,39 @@
             if (isLoginMode) {
                 const { data, error } = await supabaseClientObj.auth.signInWithPassword({ email, password }); if (error) throw error;
                 if (data && data.user) currentUser = data.user; isOfflineMode = false; isSuccess = true;
+                await fetchUserProfile();
                 switchScreen('auth-screen', 'main-menu', 'IDENTITY', 'VERIFIED', () => { updateUserStatusBar(); });
             } else {
                 if (!name) { errEl.textContent = "请输入代号！"; errEl.style.display = 'block'; return; }
                 const { data, error } = await supabaseClientObj.auth.signUp({ email, password, options: { data: { display_name: name } } }); if (error) throw error;
                 if (data && data.user) currentUser = data.user; isOfflineMode = false; isSuccess = true;
+                await fetchUserProfile();
                 switchScreen('auth-screen', 'main-menu', 'NEW IDENTITY', 'ESTABLISHED', () => { updateUserStatusBar(); });
             }
         } catch (err) {
             errEl.textContent = translateAuthError(err.message); errEl.style.display = 'block';
         } finally {
             if (!isSuccess) { document.getElementById('auth-submit-btn').disabled = false; document.getElementById('auth-submit-btn').textContent = isLoginMode ? '登 录' : '注 册'; }
+        }
+    });
+
+    // ========== 背包与商店 UI 绑定 ==========
+    document.getElementById('bag-btn').addEventListener('click', () => { updateBagAndShopUI(); document.getElementById('bag-overlay').classList.add('active'); });
+    document.getElementById('close-bag-btn').addEventListener('click', () => { document.getElementById('bag-overlay').classList.remove('active'); });
+    document.getElementById('shop-btn').addEventListener('click', () => { updateBagAndShopUI(); document.getElementById('shop-overlay').classList.add('active'); });
+    document.getElementById('close-shop-btn').addEventListener('click', () => { document.getElementById('shop-overlay').classList.remove('active'); });
+    
+    document.getElementById('buy-potion-btn').addEventListener('click', () => {
+        if (isOfflineMode) { alert("游客模式无法使用商店！"); return; }
+        if (userProfile.cores >= 3000) {
+            userProfile.cores -= 3000;
+            if (!userProfile.inventory) userProfile.inventory = {};
+            userProfile.inventory.potions = (userProfile.inventory.potions || 0) + 1;
+            updateUserProfileData();
+            updateBagAndShopUI();
+            alert("成功购买 1 瓶潜能药剂！\n已存入行者背包。");
+        } else {
+            alert("核心不足！");
         }
     });
 
@@ -552,24 +718,38 @@
     });
     document.getElementById('refresh-lb-btn').addEventListener('click', () => { renderLeaderboard(); });
 
-    // 自动判定最高分上传
-    async function autoUploadToLeaderboard(name, data) {
+    // 全新自动智能上传与云端记录写入
+    async function autoUploadMatchAndLeaderboard(name, data) {
         if (!supabaseClientObj || isOfflineMode) return;
         try {
             const db = supabaseClientObj;
-            let payload = { player_name: name, score: data.score, survive_time: data.time, kills: data.kills, bosses: data.bosses, total_damage: data.dmg, level: data.level, difficulty: data.diff, weapon: data.weapon, talents: data.talents, skills: data.skills };
+            let payload = { user_id: currentUser.id, player_name: name, score: data.score, survive_time: data.time, kills: data.kills, bosses: data.bosses, total_damage: data.dmg, level: data.level, difficulty: data.diff, weapon: data.weapon, talents: data.talents, skills: data.skills };
             
-            const { data: exist } = await db.from('leaderboard').select('id, score').eq('player_name', name).limit(1);
+            await db.from('match_records').insert([payload]);
+
+            const { data: exist } = await db.from('leaderboard').select('id, score').eq('player_name', name).eq('difficulty', data.diff).limit(1);
             if (exist && exist.length > 0) { 
-                if (data.score > exist[0].score) { await db.from('leaderboard').update(payload).eq('player_name', name); }
+                if (data.score > exist[0].score) { await db.from('leaderboard').update(payload).eq('id', exist[0].id); }
             } else { 
                 await db.from('leaderboard').insert([payload]); 
             }
-        } catch(err) {}
+
+            if (!userProfile.maxScores) userProfile.maxScores = {};
+            if ((userProfile.maxScores[data.diff] || 0) < data.score) {
+                userProfile.maxScores[data.diff] = data.score;
+            }
+            Object.keys(DIFF_CONFIG).forEach(diff => {
+                if(diff === 'F') return;
+                let maxFound = 0;
+                for(let k in userProfile.maxScores) { if(userProfile.maxScores[k] > maxFound) maxFound = userProfile.maxScores[k]; }
+                if(maxFound >= DIFF_CONFIG[diff].req && !userProfile.unlockedDiffs.includes(diff)) {
+                    userProfile.unlockedDiffs.push(diff);
+                }
+            });
+            await updateUserProfileData();
+
+        } catch(err) { console.error('数据同步失败', err); }
     }
-    
-    // 依然保留给武器详情点击用
-    window.showLeaderboardDetail = function(text) { document.getElementById('info-modal-text').textContent = text; document.getElementById('info-modal').classList.add('active'); };
 
     let globalLbData = [];
     let currentLbTab = 'ALL';
@@ -597,7 +777,7 @@
         
         list.innerHTML = filtered.map((item,i) => {
             let tl = item.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`;
-            let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':'基础炮'}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}`;
+            let detailHtml = `【代号: ${item.player_name}】\n得分: ${item.score} | 存活: ${formatTime(item.survive_time||0)}\n难度: ${item.difficulty||'F'} | 武器: ${item.weapon==='laser'?'激光':(item.weapon==='magic_star'?'星芒法绘':'基础炮')}\n斩杀敌怪: ${item.kills||0} | 击破领主: ${item.bosses||0}\n总输出: ${Math.floor(item.total_damage||0).toLocaleString()}\n\n【潜能加点】\n${tlStr}\n\n【技能构型】\n${item.skills||'无'}`;
             
             let rankIcon = '';
             if (i === 0) rankIcon = '🥇';
@@ -644,71 +824,90 @@
 
     let matchHistory = []; let historyPage = 0; const HIST_PER_PAGE = 5;
 
-    // 获取并保存战绩全部改为本地化
+    // 获取并保存战绩本地化备份
     function loadLocalHistory() {
         try { const saved = localStorage.getItem('geo_match_history'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) matchHistory = parsed; else matchHistory = []; } else { matchHistory = []; } } catch(e) { matchHistory = []; }
     }
     function saveLocalHistory(data) { try { loadLocalHistory(); matchHistory.unshift(data); if (matchHistory.length > 50) matchHistory.pop(); localStorage.setItem('geo_match_history', JSON.stringify(matchHistory)); } catch(e) {} }
-    function getLocalMaxScore() { loadLocalHistory(); let max = 0; for (let m of matchHistory) { if (m && m.score > max) max = m.score; } return max; }
+    function getLocalMaxScore() { 
+        let max = 0;
+        if (!isOfflineMode && userProfile.maxScores) {
+            for(let k in userProfile.maxScores) { if(userProfile.maxScores[k] > max) max = userProfile.maxScores[k]; }
+        } else {
+            loadLocalHistory(); for (let m of matchHistory) { if (m && m.score > max) max = m.score; } 
+        }
+        return max; 
+    }
 
     function renderHistoryUI() {
         const list = document.getElementById('history-list-ui'); const detail = document.getElementById('history-detail-ui'); list.innerHTML = ''; detail.innerHTML = '<div class="hd-full" style="text-align:center; color:#999; margin-top:50px;">请在左侧选择一条记录查看详细数据</div>';
-        if (!Array.isArray(matchHistory) || matchHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无战斗数据</div>'; return; }
+        if (!Array.isArray(matchHistory) || matchHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">暂无本地战斗数据</div>'; return; }
         let totalPages = Math.ceil(matchHistory.length / HIST_PER_PAGE); if (historyPage >= totalPages) historyPage = Math.max(0, totalPages - 1);
         document.getElementById('hist-page-txt').textContent = `${historyPage + 1} / ${totalPages}`; document.getElementById('hist-prev').disabled = historyPage === 0; document.getElementById('hist-next').disabled = historyPage >= totalPages - 1;
         let start = historyPage * HIST_PER_PAGE; let end = Math.min(start + HIST_PER_PAGE, matchHistory.length);
         for (let i = start; i < end; i++) {
             let m = matchHistory[i]; if (!m) continue; let item = document.createElement('div'); item.className = 'history-item';
-            let uploadBtnHtml = (isOfflineMode || !isDbUsable) ? '' : `<button class="upload-single-btn" onclick="event.stopPropagation(); manualUploadScore(${i})">⬆️上传排行</button>`;
+            let wpnStr = m.weapon==='laser'?'高能激光':(m.weapon==='magic_star'?'星芒法绘':'基础炮');
             
             item.innerHTML = `<div style="display:flex; justify-content:space-between; width:100%; align-items: center;">
-                <div><div class="hi-main">得分: <span style="color:#d9381e;">${m.score || 0}</span> [${m.diff || 'F'}级]</div><div class="hi-sub">${m.date || '未知时间'} | ${m.weapon==='laser'?'高能激光':'基础炮'}</div></div>
-                <div style="display:flex; flex-direction:column; align-items:flex-end; gap: 4px;"><div style="font-size:12px; font-weight:bold;">${formatTime(m.time || 0)}</div>${uploadBtnHtml}</div>
+                <div><div class="hi-main">得分: <span style="color:#d9381e;">${m.score || 0}</span> [${m.diff || 'F'}级]</div><div class="hi-sub">${m.date || '未知时间'} | ${wpnStr}</div></div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap: 4px;"><div style="font-size:12px; font-weight:bold;">${formatTime(m.time || 0)}</div></div>
             </div>`;
             
-            item.onclick = () => { document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active')); item.classList.add('active'); let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`; detail.innerHTML = `<div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div><div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div><div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div><div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${m.weapon==='laser'?'激光':'基础炮'}</span></div><div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div><div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div><div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div><div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div><div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div>`; }; list.appendChild(item);
+            item.onclick = () => { document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active')); item.classList.add('active'); let tl = m.talents || { hp:0, atk:0, regen:0, spd:0, def:0 }; let tlStr = `HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}`; detail.innerHTML = `<div><span style="color:#7a6b5d">得分</span><br><span class="hd-val">${m.score || 0}</span></div><div><span style="color:#7a6b5d">存活</span><br><span class="hd-val" style="color:#2a1d13">${formatTime(m.time || 0)}</span></div><div><span style="color:#7a6b5d">难度级</span><br><span class="hd-val" style="color:#2a1d13">${m.diff || 'F'}级</span></div><div><span style="color:#7a6b5d">武器</span><br><span class="hd-val" style="color:#2a1d13">${wpnStr}</span></div><div><span style="color:#7a6b5d">斩杀敌怪</span><br><span class="hd-val" style="color:#2a1d13">${m.kills || 0}</span></div><div><span style="color:#7a6b5d">击破领主</span><br><span class="hd-val" style="color:#2a1d13">${m.bosses || 0}</span></div><div class="hd-full"><span style="color:#7a6b5d">总输出</span><br><span class="hd-val">${Math.floor(m.dmg || 0).toLocaleString()}</span></div><div class="hd-full"><span style="color:#7a6b5d">天赋加点</span><br><span style="font-weight:bold; font-size:11px; color:#d9381e;">${tlStr}</span></div><div class="hd-full"><span style="color:#7a6b5d">构型</span><br><span style="font-weight:bold; font-size:11px; color:#555;">${m.skills || '无'}</span></div>`; }; list.appendChild(item);
         }
     }
-    
-    // 单条战绩手动上传排行
-    window.manualUploadScore = async function(index) {
-        if (!currentUser || !isDbUsable) { alert("请先登录云端账号！"); return; }
-        let m = matchHistory[index]; if (!m) return;
-        let btnIndex = index % HIST_PER_PAGE; let btn = document.querySelectorAll('.upload-single-btn')[btnIndex];
-        if (btn) btn.textContent = "上传中...";
-        let savedName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
-        await autoUploadToLeaderboard(savedName, m);
-        if (btn) { btn.textContent = "✅已更新"; btn.style.background = "#34a853"; }
-        alert(`已尝试同步分数为 ${m.score} 的战绩至云端！\n（注：排行榜永远只展示您的历史最高分）`);
-    }
-
-    // 自动计算历史最佳并上传
-    document.getElementById('upload-best-btn').addEventListener('click', async () => {
-        if (!currentUser || !isDbUsable) { alert("请先使用账号登录！游客模式无法上传排行。"); return; }
-        if (!matchHistory || matchHistory.length === 0) { alert("暂无本地战绩可供上传！"); return; }
-        let bestMatch = matchHistory.reduce((max, obj) => (obj.score > max.score) ? obj : max, matchHistory[0]);
-        let btn = document.getElementById('upload-best-btn'); let origText = btn.textContent; btn.textContent = "计算并上传中..."; btn.disabled = true;
-        let savedName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
-        await autoUploadToLeaderboard(savedName, bestMatch);
-        btn.textContent = origText; btn.disabled = false;
-        alert(`已从您的本地档案提取最高分： ${bestMatch.score}\n并成功同步至云端！`);
-    });
 
     document.getElementById('hist-prev').onclick = () => { if (historyPage > 0) { historyPage--; renderHistoryUI(); } };
     document.getElementById('hist-next').onclick = () => { if (historyPage < Math.ceil(matchHistory.length / HIST_PER_PAGE) - 1) { historyPage++; renderHistoryUI(); } };
     document.getElementById('local-stats-btn').addEventListener('click', () => { loadLocalHistory(); historyPage = 0; renderHistoryUI(); document.getElementById('history-overlay').classList.add('active'); });
     document.getElementById('close-local-stats-btn').addEventListener('click', () => { document.getElementById('history-overlay').classList.remove('active'); });
 
-    function updateTalentUI() { let sum = currentTalents.hp + currentTalents.atk + currentTalents.regen + currentTalents.spd + currentTalents.def; document.getElementById('tp-left').textContent = 10 - sum; ['hp','atk','regen','spd','def'].forEach(k => { let s = document.querySelector(`.talent-slider[data-id="${k}"]`); let n = document.querySelector(`.talent-num[data-id="${k}"]`); if (s) s.value = currentTalents[k]; if (n) n.value = currentTalents[k]; }); }
-    function handleTalentChange(key, val) { val = parseInt(val) || 0; if(val < 0) val = 0; let sumOther = 0; for(let k in currentTalents) { if(k !== key) sumOther += currentTalents[k]; } if(sumOther + val > 10) val = 10 - sumOther; currentTalents[key] = val; updateTalentUI(); }
+    function updateTalentUI() { 
+        let baseMax = 10;
+        let bonus = userProfile.bonusTalents || 0;
+        let totalMax = baseMax + bonus;
+        
+        let sum = currentTalents.hp + currentTalents.atk + currentTalents.regen + currentTalents.spd + currentTalents.def; 
+        document.getElementById('tp-max').textContent = totalMax;
+        document.getElementById('tp-left').textContent = totalMax - sum; 
+        
+        ['hp','atk','regen','spd','def'].forEach(k => { 
+            let s = document.querySelector(`.talent-slider[data-id="${k}"]`); 
+            let n = document.querySelector(`.talent-num[data-id="${k}"]`); 
+            if (s) { s.max = totalMax; s.value = currentTalents[k]; }
+            if (n) { n.max = totalMax; n.value = currentTalents[k]; }
+        }); 
+    }
+    
+    function handleTalentChange(key, val) { 
+        val = parseInt(val) || 0; if(val < 0) val = 0; 
+        let bonus = userProfile.bonusTalents || 0;
+        let totalMax = 10 + bonus;
+        
+        let sumOther = 0; 
+        for(let k in currentTalents) { if(k !== key) sumOther += currentTalents[k]; } 
+        if(sumOther + val > totalMax) val = totalMax - sumOther; 
+        currentTalents[key] = val; 
+        updateTalentUI(); 
+    }
     document.querySelectorAll('.talent-slider, .talent-num').forEach(el => { el.addEventListener('input', (e) => { handleTalentChange(e.target.dataset.id, e.target.value); }); });
     document.querySelectorAll('.weapon-card').forEach(card => { card.addEventListener('click', (e) => { if(e.target.classList.contains('weapon-info-btn')) return; document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active')); card.classList.add('active'); selectedWeapon = card.dataset.wid; }); });
     document.querySelectorAll('.weapon-info-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); document.getElementById('info-modal-text').textContent = btn.dataset.info.replace(/\\n/g, '\n'); document.getElementById('info-modal').classList.add('active'); }); });
     document.getElementById('close-info-btn').addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); document.getElementById('info-modal').classList.remove('active'); });
     document.getElementById('info-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('info-modal')) document.getElementById('info-modal').classList.remove('active'); });
 
-    function checkDifficultyUnlocks() { let maxScore = getLocalMaxScore(); document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { let df = btn.dataset.diff; if(maxScore >= DIFF_CONFIG[df].req) btn.classList.remove('locked'); else btn.classList.add('locked'); }); }
-    document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { btn.addEventListener('click', () => { if(btn.classList.contains('locked')) { let df = btn.dataset.diff; alert(`需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该难度。`); return; } document.querySelectorAll('#diff-box .diff-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedDiff = btn.dataset.diff; document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc; }); });
+    // 解锁难度依靠云端或本地最高分判断
+    function checkDifficultyUnlocks() { 
+        let maxScore = getLocalMaxScore(); 
+        document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { 
+            let df = btn.dataset.diff; 
+            let unlocked = (!isOfflineMode && userProfile.unlockedDiffs && userProfile.unlockedDiffs.includes(df)) || (maxScore >= DIFF_CONFIG[df].req);
+            if(unlocked) btn.classList.remove('locked'); 
+            else btn.classList.add('locked'); 
+        }); 
+    }
+    document.querySelectorAll('#diff-box .diff-btn').forEach(btn => { btn.addEventListener('click', () => { if(btn.classList.contains('locked')) { let df = btn.dataset.diff; alert(`该难度已被封锁。\n需要历史最高分达到 ${DIFF_CONFIG[df].req.toLocaleString()} 才能解锁该维度协议。`); return; } document.querySelectorAll('#diff-box .diff-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedDiff = btn.dataset.diff; document.getElementById('diff-desc').textContent = DIFF_CONFIG[selectedDiff].desc; }); });
 
     let prevCtx = document.getElementById('preview-canvas').getContext('2d'); let prevTime = performance.now();
     function renderPreview(now) {
@@ -719,9 +918,58 @@
         prevCtx.strokeStyle = 'rgba(42,29,19,0.05)'; prevCtx.lineWidth=2; for(let x=0; x<prevCanvas.width; x+=40) { prevCtx.beginPath(); prevCtx.moveTo(x,0); prevCtx.lineTo(x,prevCanvas.height); prevCtx.stroke(); } for(let y=0; y<prevCanvas.height; y+=40) { prevCtx.beginPath(); prevCtx.moveTo(0,y); prevCtx.lineTo(prevCanvas.width,y); prevCtx.stroke(); }
         let cx = prevCanvas.width / 2; let cy = prevCanvas.height / 2; let aimAngle = Math.sin(pT * 2) * 0.5 - Math.PI/2; let scale = devicePixelRatio * 1.5;
         prevCtx.translate(cx, cy); prevCtx.scale(scale, scale);
-        if(selectedWeapon === 'laser') { if(Math.floor(pT * 2) % 2 === 0) { prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.globalAlpha = 0.6; prevCtx.strokeStyle = 'rgba(217,56,30,0.8)'; prevCtx.lineWidth = 15; prevCtx.lineCap = 'round'; prevCtx.beginPath(); prevCtx.moveTo(0,0); prevCtx.lineTo(300,0); prevCtx.stroke(); prevCtx.globalAlpha = 1.0; prevCtx.strokeStyle = 'rgba(255,255,255,0.9)'; prevCtx.lineWidth = 4; prevCtx.beginPath(); prevCtx.moveTo(0,0); prevCtx.lineTo(300,0); prevCtx.stroke(); prevCtx.restore(); } } else { let bDist = ((pT*600)%200 + 20); prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.fillStyle = '#2a1d13'; prevCtx.beginPath(); prevCtx.arc(bDist, 0, 4, 0, Math.PI*2); prevCtx.fill(); prevCtx.restore(); }
+        
+        // 绘制主角
         prevCtx.strokeStyle = '#2a1d13'; prevCtx.lineWidth = 3; prevCtx.beginPath(); prevCtx.arc(0, 0, 14, 0, Math.PI*2); prevCtx.stroke();
-        prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.fillStyle = '#2a1d13'; prevCtx.beginPath(); prevCtx.moveTo(18, 0); prevCtx.lineTo(8, -6); prevCtx.lineTo(8, 6); prevCtx.closePath(); prevCtx.fill(); prevCtx.restore(); prevCtx.restore();
+        prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.fillStyle = '#2a1d13'; prevCtx.beginPath(); prevCtx.moveTo(18, 0); prevCtx.lineTo(8, -6); prevCtx.lineTo(8, 6); prevCtx.closePath(); prevCtx.fill(); prevCtx.restore(); 
+
+        // 绘制不同武器的攻击预览
+        if(selectedWeapon === 'laser') { 
+            if(Math.floor(pT * 2) % 2 === 0) { prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.globalAlpha = 0.6; prevCtx.strokeStyle = 'rgba(217,56,30,0.8)'; prevCtx.lineWidth = 15; prevCtx.lineCap = 'round'; prevCtx.beginPath(); prevCtx.moveTo(0,0); prevCtx.lineTo(300,0); prevCtx.stroke(); prevCtx.globalAlpha = 1.0; prevCtx.strokeStyle = 'rgba(255,255,255,0.9)'; prevCtx.lineWidth = 4; prevCtx.beginPath(); prevCtx.moveTo(0,0); prevCtx.lineTo(300,0); prevCtx.stroke(); prevCtx.restore(); } 
+        } 
+        else if(selectedWeapon === 'magic_star') { 
+            let targetDist = 60;
+            let tx = Math.cos(aimAngle) * targetDist;
+            let ty = Math.sin(aimAngle) * targetDist;
+            
+            // 绘制假敌人
+            prevCtx.fillStyle = '#2ecc71'; prevCtx.beginPath(); prevCtx.arc(tx, ty, 10, 0, Math.PI*2); prevCtx.fill();
+            
+            // 绘制五角星绘制过程
+            let cycle = (pT % 1.0); // 1秒一个周期
+            if (cycle < 0.8) {
+                let progress = cycle / 0.8;
+                prevCtx.save(); prevCtx.translate(tx, ty); prevCtx.rotate(pT);
+                prevCtx.strokeStyle = 'rgba(142,68,173,0.8)'; prevCtx.lineWidth = 2; prevCtx.beginPath();
+                
+                let pts = [];
+                for(let i=0; i<6; i++) {
+                   let a = (i * 4 * Math.PI) / 5 - Math.PI/2;
+                   pts.push({x: Math.cos(a)*20, y: Math.sin(a)*20});
+                }
+                
+                prevCtx.moveTo(pts[0].x, pts[0].y);
+                let totalLines = 5;
+                let linesToDraw = Math.floor(progress * totalLines);
+                let partialLine = (progress * totalLines) - linesToDraw;
+                
+                for(let i=0; i<linesToDraw; i++) { prevCtx.lineTo(pts[i+1].x, pts[i+1].y); }
+                if(linesToDraw < totalLines) {
+                    let cur = pts[linesToDraw], nxt = pts[linesToDraw+1];
+                    prevCtx.lineTo(cur.x + (nxt.x - cur.x) * partialLine, cur.y + (nxt.y - cur.y) * partialLine);
+                }
+                prevCtx.stroke(); prevCtx.restore();
+            } else {
+                // 爆炸
+                let blastR = 25 * (cycle - 0.8) / 0.2;
+                prevCtx.fillStyle = 'rgba(142,68,173,0.5)'; prevCtx.beginPath(); prevCtx.arc(tx, ty, blastR, 0, Math.PI*2); prevCtx.fill();
+            }
+        }
+        else { 
+            let bDist = ((pT*600)%200 + 20); prevCtx.save(); prevCtx.rotate(aimAngle); prevCtx.fillStyle = '#2a1d13'; prevCtx.beginPath(); prevCtx.arc(bDist, 0, 4, 0, Math.PI*2); prevCtx.fill(); prevCtx.restore(); 
+        }
+        
+        prevCtx.restore();
     }
     requestAnimationFrame(renderPreview);
 
@@ -743,17 +991,27 @@
         } catch(e) {}
     }
 
-    function initPlayer() { let baseHp = 1000 + currentTalents.hp * 50; let pDef = currentTalents.def * 5; let pAtk = (selectedWeapon === 'laser' ? 10 : 30) + currentTalents.atk * 2; let pSpd = 230 + currentTalents.spd * 10; player = { x: WORLD_W / 2, y: WORLD_H / 2, radius: 14, speed: pSpd, def: pDef, weapon: selectedWeapon, baseAtk: pAtk, shootCooldown: 0, shootDelay: (selectedWeapon === 'laser' ? 0.5 : 0.32), bulletSpeed: 850, bulletRadius: 4, atkMultiplier: 1, critChance: 0.08, critMultiplier: 2.0, invincibleTimer: 0, flashTimer: 0, aimAngle: 0, hp: baseHp, darkburnCd: 0, isDead: false, skills: { expansion:0, refinement:0, gravity:0, drawSpeed:0, regen:0, maxHpUp:0, lifesteal:0, bulletPower:0, fireRate:0, agility:0, isincos:0, bomb:0, downgrade:0, darksurge:0, darkburn:0, darkmine:0, splitShot:0, burstShot:0, scatter:0, orbitalStrike:0, photonRift:0, matrixBlade:0, supernova:0, laserDrone:0, overcharge:0, prism:0 }, timers: { isincos:12, bomb:6, downgrade:55, darksurge:8, darkmine:5, orbitalStrike:12, photonRift:15, matrixBlade:15, supernova:10, laserDrone:12 }, darksurgeDuration: 0, matrixBladeDuration: 0 }; cameraX = safeNum(player.x - VIEW_W / 2, 0); cameraY = safeNum(player.y - VIEW_H / 2, 0); }
+    function initPlayer() { 
+        let baseHp = 1000 + currentTalents.hp * 50; let pDef = currentTalents.def * 5; let pAtk = (selectedWeapon === 'laser' ? 10 : (selectedWeapon === 'magic_star' ? 40 : 30)) + currentTalents.atk * 2; let pSpd = 230 + currentTalents.spd * 10; 
+        player = { x: WORLD_W / 2, y: WORLD_H / 2, radius: 14, speed: pSpd, def: pDef, weapon: selectedWeapon, baseAtk: pAtk, shootCooldown: 0, shootDelay: (selectedWeapon === 'laser' ? 0.5 : (selectedWeapon === 'magic_star' ? 0.65 : 0.32)), bulletSpeed: 850, bulletRadius: 4, atkMultiplier: 1, critChance: 0.08, critMultiplier: 2.0, invincibleTimer: 0, flashTimer: 0, aimAngle: 0, hp: baseHp, darkburnCd: 0, starPulse: 0, isDead: false, skills: { expansion:0, refinement:0, gravity:0, drawSpeed:0, regen:0, maxHpUp:0, lifesteal:0, bulletPower:0, fireRate:0, agility:0, isincos:0, bomb:0, downgrade:0, darksurge:0, darkburn:0, darkmine:0, splitShot:0, burstShot:0, scatter:0, orbitalStrike:0, photonRift:0, matrixBlade:0, supernova:0, laserDrone:0, overcharge:0, prism:0, summon_ring:0, star_prison:0, meteor_shower:0, void_vortex:0, astral_shield:0, rapid_draw:0, twin_stars:0, starlight_echo:0, star_chain:0, star_resonance:0 }, timers: { isincos:12, bomb:6, downgrade:55, darksurge:8, darkmine:5, orbitalStrike:12, photonRift:15, matrixBlade:15, supernova:10, laserDrone:12, summon_ring:8, star_prison:15, meteor_shower:12, void_vortex:20, astral_shield:18 }, darksurgeDuration: 0, matrixBladeDuration: 0 }; 
+        cameraX = safeNum(player.x - VIEW_W / 2, 0); cameraY = safeNum(player.y - VIEW_H / 2, 0); 
+    }
     function getMaxHP() { return 1000 + currentTalents.hp * 50 + [0,200,400,600,800,1000][player ? player.skills.maxHpUp||0 : 0]; }
     function getExpMulti() { return 1 + [0,0.2,0.25,0.3,0.35,0.4][player ? player.skills.refinement||0 : 0]; }
     function getPickupRange() { return 100 * (1 + [0,0.3,0.4,0.5,0.6,0.7][player ? player.skills.gravity||0 : 0]); }
     function getRangeMulti() { return 1 + [0,0.1,0.2,0.3,0.4,0.5][player ? player.skills.expansion||0 : 0]; }
     function getCdMulti() { return 1 - [0,0.1,0.15,0.2,0.25,0.3][player ? player.skills.drawSpeed||0 : 0]; }
     function getPlayerSpeed() { return (230 + currentTalents.spd * 10) * (1 + (player ? player.skills.agility||0 : 0) * 0.05); }
-    function getShootDelay() { let lv = player ? player.skills.fireRate||0 : 0; let baseD = selectedWeapon === 'laser' ? 0.5 : 0.32; return baseD * (1 - Math.min(lv * 0.1, 0.7)); }
+    function getShootDelay() { 
+        let lv = player ? player.skills.fireRate||0 : 0; 
+        let baseD = selectedWeapon === 'laser' ? 0.5 : (selectedWeapon === 'magic_star' ? 0.65 : 0.32); 
+        let m = baseD * (1 - Math.min(lv * 0.1, 0.7)); 
+        if(selectedWeapon === 'magic_star' && player.skills.rapid_draw > 0) m *= (1 - [0, 0.15, 0.3, 0.45, 0.6, 0.8][player.skills.rapid_draw]);
+        return m;
+    }
     function getBulletDamageMulti() { return 1 + (player ? player.skills.bulletPower||0 : 0) * 0.05; }
     function getScatterCount() { return 1 + (player ? player.skills.scatter||0 : 0); }
-    function getSkillMaxCd(id) { if (!player) return 1; let lv = player.skills[id]||0; if(id === 'isincos') return 15 * getCdMulti() * (lv >= 4 ? 0.85 : (lv >= 2 ? 0.9 : 1)); if(id === 'bomb') return 8 * getCdMulti() * (lv >= 3 ? 0.9 : 1); if(id === 'downgrade') return 60 * getCdMulti(); if(id === 'darksurge') return [0,9,8,7,6,5][lv] * getCdMulti(); if(id === 'darkmine') return [0,5,4.5,3,2.5,2][lv] * getCdMulti(); if(id === 'orbitalStrike') return [0, 12, 10, 8, 6, 6][lv] * getCdMulti(); if(id === 'photonRift') return [0, 15, 13, 11, 9, 8][lv] * getCdMulti(); if(id === 'matrixBlade') return [0, 15, 15, 12, 12, 0][lv] * getCdMulti(); if(id === 'supernova') return [0, 10, 9, 8, 7, 5][lv] * getCdMulti(); if(id === 'laserDrone') return [0, 12, 12, 10, 10, 8][lv] * getCdMulti(); return 1; }
+    function getSkillMaxCd(id) { if (!player) return 1; let lv = player.skills[id]||0; if(id === 'isincos') return 15 * getCdMulti() * (lv >= 4 ? 0.85 : (lv >= 2 ? 0.9 : 1)); if(id === 'bomb') return 8 * getCdMulti() * (lv >= 3 ? 0.9 : 1); if(id === 'downgrade') return 60 * getCdMulti(); if(id === 'darksurge') return [0,9,8,7,6,5][lv] * getCdMulti(); if(id === 'darkmine') return [0,5,4.5,3,2.5,2][lv] * getCdMulti(); if(id === 'orbitalStrike') return [0, 12, 10, 8, 6, 6][lv] * getCdMulti(); if(id === 'photonRift') return [0, 15, 13, 11, 9, 8][lv] * getCdMulti(); if(id === 'matrixBlade') return [0, 15, 15, 12, 12, 0][lv] * getCdMulti(); if(id === 'supernova') return [0, 10, 9, 8, 7, 5][lv] * getCdMulti(); if(id === 'laserDrone') return [0, 12, 12, 10, 10, 8][lv] * getCdMulti(); if(id === 'summon_ring') return [0, 8, 8, 6, 6, 6][lv] * getCdMulti(); if(id === 'star_prison') return [0, 15, 15, 15, 15, 15][lv] * getCdMulti(); if(id === 'meteor_shower') return [0, 12, 12, 10, 10, 8][lv] * getCdMulti(); if(id === 'void_vortex') return [0, 20, 20, 20, 20, 20][lv] * getCdMulti(); if(id === 'astral_shield') return [0, 18, 18, 18, 18, 18][lv] * getCdMulti(); return 1; }
     function getDarkburnCd() { let lv = player.skills.darkburn || 0; if (lv === 0) return 999; if (lv >= 5) return 0; return Math.max(0.1, 5 - 3); }
     function formatTime(seconds) { let m = Math.floor(seconds / 60).toString().padStart(2, '0'); let s = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${m}:${s}`; }
     function resize() { VIEW_W = window.innerWidth; VIEW_H = window.innerHeight; canvas.width = VIEW_W * window.devicePixelRatio; canvas.height = VIEW_H * window.devicePixelRatio; ctx.scale(window.devicePixelRatio, window.devicePixelRatio); }
@@ -777,7 +1035,7 @@
     function updateDamagePanel() { const list = document.getElementById('damage-list'); if (!list || damagePanelCollapsed) return; const oldPos = {}; Array.from(list.children).forEach(child => { oldPos[child.id] = child.getBoundingClientRect().top; }); const sorted = Object.entries(damageStats).sort((a,b) => b[1] - a[1]); sorted.forEach(([key, val], index) => { let item = document.getElementById(`dmg-item-${key}`); if (!item) { item = document.createElement('div'); item.id = `dmg-item-${key}`; item.className = 'damage-entry'; item.innerHTML = `<div class="damage-skill-name">${SKILL_NAMES[key]||key}</div><div class="damage-value">0</div>`; list.appendChild(item); } const valEl = item.querySelector('.damage-value'); const strVal = Math.floor(val).toLocaleString(); if (valEl.textContent !== strVal) { valEl.textContent = strVal; valEl.classList.remove('dmg-pop-anim'); void valEl.offsetWidth; valEl.classList.add('dmg-pop-anim'); } if (list.children[index] !== item) list.insertBefore(item, list.children[index]); }); Array.from(list.children).forEach(child => { const oldTop = oldPos[child.id]; if (oldTop !== undefined) { const newTop = child.getBoundingClientRect().top; const deltaY = oldTop - newTop; if (deltaY !== 0) { child.style.transition = 'none'; child.style.transform = `translateY(${deltaY}px)`; requestAnimationFrame(() => { child.style.transition = 'transform 0.4s ease-out'; child.style.transform = ''; }); } } }); }
     function addScoreEffect() { const el = document.getElementById('score-span'); el.textContent = score; el.classList.remove('score-pop'); void el.offsetWidth; el.classList.add('score-pop'); comboCount++; comboTimer = 2.0; const comboEl = document.getElementById('combo-display'); if (comboCount > 1) { comboEl.textContent = `Combo x${comboCount}!`; comboEl.classList.add('active'); comboEl.style.transform = `translateX(0) scale(${1.1 + Math.random()*0.2})`; } }
 
-    function startGame() { try { initAudio(); initPlayer(); enemies=[]; bullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[]; lasers=[]; bombs=[]; downgradeRings=[]; floorTexts=[]; items=[]; activeSingularities=[]; chainEffects=[]; bulletTrails=[]; shatterPieces=[]; darkmines=[]; burstQueue=[]; damageStats={}; recentDamageList=[]; orbitalStrikes=[]; photonRifts=[]; supernovas=[]; drones=[]; stats = { kills: 0, totalDamage: 0, bossesKilled: 0 }; comboCount = 0; comboTimer = 0; currentDps = 0; screenRedFlash = 0; score = 0; level = 1; xp = 0; xpToNext = 50; gameTime = 0; playerDeadTimer = 0; enemyIdCounter = 0; screenShake = 0; spawnTimer = 0; eventsTriggered = { 60:false,120:false,180:false,240:false,300:false }; activeEvent = null; eventTimer = 0; coreBreathPhase = 0; coreShootPulse = 0; coreSkillCharge = 0; coreChargeActive = false; bossSystem = { active: false, gathering: false, gatherPoint: {x:0,y:0}, cooldown: 60, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null, introTimer: 0 }; document.getElementById('event-log').innerHTML=''; document.getElementById('damage-list').innerHTML=''; document.getElementById('score-span').textContent='0'; document.getElementById('dps-span').textContent='0'; document.getElementById('combo-display').classList.remove('active'); document.getElementById('boss-ui').classList.remove('visible'); ['hud-top','score-display','skill-tracker','damage-panel'].forEach(id => { document.getElementById(id).classList.add('visible'); }); document.getElementById('pause-btn-wrap').style.display='block'; document.getElementById('dps-display').style.display='inline-block'; updateHPUI(); updateXPUI(); updateSkillPanelUI(); lastTime = performance.now(); gameRunning = true; isGameOver = false; isPaused = false; isUpgrading = false; stickEnd(); } catch(e) { alert("引擎启动失败，请检查浏览器配置！\n" + e.message); } }
+    function startGame() { try { initAudio(); initPlayer(); enemies=[]; bullets=[]; enemyBullets=[]; particles=[]; textParticles=[]; expOrbs=[]; trails=[]; lasers=[]; bombs=[]; downgradeRings=[]; floorTexts=[]; items=[]; activeSingularities=[]; chainEffects=[]; bulletTrails=[]; shatterPieces=[]; darkmines=[]; burstQueue=[]; damageStats={}; recentDamageList=[]; orbitalStrikes=[]; photonRifts=[]; supernovas=[]; drones=[]; magicArrays=[]; friendlyRings=[]; meteorShowers=[]; voidVortexes=[]; stats = { kills: 0, totalDamage: 0, bossesKilled: 0, eliteKills: 0, specialKills: 0 }; comboCount = 0; comboTimer = 0; currentDps = 0; screenRedFlash = 0; score = 0; level = 1; xp = 0; xpToNext = 50; gameTime = 0; playerDeadTimer = 0; enemyIdCounter = 0; screenShake = 0; spawnTimer = 0; eventsTriggered = { 60:false,120:false,180:false,240:false,300:false }; activeEvent = null; eventTimer = 0; coreBreathPhase = 0; coreShootPulse = 0; coreSkillCharge = 0; coreChargeActive = false; bossSystem = { active: false, gathering: false, gatherPoint: {x:0,y:0}, cooldown: 60, absorbedHp: 0, minTier: 99, maxTier: 0, bossEntity: null, introTimer: 0 }; document.getElementById('event-log').innerHTML=''; document.getElementById('damage-list').innerHTML=''; document.getElementById('score-span').textContent='0'; document.getElementById('dps-span').textContent='0'; document.getElementById('combo-display').classList.remove('active'); document.getElementById('boss-ui').classList.remove('visible'); ['hud-top','score-display','skill-tracker','damage-panel'].forEach(id => { document.getElementById(id).classList.add('visible'); }); document.getElementById('pause-btn-wrap').style.display='block'; document.getElementById('dps-display').style.display='inline-block'; updateHPUI(); updateXPUI(); updateSkillPanelUI(); lastTime = performance.now(); gameRunning = true; isGameOver = false; isPaused = false; isUpgrading = false; stickEnd(); } catch(e) { alert("引擎启动失败，请检查浏览器配置！\n" + e.message); } }
 
     function endGame() { 
         try { 
@@ -788,16 +1046,27 @@
             
             let loadedSkills = []; if (player && player.skills) { for (let k in player.skills) { if (player.skills[k] > 0) loadedSkills.push(`${SKILL_NAMES[k]||k}Lv.${player.skills[k]}`); } } let skillStr = loadedSkills.length > 0 ? loadedSkills.join(' | ') : '基础形态'; 
             let histData = { date: new Date().toLocaleString(), score: score, time: gameTime, kills: stats.kills, bosses: stats.bossesKilled, dmg: stats.totalDamage, level: level, diff: selectedDiff, weapon: selectedWeapon, talents: { ...currentTalents }, skills: skillStr }; 
-            
             saveLocalHistory(histData); 
 
-            document.getElementById('end-time').textContent = formatTime(gameTime); document.getElementById('end-score').textContent = score; document.getElementById('end-level').textContent = `Lv.${level}`; document.getElementById('end-kills').textContent = `${stats.kills} | ${stats.bossesKilled}`; document.getElementById('end-setup').textContent = `${selectedDiff} | ${selectedWeapon==='laser'?'激光':'基础炮'}`; document.getElementById('end-damage').textContent = Math.floor(stats.totalDamage).toLocaleString(); document.getElementById('end-talents').textContent = `HP:${currentTalents.hp} ATK:${currentTalents.atk} REG:${currentTalents.regen} SPD:${currentTalents.spd} DEF:${currentTalents.def}`; document.getElementById('end-skills').textContent = skillStr; 
+            // ==========================================
+            // 核心获取平滑计算公式：
+            // 基础得分项 = (分数/200) + 击杀*0.2 + 特殊击杀*3 + 精英击杀*10 + 首领击杀*100 + 存活时间/5 + 最终等级*5
+            // 最终收益 = 基础得分项 ^ 0.9 * 3 （指数0.9用于平滑压制后期指数级膨胀的分数，避免货币彻底崩溃）
+            // ==========================================
+            let baseFormula = (score / 200) + stats.kills * 0.2 + stats.specialKills * 3 + stats.eliteKills * 10 + stats.bossesKilled * 100 + (gameTime / 5) + level * 5;
+            let earnedCores = Math.floor(Math.pow(baseFormula, 0.9) * 3);
+            if (isNaN(earnedCores) || earnedCores < 0 || isOfflineMode) earnedCores = 0;
+
+            document.getElementById('end-time').textContent = formatTime(gameTime); document.getElementById('end-score').textContent = score; document.getElementById('end-level').textContent = `Lv.${level}`; document.getElementById('end-kills').textContent = `${stats.kills} | ${stats.bossesKilled}`; document.getElementById('end-setup').textContent = `${selectedDiff} | ${selectedWeapon==='laser'?'激光':(selectedWeapon==='magic_star'?'星芒法绘':'基础炮')}`; document.getElementById('end-damage').textContent = Math.floor(stats.totalDamage).toLocaleString(); document.getElementById('end-talents').textContent = `HP:${currentTalents.hp} ATK:${currentTalents.atk} REG:${currentTalents.regen} SPD:${currentTalents.spd} DEF:${currentTalents.def}`; document.getElementById('end-skills').textContent = skillStr; 
+            document.getElementById('end-cores').textContent = isOfflineMode ? '游客模式无法获取' : `+${earnedCores}`;
             
             setTimeout(async ()=>{ 
                 if (!isOfflineMode && isDbUsable && currentUser) { 
                     let savedName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0]; 
+                    userProfile.cores += earnedCores;
+                    userProfile.bonusTalents = 0; // 重置药剂附加潜能点
                     try { 
-                        await autoUploadToLeaderboard(savedName, histData);
+                        await autoUploadMatchAndLeaderboard(savedName, histData);
                     } catch(e) {} 
                 } 
             }, 300); 
@@ -806,7 +1075,7 @@
         } catch(e) { document.getElementById('end-modal').classList.add('active'); } 
     }
 
-    function updateSkillPanelUI() { const tracker = document.getElementById('skill-tracker'); tracker.innerHTML = ''; if (!player) return; for (let key in player.skills) { if (player.skills[key] > 0) { let isCD = ['isincos','bomb','downgrade','darksurge','darkmine','orbitalStrike','photonRift','matrixBlade','supernova','laserDrone'].includes(key); tracker.innerHTML += `<div class="skill-badge" id="badge-${key}"> ${isCD ? `<div class="skill-cd-bg" id="cd-${key}"></div>` : ''} <span class="skill-name-txt">${SKILL_NAMES[key]||key}</span> <span class="skill-lv-txt">Lv.${player.skills[key]}</span></div>`; } } }
+    function updateSkillPanelUI() { const tracker = document.getElementById('skill-tracker'); tracker.innerHTML = ''; if (!player) return; for (let key in player.skills) { if (player.skills[key] > 0) { let isCD = ['isincos','bomb','downgrade','darksurge','darkmine','orbitalStrike','photonRift','matrixBlade','supernova','laserDrone','summon_ring','star_prison','meteor_shower','void_vortex','astral_shield'].includes(key); tracker.innerHTML += `<div class="skill-badge" id="badge-${key}"> ${isCD ? `<div class="skill-cd-bg" id="cd-${key}"></div>` : ''} <span class="skill-name-txt">${SKILL_NAMES[key]||key}</span> <span class="skill-lv-txt">Lv.${player.skills[key]}</span></div>`; } } }
     function triggerEvent(msg, type, duration) { if (type !== 'normal') { activeEvent = type; eventTimer = duration; } const logBox = document.getElementById('event-log'); if (!logBox) return; const item = document.createElement('div'); item.className = 'event-item'; item.innerHTML = `<span style="color:#d9381e;font-weight:bold;">[${formatTime(gameTime)}]</span> ${msg}`; logBox.prepend(item); if (logBox.children.length > 5) logBox.removeChild(logBox.lastChild); playSound('xp'); setTimeout(() => { if (item && item.parentNode) { item.style.opacity = '0'; item.style.transform = 'translateX(-30px)'; setTimeout(() => { if (item.parentNode) item.parentNode.removeChild(item); }, 300); } }, 3000); }
     function updateHPUI() { if (!player) return; const cur = Math.ceil(Math.max(0, player.hp)); const mHp = getMaxHP(); let txt = document.getElementById('hp-text'); let fill = document.getElementById('hp-bar-fill'); if (txt) txt.textContent = `${cur}/${mHp}`; if (fill) fill.style.width = Math.min(100, (cur/mHp)*100) + '%'; }
     function updateXPUI() { let txt = document.getElementById('xp-text'); let fill = document.getElementById('xp-bar-fill'); let lv = document.getElementById('hud-level'); if (txt) txt.textContent = `${Math.floor(xp)}/${xpToNext}`; if (fill) fill.style.width = Math.min(100, (xp/xpToNext)*100) + '%'; if (lv) lv.textContent = `Lv.${level}`; }
@@ -848,7 +1117,7 @@
         const choice = currentUpgradeChoices[index];
         if (choice.id === 'heal') { player.hp = Math.min(getMaxHP(), player.hp + getMaxHP() * 0.3); } 
         else if (choice.id === 'maxHpUp') { const oldMax = getMaxHP(); player.skills.maxHpUp = (player.skills.maxHpUp || 0) + 1; player.hp += getMaxHP() - oldMax; } 
-        else { player.skills[choice.id] = (player.skills[choice.id] || 0) + 1; if (['isincos','bomb','downgrade','darksurge','darkmine', 'orbitalStrike','photonRift','matrixBlade','supernova','laserDrone'].includes(choice.id)) { if (player.skills[choice.id] === 1) player.timers[choice.id] = getSkillMaxCd(choice.id); } if (choice.id === 'darksurge' && player.skills.darksurge >= 5) { player.darksurgeDuration = Infinity; } if (choice.id === 'matrixBlade' && player.skills.matrixBlade >= 5) { player.matrixBladeDuration = Infinity; } }
+        else { player.skills[choice.id] = (player.skills[choice.id] || 0) + 1; if (['isincos','bomb','downgrade','darksurge','darkmine', 'orbitalStrike','photonRift','matrixBlade','supernova','laserDrone','summon_ring','star_prison','meteor_shower','void_vortex','astral_shield'].includes(choice.id)) { if (player.skills[choice.id] === 1) player.timers[choice.id] = getSkillMaxCd(choice.id); } if (choice.id === 'darksurge' && player.skills.darksurge >= 5) { player.darksurgeDuration = Infinity; } if (choice.id === 'matrixBlade' && player.skills.matrixBlade >= 5) { player.matrixBladeDuration = Infinity; } }
         document.getElementById('upgrade-overlay').classList.remove('active'); stickEnd();
         gameRunning = true; isUpgrading = false; player.invincibleTimer = 2.0; player.flashTimer = 2.0; particles.push({x:player.x, y:player.y, type:'pulse', life:0.4, maxLife:0.4, radius:250}); for (let e of enemies) { const dx = e.x - player.x, dy = e.y - player.y, d = Math.sqrt(dx*dx + dy*dy); if (d < 250 && d > 0) { e.x += (dx/d) * 150; e.y += (dy/d) * 150; } } playSound('laser_pew'); updateHPUI(); updateSkillPanelUI(); if (xp >= xpToNext) setTimeout(() => triggerLevelUp(), 100);
     }
@@ -856,13 +1125,37 @@
     function createLightningPath(x1, y1, x2, y2) { const dx = x2 - x1, dy = y2 - y1, dist = Math.sqrt(dx*dx + dy*dy); if (dist === 0) return [{x: x1, y: y1}, {x: x2, y: y2}]; const segs = 1 + Math.floor(Math.random() * 2); const pts = [{x: x1, y: y1}]; const perpX = -dy / dist, perpY = dx / dist; for (let i = 1; i <= segs; i++) { const t = i / (segs + 1); const offset = (Math.random() - 0.5) * dist * 0.4; pts.push({ x: x1 + dx*t + perpX*offset, y: y1 + dy*t + perpY*offset }); } pts.push({x: x2, y: y2}); return pts; }
     function processDarkChain(firstTarget, baseDmg) { const lv = player.skills.darksurge; if (!lv) return; const chainCount = [0, 1, 2, 3, 3, 4][lv]; const dmgRatios = (lv >= 5) ? [0.9, 0.81, 0.73, 0.65] : [[], [0.7], [0.7, 0.5], [0.7, 0.5, 0.3], [0.9, 0.7, 0.5], [0.9, 0.7, 0.5, 0.3]][lv] || [0.5]; let cur = firstTarget; const hitSet = new Set([firstTarget.id]); for (let i = 0; i < chainCount; i++) { let next = null, minD = Infinity; for (const e of enemies) { if (e.isDead || hitSet.has(e.id)) continue; const dSq = (e.x - cur.x)**2 + (e.y - cur.y)**2; if (dSq < 300*300 && dSq < minD) { minD = dSq; next = e; } } if (!next) break; const dmg = baseDmg * (dmgRatios[i] || 0.5); damageEnemy(next, dmg, false, 'darksurge'); chainEffects.push({ path: createLightningPath(cur.x, cur.y, next.x, next.y), life: 0.35, maxLife: 0.35 }); playSound('chain'); hitSet.add(next.id); cur = next; } }
 
+    function spawnMagicArrayTargeting(validEnemies) {
+        if(validEnemies.length === 0) return;
+        let target = validEnemies[0];
+        let dmgEach = player.baseAtk * (player.atkMultiplier || 1) * getBulletDamageMulti();
+        magicArrays.push({ targetId: target.id, x: target.x, y: target.y, life: 0.8, maxLife: 0.8, dmg: dmgEach, radius: 45 * getRangeMulti(), isDark: true, type: 'weapon_magic' });
+        
+        // 被动：双子星
+        if(player.skills.twin_stars > 0 && validEnemies.length > 1) {
+            let chances = [0, 0.1, 0.2, 0.3, 0.4, 1.0];
+            if(Math.random() < chances[player.skills.twin_stars]) {
+                let t2 = validEnemies[1];
+                magicArrays.push({ targetId: t2.id, x: t2.x, y: t2.y, life: 0.8, maxLife: 0.8, dmg: dmgEach, radius: 45 * getRangeMulti(), isDark: true, type: 'weapon_magic' });
+            }
+        }
+    }
+
     function executeFire(isBurst = false) {
-        let hasEnemyInView = false; for (const e of enemies) { if (!e.isDead && isInView(e.x, e.y, 200)) { hasEnemyInView = true; break; } } if (!hasEnemyInView) return;
+        let hasEnemyInView = false; for (const e of enemies) { if (!e.isDead && isInView(e.x, e.y, 250)) { hasEnemyInView = true; break; } } if (!hasEnemyInView) return;
         const baseAngle = player.aimAngle; const isDark = player.darksurgeDuration > 0;
         if (player.weapon === 'laser') {
             let pCount = 1 + (player.skills.prism || 0); let pSpread = 0.4; if(pCount >= 6) pSpread = Math.PI * 2; let step = pCount > 1 ? pSpread / (pCount - 1) : 0; if(pCount >= 6) step = Math.PI * 2 / pCount; let start = pCount % 2 === 0 ? baseAngle - step * (pCount / 2 - 0.5) : baseAngle - pSpread / 2; let overchargeLv = player.skills.overcharge || 0; let dmgMult = 1 + [0, 0.3, 0.6, 1.0, 1.5, 2.5][overchargeLv]; let widthMult = 1 + overchargeLv * 0.4; let lifeTime = 0.15; let dmgEach = player.baseAtk * (player.atkMultiplier || 1) * getBulletDamageMulti() * dmgMult;
             for(let i = 0; i < pCount; i++) { let ang = pCount > 1 ? (start + step * i) : baseAngle; lasers.push({ x: player.x, y: player.y, angle: ang, life: lifeTime, maxLife: lifeTime, dmg: dmgEach, hitSet: new Set(), hitMap: new Map(), widthOffset: widthMult * 0.4, bw: false, isEnemy: false, isMainWeapon: true, isDark, skillKey: 'weapon_laser' }); }
             playSound('laser_pew'); coreShootPulse = 1.0;
+        } else if (player.weapon === 'magic_star') {
+            let validEnemies = enemies.filter(e => !e.isDead && isInView(e.x, e.y, 400)).sort((a,b) => ((a.x-player.x)**2+(a.y-player.y)**2) - ((b.x-player.x)**2+(b.y-player.y)**2));
+            if (validEnemies.length > 0) {
+                spawnMagicArrayTargeting(validEnemies);
+                playSound('laser_pew');
+                player.starPulse = 1.0;
+                coreShootPulse = 1.0;
+            }
         } else {
             const sc = getScatterCount(); const dmgEach = player.baseAtk * (player.atkMultiplier || 1) * getBulletDamageMulti(); const spread = 0.35; const step = sc > 1 ? spread / (sc - 1) : 0; const startAngle = sc % 2 === 0 ? baseAngle - step * (sc / 2 - 0.5) : baseAngle - spread / 2;
             for (let i = 0; i < sc; i++) { const baseAng = sc > 1 ? (startAngle + step * i) : baseAngle; const finalAng = baseAng + (Math.random() - 0.5) * 0.25; bullets.push({ x: player.x, y: player.y, vx: Math.cos(finalAng) * player.bulletSpeed, vy: Math.sin(finalAng) * player.bulletSpeed, radius: player.bulletRadius, life: 3, dmg: dmgEach, hitSet: new Set(), isSplit: false, isDark, type: 'weapon_basic' }); }
@@ -870,33 +1163,106 @@
         }
     }
 
-    function fireBasicShoot() { let hasEnemyInView = false; for (const e of enemies) { if (!e.isDead && isInView(e.x, e.y, 200)) { hasEnemyInView = true; break; } } if (!hasEnemyInView) return; executeFire(false); if(player.weapon === 'basic') { let burstLv = player.skills.burstShot || 0; if (burstLv > 0) { for (let i = 1; i <= burstLv; i++) burstQueue.push(0.12 * i); } } }
+    function fireBasicShoot() { let hasEnemyInView = false; for (const e of enemies) { if (!e.isDead && isInView(e.x, e.y, 250)) { hasEnemyInView = true; break; } } if (!hasEnemyInView) return; executeFire(false); if(player.weapon === 'basic') { let burstLv = player.skills.burstShot || 0; if (burstLv > 0) { for (let i = 1; i <= burstLv; i++) burstQueue.push(0.12 * i); } } }
     function triggerSplit(sx, sy) { if(player.weapon !== 'basic') return; const lv = player.skills.splitShot; if (!lv) return; const count = [0, 1, 1, 2, 2, 3][lv]; const dmgPct = [0, 0.3, 0.4, 0.4, 0.5, 0.7][lv]; const isDark = player.darksurgeDuration > 0; const dmg = player.baseAtk * dmgPct * (player.atkMultiplier || 1) * getBulletDamageMulti(); for (let i = 0; i < count; i++) { const ang = Math.random() * Math.PI * 2; bullets.push({ x: sx, y: sy, vx: Math.cos(ang) * player.bulletSpeed * 0.8, vy: Math.sin(ang) * player.bulletSpeed * 0.8, radius: 3, life: 1.5, dmg: dmg, hitSet: new Set(), isSplit: true, isDark, type: 'skill_split' }); } }
-    function spawnShatterPieces(e) { if (e.sides < 3) return; const col = e.isBoss ? 'rgba(255,50,50,0.9)' : THEME.main; for (let i = 0; i < e.sides; i++) { const a1 = e.angle + (i * 2 * Math.PI) / e.sides; const a2 = e.angle + ((i+1) * 2 * Math.PI) / e.sides; const pAng = (a1 + a2) / 2; shatterPieces.push({ x: e.x, y: e.y, vx: Math.cos(pAng) * (100 + Math.random()*200), vy: Math.sin(pAng) * (100 + Math.random()*200), rot: e.angle, spin: (Math.random()-0.5)*15, life: 0.5 + Math.random()*0.4, maxLife: 0.9, p1x: Math.cos(a1)*e.radius, p1y: Math.sin(a1)*e.radius, p2x: Math.cos(a2)*e.radius, p2y: Math.sin(a2)*e.radius, color: col }); } }
+    function spawnShatterPieces(e) { if (e.sides < 3) return; const col = e.isBoss ? 'rgba(255,50,50,0.9)' : (e.sType==='split'?'#2ecc71':(e.sType==='heal'?'#3498db':(e.sType==='shooter'?'#e74c3c':THEME.main))); for (let i = 0; i < e.sides; i++) { const a1 = e.angle + (i * 2 * Math.PI) / e.sides; const a2 = e.angle + ((i+1) * 2 * Math.PI) / e.sides; const pAng = (a1 + a2) / 2; shatterPieces.push({ x: e.x, y: e.y, vx: Math.cos(pAng) * (100 + Math.random()*200), vy: Math.sin(pAng) * (100 + Math.random()*200), rot: e.angle, spin: (Math.random()-0.5)*15, life: 0.5 + Math.random()*0.4, maxLife: 0.9, p1x: Math.cos(a1)*e.radius, p1y: Math.sin(a1)*e.radius, p2x: Math.cos(a2)*e.radius, p2y: Math.sin(a2)*e.radius, color: col }); } }
 
     function damageEnemy(e, baseDmg, forceCrit=false, skillKey='weapon_basic', silent=false) {
-        if (!e || e.isDead) return; const isCrit = forceCrit || (Math.random() < player.critChance); const mitigation = 100 / (100 + (e.def || 0)); const fluctuation = 0.85 + Math.random() * 0.3; const finalDmg = baseDmg * fluctuation * mitigation * (isCrit ? player.critMultiplier : 1);
-        e.hp -= finalDmg; e.hitTimer = 0.12; recordDamage(skillKey, finalDmg);
+        if (!e || e.isDead) return; 
+        const isCrit = forceCrit || (Math.random() < player.critChance); 
+        let mitigation = 100 / (100 + (e.def || 0)); 
+        if (e.isElite && e.shield > 0) mitigation *= 0.5; // 护盾期间减伤
+        const fluctuation = 0.85 + Math.random() * 0.3; 
+        const finalDmg = baseDmg * fluctuation * mitigation * (isCrit ? player.critMultiplier : 1);
+        
+        if (e.isElite && e.shield > 0) { e.shield -= finalDmg; if(e.shield < 0) { e.hp += e.shield; e.shield = 0; triggerEvent("精英护盾已击破！", "normal", 0); } } 
+        else { e.hp -= finalDmg; }
+        
+        e.hitTimer = 0.12; recordDamage(skillKey, finalDmg);
         if(e.isBoss) { let hpBar = document.getElementById('boss-hp-fill'); let hpText = document.getElementById('boss-hp-text'); if(hpBar) { let pct = (e.hp / e.maxHp) * 100; hpBar.style.width = Math.min(100, Math.max(0, pct)) + '%'; if(hpText) hpText.textContent = `${Math.ceil(Math.max(0, e.hp))} / ${Math.ceil(e.maxHp)} (${Math.floor(Math.max(0, pct))}%)`; } }
         if (!silent) { const radOffset = Math.random() * (e.radius * 0.8); const angOffset = Math.random() * Math.PI * 2; const px = e.x + Math.cos(angOffset) * radOffset; const py = e.y + Math.sin(angOffset) * radOffset; textParticles.push({ x: px, baseX: px, y: py, text: `-${Math.ceil(finalDmg)}${isCrit?'!':''}`, life: 0.9, maxLife: 0.9, vy: -70 - Math.random() * 30, vx: (Math.random() - 0.5) * 20, isDmg: true, wobbleSpeed: 6 + Math.random() * 6, wobbleOffset: Math.random() * Math.PI * 2, hueStart: 30 + Math.random() * 20, hueEnd: 0 + Math.random() * 10, size: isCrit ? 20 : 15 }); if (isCrit) playSound('crit'); else playSound('hit'); }
-        if (player.skills.darkburn > 0 && skillKey !== 'darkburn') { if (player.darkburnCd <= 0) { const lv = player.skills.darkburn; const damages = [0, 5, 7, 10, 15, 20]; const finalBurnDmg = damages[lv] + (lv === 5 ? 20 : 0); e.burnEffect = { duration: [0,2,3,4,5,8][lv], interval: [0,0.8,0.7,0.6,0.5,0.2][lv], damage: finalBurnDmg, timer: 0, sparkPhase: 0 }; player.darkburnCd = getDarkburnCd(); } }
+        
+        // 暗能灼烧叠加逻辑
+        if ((player.skills.darkburn > 0 && skillKey !== 'darkburn') || skillKey === 'weapon_magic') { 
+            if (player.darkburnCd <= 0 || skillKey === 'weapon_magic') { 
+                const lv = player.skills.darkburn || 1; 
+                const damages = [0, 5, 8, 12, 18, 30]; 
+                const maxStacks = [0, 1, 2, 3, 4, 10][lv] || 1;
+                
+                if (e.burnEffect) {
+                    e.burnEffect.stacks = Math.min(maxStacks, e.burnEffect.stacks + 1);
+                    e.burnEffect.duration = [0,2,3,4,5,8][lv];
+                    e.burnEffect.timer = 0;
+                } else {
+                    e.burnEffect = { stacks: 1, duration: [0,2,3,4,5,8][lv], interval: [0,0.8,0.7,0.6,0.5,0.2][lv], damage: damages[lv], timer: 0, sparkPhase: 0 }; 
+                }
+                player.darkburnCd = getDarkburnCd(); 
+            } 
+        }
+        
         if (player.skills.lifesteal > 0 && player.hp < getMaxHP()) { const chance = [0, 0.05, 0.1, 0.15, 0.2, 0.3][player.skills.lifesteal]; if (Math.random() < chance) { player.hp = Math.min(getMaxHP(), player.hp + getMaxHP() * 0.01); updateHPUI(); if (!silent) { textParticles.push({ x: player.x, y: player.y - 25, text: `+HP`, life: 0.5, maxLife: 0.5, vy: -50, vx: 0, isDmg: false, color: '#34a853', size: 14 }); } } }
+        
         if (e.hp <= 0) {
             e.isDead = true; spawnShatterPieces(e); 
-            if (e.isBoss) { stats.bossesKilled++; screenShake = 30; playSound('bossRoar'); for (let k = 0; k < 40; k++) { expOrbs.push({ x: e.x, y: e.y, value: e.exp / 40, life: Infinity, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, targetS: null, ox: 0, oy: 0 }); } triggerEvent("领主被击破！核心结构瓦解。", "normal", 0); } else { stats.kills++; expOrbs.push({ x: e.x, y: e.y, value: e.exp, life: Infinity, vx: (Math.random() - 0.5) * 150, vy: (Math.random() - 0.5) * 150, targetS: null, ox: 0, oy: 0 }); if (Math.random() < 0.025) items.push({type: 'singularity', x: e.x, y: e.y, life: 20, rot: 0}); }
-            // 修复：爆破碎片的生命周期和抛射逻辑增强
-            for (let k = 0; k < (e.isBoss ? 40 : 8); k++) { particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), vy: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), life: e.isBoss ? 1.5 : 0.6, maxLife: e.isBoss ? 1.5 : 0.6, size: 2 + Math.random() * (e.isBoss ? 8 : 4), color: e.isBoss ? '#ff4500' : THEME.main }); }
+            // 满层暗灼死亡爆炸
+            if (e.burnEffect && player.skills.darkburn >= 3 && e.burnEffect.stacks >= [0,1,2,3,4,10][player.skills.darkburn]) {
+                 particles.push({x: e.x, y: e.y, type: 'pulse', life: 0.3, maxLife: 0.3, radius: 100, color: 'rgba(150,0,255,0.8)'});
+                 for(let e2 of enemies) { if(!e2.isDead && (e2.x-e.x)**2+(e2.y-e.y)**2 < 10000) { damageEnemy(e2, e.burnEffect.damage * 3, false, 'darkburn'); } }
+            }
+
+            // 特殊分裂怪死亡逻辑
+            if (e.sType === 'split' && e.sides > 3) {
+                let sc = 2 + Math.floor(Math.random() * 2);
+                for(let k=0; k<sc; k++) {
+                    const cnf = DIFF_CONFIG[selectedDiff].mult;
+                    enemies.push({ id: enemyIdCounter++, x: e.x + (Math.random()-0.5)*20, y: e.y + (Math.random()-0.5)*20, sides: e.sides-1, radius: e.radius*0.7, sizeMult: e.sizeMult*0.8, speed: e.speed*1.2, def: e.def*0.8, hp: e.maxHp*0.4, maxHp: e.maxHp*0.4, exp: e.exp*0.5, atk: e.atk*0.8, angle: Math.random()*Math.PI*2, spin: e.spin*1.5, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: false, overlapCount: 0, sType: 'none', isElite: false, shield: 0 });
+                }
+            }
+
+            if (e.isBoss) { 
+                stats.bossesKilled++; screenShake = 30; playSound('bossRoar'); 
+                for (let k = 0; k < 40; k++) { expOrbs.push({ x: e.x, y: e.y, value: e.exp / 40, life: Infinity, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, targetS: null, type: 'elite' }); } 
+                triggerEvent("领主被击破！核心结构瓦解。", "normal", 0); 
+            } else if (e.isElite) {
+                stats.eliteKills++; 
+                for (let k = 0; k < 8; k++) expOrbs.push({ x: e.x, y: e.y, value: e.exp/8 * 3, life: Infinity, vx: (Math.random() - 0.5) * 200, vy: (Math.random() - 0.5) * 200, targetS: null, type: 'elite' });
+            } else if (e.sType !== 'none') {
+                stats.specialKills++;
+                expOrbs.push({ x: e.x, y: e.y, value: e.exp * 2, life: Infinity, vx: (Math.random() - 0.5) * 150, vy: (Math.random() - 0.5) * 150, targetS: null, type: 'special' });
+            } else { 
+                stats.kills++; 
+                expOrbs.push({ x: e.x, y: e.y, value: e.exp, life: Infinity, vx: (Math.random() - 0.5) * 150, vy: (Math.random() - 0.5) * 150, targetS: null, type: 'normal' }); 
+                if (Math.random() < 0.025) items.push({type: 'singularity', x: e.x, y: e.y, life: 20, rot: 0}); 
+            }
+            
+            for (let k = 0; k < (e.isBoss ? 40 : 8); k++) { particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), vy: (Math.random() - 0.5) * (e.isBoss ? 800 : 220), life: e.isBoss ? 1.5 : 0.6, maxLife: e.isBoss ? 1.5 : 0.6, size: 2 + Math.random() * (e.isBoss ? 8 : 4), color: e.isBoss ? '#ff4500' : (e.sType==='split'?'#2ecc71':(e.sType==='heal'?'#3498db':(e.sType==='shooter'?'#e74c3c':THEME.main))) }); }
             score += Math.floor(e.maxHp / 10); addScoreEffect(); playSound('kill');
         }
     }
 
     function damagePlayer(amount) {
         if (!gameRunning || player.isDead || player.invincibleTimer > 0) return;
+        
+        if (player.skills.astral_shield > 0 && player.hasAstralShield) {
+            player.hasAstralShield = false;
+            player.invincibleTimer = 1.0;
+            playSound('bomb');
+            particles.push({x: player.x, y: player.y, type: 'pulse', life: 0.5, maxLife: 0.5, radius: 150, color: 'rgba(142,68,173,0.8)'});
+            let lv = player.skills.astral_shield;
+            if (lv >= 3) {
+                for(let e of enemies) { if(!e.isDead && (e.x-player.x)**2+(e.y-player.y)**2 < 200*200) { e.x += (e.x-player.x)*0.5; e.y += (e.y-player.y)*0.5; } }
+            }
+            if (lv >= 5) {
+                for(let e of enemies) { if(!e.isDead) damageEnemy(e, player.baseAtk * 10, false, 'astral_shield'); }
+                screenShake = 20;
+            }
+            return;
+        }
+
         const mitigation = 100 / (100 + player.def); const fluctuation = 0.85 + Math.random() * 0.3; const finalDmg = amount * mitigation * fluctuation;
         player.hp -= finalDmg; player.invincibleTimer = 0.5; player.flashTimer = 0.2; screenShake = Math.max(screenShake, 25); screenRedFlash = 1.0; updateHPUI(); playSound('playerHurt'); comboCount = 0; document.getElementById('combo-display').classList.remove('active');
         if (player.hp <= 0 && !player.isDead) { 
             player.hp = 0; player.isDead = true; playerDeadTimer = 2.5; screenShake = 80; playSound('bomb');
-            // 修复：主角死亡核爆粒子
             for(let k=0; k<100; k++) particles.push({x: player.x, y: player.y, vx: (Math.random()-0.5)*1200, vy: (Math.random()-0.5)*1200, life: 2.0, maxLife: 2.0, size: Math.random()*8+3, color: THEME.damage});
             document.getElementById('joystick-base').style.opacity = '0'; document.getElementById('pause-btn-wrap').style.display = 'none';
         }
@@ -911,14 +1277,29 @@
             let baseTier = 3; if (gameTime > 270 || activeEvent === 'endgame') baseTier = 3 + Math.floor(Math.random() * 5); else if (gameTime > 180 || activeEvent === 'elite') baseTier = 3 + Math.floor(Math.random() * 4); else if (gameTime > 90) baseTier = 3 + Math.floor(Math.random() * 3); else if (gameTime > 30) baseTier = 3 + Math.floor(Math.random() * 2);
             for (let i = 0; i < cluster; i++) {
                 const sides = Math.min(7, Math.max(3, baseTier + (Math.random() > 0.85 ? 1 : 0))); const stats = { 3: {r: 16, hp: 30, spd: 170, exp: 10, dmg: 60}, 4: {r: 20, hp: 75, spd: 130, exp: 20, dmg: 90}, 5: {r: 24, hp: 160, spd: 95, exp: 40, dmg: 140}, 6: {r: 30, hp: 320, spd: 65, exp: 80, dmg: 200}, 7: {r: 38, hp: 650, spd: 48, exp: 150, dmg: 320} }[sides];
-                const sm2 = 0.8 + Math.random() * 1.5; const timeMult = Math.pow(1.05, gameTime / 60); const atkMult = 1 + gameTime / 300; let fHp = stats.hp * Math.pow(sm2, 1.2) * timeMult * cnf.hp; let fSpd = (stats.spd / Math.sqrt(sm2)) * (0.9 + Math.random() * 0.2) * (1 + gameTime / 400) * cnf.spd; let fAtk = stats.dmg * atkMult * cnf.atk; let fDef = cnf.def + (gameTime / 60) * 5 + sides * 2; 
+                
+                let isElite = Math.random() < 0.02 + gameTime / 15000;
+                let sType = 'none';
+                if (!isElite && Math.random() < 0.08) {
+                    let r = Math.random();
+                    if(r < 0.33) sType = 'split'; else if(r < 0.66) sType = 'heal'; else sType = 'shooter';
+                }
+
+                let sm2 = 0.8 + Math.random() * 1.5; const timeMult = Math.pow(1.05, gameTime / 60); const atkMult = 1 + gameTime / 300; 
+                let fHp = stats.hp * Math.pow(sm2, 1.2) * timeMult * cnf.hp; 
+                let fSpd = (stats.spd / Math.sqrt(sm2)) * (0.9 + Math.random() * 0.2) * (1 + gameTime / 400) * cnf.spd; 
+                let fAtk = stats.dmg * atkMult * cnf.atk; 
+                let fDef = cnf.def + (gameTime / 60) * 5 + sides * 2; 
+                let eRad = stats.r * sm2;
+
+                if (isElite) { fHp *= 2; eRad *= 1.5; fAtk *= 1.5; }
                 if (activeEvent === 'speed_up' || activeEvent === 'endgame') fSpd *= 1.5;
-                enemies.push({ id: enemyIdCounter++, x: cx + (Math.random() - 0.5) * 100, y: cy + (Math.random() - 0.5) * 100, sides, radius: stats.r * sm2, sizeMult: sm2, speed: fSpd, def: fDef, hp: fHp, maxHp: fHp, exp: stats.exp * sm2, atk: fAtk, angle: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 4, hitTimer: 0, hitByRing: new Set(), isDead: false, burnEffect: null, isBoss: false, overlapCount: 0 });
+                
+                enemies.push({ id: enemyIdCounter++, x: cx + (Math.random() - 0.5) * 100, y: cy + (Math.random() - 0.5) * 100, sides, radius: eRad, sizeMult: sm2, speed: fSpd, def: fDef, hp: fHp, maxHp: fHp, exp: stats.exp * sm2, atk: fAtk, angle: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 4, hitTimer: 0, hitByRing: new Set(), isDead: false, burnEffect: null, isBoss: false, overlapCount: 0, isElite, shield: isElite ? fHp * 0.5 : 0, maxShield: isElite ? fHp * 0.5 : 0, sType, specialTimer: 0 });
             }
         }
     }
 
-    // 修复强化：加入全新的连招（黑洞、冲刺、扫射激光）
     function updateBossSystem(dt) {
         if (!bossSystem.active && !bossSystem.gathering && gameTime > 120) {
             if (Math.random() < (dt / 60)) { bossSystem.gathering = true; bossSystem.absorbedHp = 0; bossSystem.minTier = 99; bossSystem.maxTier = 0; let ang = Math.random() * Math.PI * 2; bossSystem.gatherPoint = { x: player.x + Math.cos(ang) * 500, y: player.y + Math.sin(ang) * 500 }; triggerEvent("警告：探测到极高浓度暗能反应！空间正在塌缩！", "elite", 10); playSound('bossRoar'); screenShake = 20; }
@@ -929,7 +1310,7 @@
             if (allAbsorbed || enemies.length === 0) {
                 bossSystem.gathering = false; bossSystem.active = true; bossSystem.introTimer = 2.0; if (bossSystem.minTier === 99) bossSystem.minTier = 3; if (bossSystem.maxTier === 0) bossSystem.maxTier = 5;
                 const cnf = DIFF_CONFIG[selectedDiff].mult; let finalHp = (50000 + bossSystem.absorbedHp * 4 + gameTime * 150) * cnf.hp; let finalRad = Math.min(200, 50 + finalHp / 2000); let finalDef = cnf.def * 2 + 50 + gameTime / 30;
-                let boss = { id: enemyIdCounter++, x: bossSystem.gatherPoint.x, y: bossSystem.gatherPoint.y, sides: 8, radius: finalRad, sizeMult: 5, speed: 70 * cnf.spd, def: finalDef, hp: finalHp, maxHp: finalHp, exp: finalHp * 0.1, atk: (400 + gameTime) * cnf.atk, angle: 0, spin: 1, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: true, phase: 'idle', phaseTimer: 2, laserCount: 0, morphPhase: 0 };
+                let boss = { id: enemyIdCounter++, x: bossSystem.gatherPoint.x, y: bossSystem.gatherPoint.y, sides: 8, radius: finalRad, sizeMult: 5, speed: 70 * cnf.spd, def: finalDef, hp: finalHp, maxHp: finalHp, exp: finalHp * 0.1, atk: (400 + gameTime) * cnf.atk, angle: 0, spin: 1, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: true, phase: 'idle', phaseTimer: 2, laserCount: 0, morphPhase: 0, sType: 'none', isElite: false, shield: 0 };
                 enemies.push(boss); bossSystem.bossEntity = boss; triggerEvent("【深渊领主】已重组降临！", "boss", 0); playSound('bossRoar'); screenShake = 25; let hpUI = document.getElementById('boss-ui'); if(hpUI) { hpUI.classList.add('visible'); document.getElementById('boss-hp-fill').style.width = '100%'; document.getElementById('boss-hp-text').textContent = `${Math.ceil(finalHp)} / ${Math.ceil(finalHp)} (100%)`; }
             }
         }
@@ -946,7 +1327,7 @@
                 else { b.phase = 'warn_blackhole'; b.phaseTimer = 1.2; triggerEvent("领主汇聚暗能：引力塌缩！", "normal", 0); }
             } 
             else if (b.phase === 'warn_spawn') {
-                if (b.phaseTimer <= 0) { b.phase = 'idle'; b.phaseTimer = 3; let spawnCount = 4 + Math.floor(Math.random() * 4); for(let i = 0; i < spawnCount; i++) { let ang = Math.random() * Math.PI * 2; let tx = player.x + Math.cos(ang) * 200; let ty = player.y + Math.sin(ang) * 200; let tier = bossSystem.minTier + Math.floor(Math.random() * (bossSystem.maxTier - bossSystem.minTier + 1)); tier = Math.max(3, tier); const cnf = DIFF_CONFIG[selectedDiff].mult; enemies.push({ id: enemyIdCounter++, x: tx, y: ty, sides: tier, radius: tier * 4, sizeMult: 1, speed: 120 * cnf.spd, def: cnf.def + 10, hp: tier * 50 * cnf.hp, maxHp: tier * 50 * cnf.hp, exp: tier * 10, atk: tier * 30 * cnf.atk, angle: 0, spin: 2, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: false, overlapCount: 0 }); particles.push({x: tx, y: ty, type: 'pulse', life: 0.5, maxLife: 0.5, radius: 40}); } playSound('bomb'); }
+                if (b.phaseTimer <= 0) { b.phase = 'idle'; b.phaseTimer = 3; let spawnCount = 4 + Math.floor(Math.random() * 4); for(let i = 0; i < spawnCount; i++) { let ang = Math.random() * Math.PI * 2; let tx = player.x + Math.cos(ang) * 200; let ty = player.y + Math.sin(ang) * 200; let tier = bossSystem.minTier + Math.floor(Math.random() * (bossSystem.maxTier - bossSystem.minTier + 1)); tier = Math.max(3, tier); const cnf = DIFF_CONFIG[selectedDiff].mult; enemies.push({ id: enemyIdCounter++, x: tx, y: ty, sides: tier, radius: tier * 4, sizeMult: 1, speed: 120 * cnf.spd, def: cnf.def + 10, hp: tier * 50 * cnf.hp, maxHp: tier * 50 * cnf.hp, exp: tier * 10, atk: tier * 30 * cnf.atk, angle: 0, spin: 2, hitTimer: 0, hitByRing: new Set(), isDead: false, isBoss: false, overlapCount: 0, sType: 'none', isElite: false, shield: 0 }); particles.push({x: tx, y: ty, type: 'pulse', life: 0.5, maxLife: 0.5, radius: 40}); } playSound('bomb'); }
             } else if (b.phase === 'warn_laser') {
                 if (!b.targetAngle) b.targetAngle = Math.atan2(player.y - b.y, player.x - b.x); 
                 if (b.phaseTimer <= 0) { b.phase = 'fire_laser'; b.phaseTimer = 0.5; lasers.push({ x: b.x, y: b.y, angle: b.targetAngle, life: 0.6, maxLife: 0.6, dmg: b.atk * 0.5, hitSet: new Set(), hitMap: new Map(), widthOffset: 1.5, bw: false, isEnemy: true }); screenShake = 15; playSound('laser_heavy'); }
@@ -991,9 +1372,80 @@
         if (player.skills.matrixBlade > 0) { if (player.matrixBladeDuration > 0 && player.matrixBladeDuration !== Infinity) { player.matrixBladeDuration -= dt; } else if (player.matrixBladeDuration !== Infinity) { player.timers.matrixBlade -= dt; if (player.timers.matrixBlade <= 0) { const lv = player.skills.matrixBlade; player.timers.matrixBlade = getSkillMaxCd('matrixBlade'); player.matrixBladeDuration = 5.0; playSound('laser_heavy'); } } }
         if (player.skills.supernova > 0) { player.timers.supernova -= dt; if (player.timers.supernova <= 0) { const lv = player.skills.supernova; player.timers.supernova = getSkillMaxCd('supernova'); supernovas.push({ x: player.x, y: player.y, radius: 10, maxRadius: [0, 400, 500, 600, 800, 1200][lv] * getRangeMulti(), life: 0, maxLife: [0, 1.2, 1.0, 1.0, 0.8, 0.6][lv], dmg: [0, 500, 800, 1200, 1800, 3500][lv] * getBulletDamageMulti(), hitSet1: new Set(), hitSet2: new Set(), doubleHit: lv >= 3, blind: lv >= 4 }); playSound('laser_heavy'); } }
         if (player.skills.laserDrone > 0) { player.timers.laserDrone -= dt; if (player.timers.laserDrone <= 0) { const lv = player.skills.laserDrone; player.timers.laserDrone = getSkillMaxCd('laserDrone'); let count = [0, 1, 2, 2, 4, 4][lv]; for(let i=0; i<count; i++) { drones.push({ angle: (Math.PI*2 / count) * i, orbitR: 60 + Math.random()*20, life: 6.0, maxLife: 6.0, shootTimer: 0, shootInterval: lv >= 3 ? 0.4 : 0.8, dmg: [0, 40, 60, 60, 80, 150][lv] * getBulletDamageMulti(), pierce: lv >= 5 }); } } }
+        
+        // 法绘专属技能
+        if (player.skills.summon_ring > 0) {
+            player.timers.summon_ring -= dt;
+            if (player.timers.summon_ring <= 0) {
+                const lv = player.skills.summon_ring;
+                player.timers.summon_ring = getSkillMaxCd('summon_ring');
+                let count = [0, 1, 2, 2, 3, 3][lv];
+                for(let i=0; i<count; i++) {
+                    friendlyRings.push({ x: player.x, y: player.y, target: null, speed: 450, radius: 20, dmg: [0, 150, 150, 250, 250, 500][lv] * getBulletDamageMulti(), life: 5.0, maxLife: 5.0, pierce: lv >= 5, hitSet: new Set() });
+                }
+                playSound('xp');
+            }
+        }
+        if (player.skills.star_prison > 0) {
+            player.timers.star_prison -= dt;
+            if (player.timers.star_prison <= 0) {
+                const lv = player.skills.star_prison;
+                player.timers.star_prison = getSkillMaxCd('star_prison');
+                let r = lv >= 3 ? 400 : 250;
+                if(lv >= 5) r = 2000;
+                let dur = [0, 2, 3, 3, 4, 4][lv];
+                let fDmg = lv >= 3 ? player.baseAtk * 5 : 0;
+                particles.push({x: player.x, y: player.y, type: 'pulse', life: 0.5, maxLife: 0.5, radius: r, color: '#f1c40f'});
+                for(let e of enemies) {
+                    if(!e.isDead && (e.x-player.x)**2+(e.y-player.y)**2 < r*r) {
+                        e.speed = 0; setTimeout(()=>{ e.speed = e.baseSpeed || e.speed; }, dur*1000);
+                        if(fDmg > 0) damageEnemy(e, fDmg, false, 'star_prison');
+                    }
+                }
+                playSound('laser_heavy');
+            }
+        }
+        if (player.skills.meteor_shower > 0) {
+            player.timers.meteor_shower -= dt;
+            if (player.timers.meteor_shower <= 0) {
+                const lv = player.skills.meteor_shower;
+                player.timers.meteor_shower = getSkillMaxCd('meteor_shower');
+                let count = [0, 3, 5, 5, 8, 15][lv];
+                for(let i=0; i<count; i++) {
+                    setTimeout(() => {
+                        let tx = player.x + (Math.random()-0.5)*600;
+                        let ty = player.y + (Math.random()-0.5)*600;
+                        meteorShowers.push({ x: tx, y: ty, life: 0.6, maxLife: 0.6, dmg: [0, 100, 100, 200, 200, 400][lv] * getBulletDamageMulti() });
+                    }, Math.random() * 800);
+                }
+            }
+        }
+        if (player.skills.void_vortex > 0) {
+            player.timers.void_vortex -= dt;
+            if (player.timers.void_vortex <= 0) {
+                const lv = player.skills.void_vortex;
+                player.timers.void_vortex = getSkillMaxCd('void_vortex');
+                voidVortexes.push({ x: player.x, y: player.y, life: [0, 3, 4, 4, 4, 6][lv], maxLife: [0, 3, 4, 4, 4, 6][lv], radius: [0, 200, 200, 300, 300, 600][lv], pullForce: lv >= 3 ? 300 : 150, dmg: [0, 50, 50, 50, 200, 500][lv] * getBulletDamageMulti() });
+            }
+        }
+        if (player.skills.astral_shield > 0) {
+            player.timers.astral_shield -= dt;
+            if (player.timers.astral_shield <= 0) {
+                const lv = player.skills.astral_shield;
+                player.timers.astral_shield = getSkillMaxCd('astral_shield');
+                player.hasAstralShield = true;
+                setTimeout(() => { player.hasAstralShield = false; }, [0, 2000, 3000, 3000, 4000, 4000][lv]);
+                playSound('xp');
+            }
+        }
     }
 
-    function updateCoreAnimation(dt) { coreBreathPhase += dt * 2; if (coreShootPulse > 0) { coreShootPulse -= dt * 3.5; if (coreShootPulse < 0) coreShootPulse = 0; } if (coreChargeActive) { coreSkillCharge = Math.min(1, coreSkillCharge + dt * 2); } else { coreSkillCharge = Math.max(0, coreSkillCharge - dt * 2); } }
+    function updateCoreAnimation(dt) { 
+        coreBreathPhase += dt * 2; 
+        if (coreShootPulse > 0) { coreShootPulse -= dt * 3.5; if (coreShootPulse < 0) coreShootPulse = 0; } 
+        if (player && player.starPulse > 0) { player.starPulse -= dt * 2.5; if (player.starPulse < 0) player.starPulse = 0; }
+        if (coreChargeActive) { coreSkillCharge = Math.min(1, coreSkillCharge + dt * 2); } else { coreSkillCharge = Math.max(0, coreSkillCharge - dt * 2); } 
+    }
 
     function drawEnemyPoly(cx, cy, radius, sides, angle, alpha, isBoss, morphPhase) {
         if (!isFinite(cx) || !isFinite(cy) || !isFinite(radius)) return;
@@ -1009,7 +1461,7 @@
     }
 
     // ==========================================
-    // 渲染总引擎修复：将绘制与逻辑严格分层，避免残影与层叠擦除
+    // 渲染总引擎
     // ==========================================
     function loop(now) {
         requestAnimationFrame(loop);
@@ -1042,7 +1494,7 @@
 
                 updateCoreAnimation(dt); player.speed = getPlayerSpeed(); player.shootDelay = getShootDelay();
                 if (player.hp < getMaxHP() && !player.isDead) { const rAmt = [0, 2, 4, 6, 8, 12][player.skills.regen || 0] + currentTalents.regen * 0.5; if (rAmt > 0) { player.hp = Math.min(getMaxHP(), player.hp + rAmt * dt); updateHPUI(); } }
-                for (const sk of ['isincos', 'bomb', 'downgrade', 'darksurge', 'darkmine', 'orbitalStrike','photonRift','matrixBlade','supernova','laserDrone']) { if (player.skills[sk] > 0) { const el = document.getElementById(`cd-${sk}`); if (el) { let pct = (sk === 'darksurge' && player.darksurgeDuration === Infinity) ? 1 : (sk === 'matrixBlade' && player.matrixBladeDuration === Infinity) ? 1 : Math.max(0, 1 - (player.timers[sk] / getSkillMaxCd(sk))); el.style.transform = `scaleY(${pct})`; } } }
+                for (const sk of ['isincos', 'bomb', 'downgrade', 'darksurge', 'darkmine', 'orbitalStrike','photonRift','matrixBlade','supernova','laserDrone','summon_ring','star_prison','meteor_shower','void_vortex','astral_shield']) { if (player.skills[sk] > 0) { const el = document.getElementById(`cd-${sk}`); if (el) { let pct = (sk === 'darksurge' && player.darksurgeDuration === Infinity) ? 1 : (sk === 'matrixBlade' && player.matrixBladeDuration === Infinity) ? 1 : Math.max(0, 1 - (player.timers[sk] / getSkillMaxCd(sk))); el.style.transform = `scaleY(${pct})`; } } }
 
                 if (!player.isDead && !isUpgrading) {
                     let mx = moveX, my = moveY; if (keys['w'] || keys['ArrowUp']) my -= 1; if (keys['s'] || keys['ArrowDown']) my += 1; if (keys['a'] || keys['ArrowLeft']) mx -= 1; if (keys['d'] || keys['ArrowRight']) mx += 1;
@@ -1059,11 +1511,44 @@
 
                 if (!isUpgrading) {
                     spawnEnemyLogic(dt); updateBossSystem(dt);
-                    for (const e of enemies) { if (e.isDead || !e.burnEffect) continue; e.burnEffect.duration -= dt; e.burnEffect.timer += dt; e.burnEffect.sparkPhase = (e.burnEffect.sparkPhase || 0) + dt * 8; if (e.burnEffect.timer >= e.burnEffect.interval) { e.burnEffect.timer = 0; damageEnemy(e, e.burnEffect.damage, false, 'darkburn', false); } if (e.burnEffect.duration <= 0) e.burnEffect = null; }
+                    for (const e of enemies) { 
+                        if (e.isDead) continue;
+                        if (!e.baseSpeed) e.baseSpeed = e.speed;
+                        if (e.sType === 'heal') {
+                            e.specialTimer += dt;
+                            if(e.specialTimer >= 2.0) {
+                                e.specialTimer = 0;
+                                particles.push({x: e.x, y: e.y, type: 'pulse', life: 0.5, maxLife: 0.5, radius: 250, color: '#3498db'});
+                                for(let e2 of enemies) {
+                                    if(!e2.isDead && (e2.x-e.x)**2+(e2.y-e.y)**2 < 250*250) { e2.hp = Math.min(e2.maxHp, e2.hp + e2.maxHp * 0.05); }
+                                }
+                            }
+                        }
+                        if (e.sType === 'shooter') {
+                            e.specialTimer += dt;
+                            if(e.specialTimer >= 2.5) {
+                                e.specialTimer = 0;
+                                let ang = Math.atan2(player.y - e.y, player.x - e.x) + (Math.random()-0.5)*0.3;
+                                enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(ang)*400, vy: Math.sin(ang)*400, radius: 6, life: 2.0, maxLife: 2.0, dmg: e.atk });
+                                playSound('shoot');
+                            }
+                        }
+
+                        if (!e.burnEffect) continue; 
+                        e.burnEffect.duration -= dt; e.burnEffect.timer += dt; e.burnEffect.sparkPhase = (e.burnEffect.sparkPhase || 0) + dt * 8; 
+                        if (e.burnEffect.timer >= e.burnEffect.interval) { 
+                            e.burnEffect.timer = 0; 
+                            let dmgM = 1 + (e.burnEffect.stacks - 1) * 0.5; // 每层增加50%
+                            if (player.skills.darkburn >= 4 && e.burnEffect.stacks >= 4) dmgM *= 2; 
+                            if (player.skills.darkburn >= 5 && e.burnEffect.stacks >= 10) dmgM *= 5; 
+                            damageEnemy(e, e.burnEffect.damage * dmgM, false, 'darkburn', false); 
+                        } 
+                        if (e.burnEffect.duration <= 0) e.burnEffect = null; 
+                    }
 
                     const newItems = []; for (const it of items) { it.life -= dt; it.rot += 3 * dt; const d = Math.sqrt((player.x - it.x)**2 + (player.y - it.y)**2); if (d < player.radius + 20 && !player.isDead) { activeSingularities.push({x: it.x, y: it.y, life: 4, maxLife: 4, angle: 0}); triggerEvent("触发奇点：经验引力场！", "normal", 0); playSound('laser_pew'); } else if (it.life > 0) { newItems.push(it); } } items = newItems;
                     const newSings = []; for (const s of activeSingularities) { s.life -= dt; s.angle += dt * 2; if (s.life > 0) { newSings.push(s); for (const o of expOrbs) { if (!o.targetS) { o.targetS = s; o.orbitAngle = Math.random() * Math.PI * 2; o.orbitRadius = 30 + Math.random() * 50; } } } } activeSingularities = newSings;
-                    const newRings = []; for (const ring of downgradeRings) { ring.radius += ring.speed * dt; ring.life -= dt; for (const e of enemies) { if (e.isDead || e.hitByRing.has(ring.id) || e.isBoss) continue; const dtr = Math.abs(Math.sqrt((e.x - ring.x)**2 + (e.y - ring.y)**2) - ring.radius); if (dtr < 30) { e.hitByRing.add(ring.id); if (e.sides > 3) { const dc = player.skills.downgrade; const oldS = e.sides; e.sides = Math.max(3, e.sides - dc); const drop = oldS - e.sides; if (drop > 0) { e.radius *= Math.pow(0.8, drop); e.speed *= Math.pow(1.25, drop); const oldMax = e.maxHp; e.maxHp *= Math.pow(0.6, drop); e.hp *= e.maxHp / oldMax; textParticles.push({ x: e.x, y: e.y, text: `DIM-${drop}`, life: 0.8, maxLife: 0.8, vy: -40, vx: 0, isDmg: false, color: '#4285f4', size: 16 }); } } } } if (ring.life > 0) newRings.push(ring); } downgradeRings = newRings;
+                    const newRings = []; for (const ring of downgradeRings) { ring.radius += ring.speed * dt; ring.life -= dt; for (const e of enemies) { if (e.isDead || e.hitByRing.has(ring.id) || e.isBoss) continue; const dtr = Math.abs(Math.sqrt((e.x - ring.x)**2 + (e.y - ring.y)**2) - ring.radius); if (dtr < 30) { e.hitByRing.add(ring.id); if (e.sides > 3) { const dc = player.skills.downgrade; const oldS = e.sides; e.sides = Math.max(3, e.sides - dc); const drop = oldS - e.sides; if (drop > 0) { e.radius *= Math.pow(0.8, drop); e.speed *= Math.pow(1.25, drop); e.baseSpeed = e.speed; const oldMax = e.maxHp; e.maxHp *= Math.pow(0.6, drop); e.hp *= e.maxHp / oldMax; textParticles.push({ x: e.x, y: e.y, text: `DIM-${drop}`, life: 0.8, maxLife: 0.8, vy: -40, vx: 0, isDmg: false, color: '#4285f4', size: 16 }); } } } } if (ring.life > 0) newRings.push(ring); } downgradeRings = newRings;
                     const newMines = []; for (const m of darkmines) { 
                         if (m.state === 'arming') { m.timer -= dt; if (m.timer <= 0) m.state = 'idle'; newMines.push(m); } 
                         else if (m.state === 'idle') { let triggered = false; for (const e of enemies) { if (e.isDead) continue; const dSq = (e.x - m.x)**2 + (e.y - m.y)**2; if (dSq < (m.radius + e.radius)**2) { triggered = true; break; } } if (triggered) { m.state = 'explode'; m.timer = 0.4; for (const e2 of enemies) { if (e2.isDead) continue; if ((e2.x - m.x)**2 + (e2.y - m.y)**2 < (m.radius * 1.6 + e2.radius)**2) { damageEnemy(e2, m.dmg, true, 'darkmine'); } } playSound('bomb'); screenShake = Math.max(screenShake, 15); } newMines.push(m); } 
@@ -1075,6 +1560,146 @@
                     const newRifts = []; for (const r of photonRifts) { r.life -= dt; r.fireTimer -= dt; if(r.fireTimer <= 0) { r.fireTimer = r.fireInterval; let ang = Math.random() * Math.PI * 2; lasers.push({ x: r.x, y: r.y, angle: ang, life: 0.15, maxLife: 0.15, dmg: r.dmg, hitSet: new Set(), hitMap: new Map(), widthOffset: 0.8, bw: false, isEnemy: false, isMainWeapon: false, isDark: true, skillKey: 'photonRift' }); playSound('laser_pew'); } if (r.life > 0) newRifts.push(r); } photonRifts = newRifts;
                     const newNovas = []; for (const nv of supernovas) { nv.life += dt; let t = nv.life / nv.maxLife; nv.radius = nv.maxRadius * Math.pow(t, 0.5); for (const e of enemies) { if (e.isDead) continue; let d = Math.sqrt((e.x - nv.x)**2 + (e.y - nv.y)**2); if (Math.abs(d - nv.radius) < 40 && !nv.hitSet1.has(e.id)) { damageEnemy(e, nv.dmg, true, 'supernova'); nv.hitSet1.add(e.id); } else if (nv.doubleHit && Math.abs(d - nv.radius * 0.8) < 40 && !nv.hitSet2.has(e.id)) { damageEnemy(e, nv.dmg * 0.5, true, 'supernova'); nv.hitSet2.add(e.id); } } if (nv.life < nv.maxLife) newNovas.push(nv); } supernovas = newNovas;
                     const newDrones = []; for (const dr of drones) { dr.life -= dt; dr.angle += dt * 3; let tx = player.x + Math.cos(dr.angle) * dr.orbitR; let ty = player.y + Math.sin(dr.angle) * dr.orbitR; dr.shootTimer -= dt; if (dr.shootTimer <= 0) { let target = null, minDist = Infinity; for (const e of enemies) { if (e.isDead) continue; let dSq = (e.x - tx)**2 + (e.y - ty)**2; if (dSq < 500*500 && dSq < minDist) { minDist = dSq; target = e; } } if (target) { dr.shootTimer = dr.shootInterval; let ang = Math.atan2(target.y - ty, target.x - tx); lasers.push({ x: tx, y: ty, angle: ang, life: 0.2, maxLife: 0.2, dmg: dr.dmg, hitSet: new Set(), hitMap: new Map(), widthOffset: 0.5, bw: false, isEnemy: false, isMainWeapon: false, isDark: false, skillKey: 'laserDrone' }); playSound('laser_pew'); } } if (dr.life > 0) newDrones.push(dr); } drones = newDrones;
+                    
+                    const newFriendlyRings = [];
+                    for(const fr of friendlyRings) {
+                        fr.life -= dt;
+                        if(!fr.target || fr.target.isDead) {
+                            let validEnemies = enemies.filter(e => !e.isDead);
+                            if(validEnemies.length > 0) {
+                                fr.target = validEnemies.sort((a,b) => ((a.x-fr.x)**2+(a.y-fr.y)**2) - ((b.x-fr.x)**2+(b.y-fr.y)**2))[0];
+                            }
+                        }
+                        if(fr.target) {
+                            let dx = fr.target.x - fr.x, dy = fr.target.y - fr.y, d = Math.sqrt(dx*dx + dy*dy);
+                            if(d > 0) { fr.x += (dx/d) * fr.speed * dt; fr.y += (dy/d) * fr.speed * dt; }
+                        } else {
+                            fr.x += Math.cos(gameTime) * fr.speed * dt; fr.y += Math.sin(gameTime) * fr.speed * dt;
+                        }
+                        
+                        let hitSomething = false;
+                        for(let e of enemies) {
+                            if(e.isDead || fr.hitSet.has(e.id)) continue;
+                            if((e.x - fr.x)**2 + (e.y - fr.y)**2 < (e.radius + fr.radius)**2) {
+                                damageEnemy(e, fr.dmg, false, 'summon_ring');
+                                if(player.skills.darkburn > 0) damageEnemy(e, 0, false, 'weapon_magic', true); // 触发暗灼
+                                fr.hitSet.add(e.id);
+                                hitSomething = true;
+                                particles.push({x: fr.x, y: fr.y, type: 'pulse', life: 0.3, maxLife: 0.3, radius: 40, color: '#8e44ad'});
+                            }
+                        }
+                        if(hitSomething && !fr.pierce) fr.life = 0;
+                        if(fr.life > 0) newFriendlyRings.push(fr);
+                    } friendlyRings = newFriendlyRings;
+
+                    const newMeteors = [];
+                    for(const mt of meteorShowers) {
+                        mt.life -= dt;
+                        if(mt.life <= 0) {
+                            particles.push({x: mt.x, y: mt.y, type: 'blast', radius: 80, life: 0.4, maxLife: 0.4});
+                            for(let e of enemies) { if(!e.isDead && (e.x-mt.x)**2+(e.y-mt.y)**2 < 80*80) { damageEnemy(e, mt.dmg, true, 'meteor_shower'); } }
+                            playSound('bomb'); screenShake = Math.max(screenShake, 10);
+                        } else newMeteors.push(mt);
+                    } meteorShowers = newMeteors;
+
+                    const newVortexes = [];
+                    for(const vx of voidVortexes) {
+                        vx.life -= dt;
+                        for(let e of enemies) {
+                            if(!e.isDead) {
+                                let dx = vx.x - e.x, dy = vx.y - e.y, dSq = dx*dx + dy*dy;
+                                if(dSq < vx.radius*vx.radius && dSq > 100) {
+                                    let d = Math.sqrt(dSq);
+                                    e.x += (dx/d) * vx.pullForce * dt;
+                                    e.y += (dy/d) * vx.pullForce * dt;
+                                }
+                            }
+                        }
+                        if(vx.life <= 0) {
+                            particles.push({x: vx.x, y: vx.y, type: 'pulse', radius: vx.radius, life: 0.5, maxLife: 0.5, color: '#8e44ad'});
+                            for(let e of enemies) { if(!e.isDead && (e.x-vx.x)**2+(e.y-vx.y)**2 < vx.radius*vx.radius) damageEnemy(e, vx.dmg, true, 'void_vortex'); }
+                            playSound('bomb'); screenShake = 25;
+                        } else newVortexes.push(vx);
+                    } voidVortexes = newVortexes;
+
+                    const newMagics = [];
+                    for (const mg of magicArrays) {
+                        mg.life -= dt;
+                        
+                        // 锁定跟随敌人位置
+                        let target = enemies.find(e => e.id === mg.targetId);
+                        if (target && !target.isDead) { mg.x = target.x; mg.y = target.y; }
+
+                        if(mg.life <= 0) {
+                            let radius = mg.radius;
+                            let fDmg = mg.dmg;
+                            if(player.skills.star_resonance > 0) {
+                                let resonLv = player.skills.star_resonance;
+                                let stacksFound = 0;
+                                for(let e of enemies) {
+                                    if(!e.isDead && e.burnEffect && (e.x-mg.x)**2 + (e.y-mg.y)**2 < radius*radius) {
+                                        stacksFound = Math.max(stacksFound, e.burnEffect.stacks);
+                                    }
+                                }
+                                let bonus = stacksFound * 0.1 * [0,1,2,2,3,5][resonLv];
+                                radius *= (1 + bonus);
+                                fDmg *= (1 + bonus);
+                                if(resonLv >= 5 && stacksFound >= 10) { radius = 2000; fDmg *= 3; triggerEvent("星芒共振触发！暗能超载全屏引爆！", "normal", 0); screenShake = 40; }
+                            }
+                            
+                            particles.push({x: mg.x, y: mg.y, type: 'blast', radius: radius, life: 0.4, maxLife: 0.4});
+                            for(let e of enemies) {
+                                if(!e.isDead && (e.x-mg.x)**2+(e.y-mg.y)**2 < radius*radius) {
+                                    damageEnemy(e, fDmg, false, 'weapon_magic');
+                                    // 星辰连结被动
+                                    if(player.skills.star_chain > 0) {
+                                        processDarkChain(e, fDmg * (player.skills.star_chain >= 5 ? 1.0 : 0.6));
+                                    }
+                                }
+                            }
+                            
+                            // 星光余音被动
+                            if(player.skills.starlight_echo > 0) {
+                                if(typeof window.starlightEchoes === 'undefined') window.starlightEchoes = [];
+                                let echoLv = player.skills.starlight_echo;
+                                window.starlightEchoes.push({
+                                    x: mg.x, y: mg.y, radius: radius, 
+                                    dmg: fDmg * 0.25, 
+                                    life: [0, 1, 2, 2, 3, 3][echoLv], 
+                                    maxLife: [0, 1, 2, 2, 3, 3][echoLv], 
+                                    interval: echoLv >= 3 ? 0.25 : 0.5, 
+                                    timer: 0, 
+                                    slow: echoLv >= 5
+                                });
+                            }
+                            
+                            playSound('bomb');
+                        } else {
+                            newMagics.push(mg);
+                        }
+                    } magicArrays = newMagics;
+
+                    // 处理星光余音持续伤害区域
+                    if(typeof window.starlightEchoes !== 'undefined') {
+                        const newEchoes = [];
+                        for(const echo of window.starlightEchoes) {
+                            echo.life -= dt;
+                            echo.timer += dt;
+                            if(echo.timer >= echo.interval) {
+                                echo.timer = 0;
+                                particles.push({x: echo.x, y: echo.y, type: 'pulse', life: 0.2, maxLife: 0.2, radius: echo.radius, color: 'rgba(142,68,173,0.3)'});
+                                for(let e of enemies) {
+                                    if(!e.isDead && (e.x-echo.x)**2+(e.y-echo.y)**2 < echo.radius*echo.radius) {
+                                        damageEnemy(e, echo.dmg, false, 'weapon_magic', true);
+                                        if(echo.slow) e.hitTimer = Math.max(e.hitTimer, 0.3); // 使用受击僵直实现减速效果
+                                    }
+                                }
+                            }
+                            if(echo.life > 0) newEchoes.push(echo);
+                        }
+                        window.starlightEchoes = newEchoes;
+                    }
+
                     if (player.matrixBladeDuration > 0 && !player.isDead) { let lv = player.skills.matrixBlade; let beamCount = [0, 2, 4, 4, 6, 6][lv]; let range = 150 * getRangeMulti(); let dmg = [0, 50, 80, 150, 300, 600][lv] * getBulletDamageMulti() * dt * 5; let spinSpeed = lv >= 3 ? 4 : 2; let bAng = gameTime * spinSpeed; for (let i=0; i<beamCount; i++) { let ang = bAng + (Math.PI * 2 / beamCount) * i; let endX = player.x + Math.cos(ang) * range; let endY = player.y + Math.sin(ang) * range; lasers.push({ x: player.x, y: player.y, endX: endX, endY: endY, isMatrixBlade: true, life: dt, maxLife: dt, dmg: dmg, widthOffset: [0, 0.1, 0.15, 0.2, 0.25, 0.3][lv] }); for(const e of enemies) { if(e.isDead) continue; let vX = e.x - player.x, vY = e.y - player.y; let proj = vX * Math.cos(ang) + vY * Math.sin(ang); if (proj > 0 && proj < range) { let dist = Math.abs(vX * Math.sin(ang) - vY * Math.cos(ang)); if (dist < e.radius + 15) { damageEnemy(e, dmg, false, 'matrixBlade', true); } } } } }
 
                     for (let i = 0; i < enemies.length; i++) {
@@ -1083,6 +1708,18 @@
                         if (!bossSystem.gathering && (!e.isBoss || (e.isBoss && e.phase !== 'dash' && e.phase !== 'warn_dash'))) { const dx = targetX - e.x, dy = targetY - e.y, d = Math.sqrt(dx * dx + dy * dy); if (d > 0) { e.x += (dx / d) * e.speed * dt + sepX * dt * 3; e.y += (dy / d) * e.speed * dt + sepY * dt * 3; } }
                         e.angle += e.spin * dt; if (e.hitTimer > 0) e.hitTimer -= dt; if (e.isBoss) e.morphPhase = (e.morphPhase || 0) + dt; const pd = Math.sqrt((player.x - e.x)**2 + (player.y - e.y)**2); if (player.invincibleTimer <= 0 && pd < player.radius + e.radius && !player.isDead) damagePlayer(e.atk);
                     }
+
+                    const newEnemyBullets = [];
+                    for(const eb of enemyBullets) {
+                        eb.x += eb.vx * dt; eb.y += eb.vy * dt; eb.life -= dt;
+                        if(eb.life > 0) {
+                            if (!player.isDead && (player.x - eb.x)**2 + (player.y - eb.y)**2 < (player.radius + eb.radius)**2) {
+                                damagePlayer(eb.dmg);
+                            } else {
+                                newEnemyBullets.push(eb);
+                            }
+                        }
+                    } enemyBullets = newEnemyBullets;
 
                     const newBullets = [];
                     for (const b of bullets) {
@@ -1131,6 +1768,23 @@
                 ctx.strokeStyle = THEME.grid; ctx.lineWidth = 1; for (let x = Math.floor(cam.x / 100) * 100; x < cam.x + VIEW_W; x += 100) { ctx.beginPath(); ctx.moveTo(x, cam.y); ctx.lineTo(x, cam.y + VIEW_H); ctx.stroke(); } for (let y = Math.floor(cam.y / 100) * 100; y < cam.y + VIEW_H; y += 100) { ctx.beginPath(); ctx.moveTo(cam.x, y); ctx.lineTo(cam.x + VIEW_W, y); ctx.stroke(); }
 
                 for (const f of floorTexts) { const a = f.life / f.maxLife; ctx.globalAlpha = a * 0.5; ctx.fillStyle = THEME.main; ctx.font = 'bold 44px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.save(); ctx.translate(f.x, f.y); ctx.scale(1, 0.45); ctx.fillText(f.text, 0, 0); ctx.restore(); ctx.globalAlpha = 1; }
+                
+                // 法绘特殊效果绘制
+                for(const vx of voidVortexes) {
+                    ctx.globalAlpha = 0.3 * (vx.life/vx.maxLife); ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(safeNum(vx.x), safeNum(vx.y), safeNum(vx.radius), 0, Math.PI*2); ctx.fill();
+                    ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(safeNum(vx.x), safeNum(vx.y), safeNum(vx.radius * (1 - (vx.life%1))), 0, Math.PI*2); ctx.stroke();
+                }
+                if(typeof window.starlightEchoes !== 'undefined') {
+                    for(const echo of window.starlightEchoes) {
+                        ctx.globalAlpha = 0.15; ctx.fillStyle = '#9b59b6'; ctx.beginPath(); ctx.arc(safeNum(echo.x), safeNum(echo.y), safeNum(echo.radius), 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+                    }
+                }
+                for(const mt of meteorShowers) {
+                    ctx.globalAlpha = 0.5; ctx.fillStyle = 'rgba(231, 76, 60, 0.4)'; ctx.beginPath(); ctx.arc(safeNum(mt.x), safeNum(mt.y), 80, 0, Math.PI*2); ctx.fill(); 
+                    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.arc(safeNum(mt.x), safeNum(mt.y), 80 * (mt.life/mt.maxLife), 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.globalAlpha = 1;
+                }
+
                 for (const s of orbitalStrikes) { if (s.state === 'warn') { ctx.globalAlpha = 0.3; ctx.fillStyle = 'rgba(217, 56, 30, 0.2)'; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]); } else if (s.state === 'fire') { const a = s.life / s.maxLife; ctx.globalAlpha = a * 0.9; let bW = s.radius * 2 * a; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(s.x - bW/4, cam.y, bW/2, s.y - cam.y); ctx.fillStyle = 'rgba(217, 56, 30, 0.6)'; ctx.fillRect(s.x - bW/2, cam.y, bW, s.y - cam.y); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * a, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(217, 56, 30, 0.7)'; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * 1.5 * a, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1; }
                 for (const r of photonRifts) { ctx.save(); ctx.translate(safeNum(r.x), safeNum(r.y)); ctx.rotate(gameTime * 3); ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(217, 56, 30, 0.9)'; ctx.lineWidth = 3; for(let i=0; i<4; i++) { ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(20,0); ctx.stroke(); ctx.rotate(Math.PI/2); } ctx.restore(); }
                 for (const nv of supernovas) { const a = 1 - (nv.life / nv.maxLife); ctx.globalAlpha = a * 0.8; ctx.strokeStyle = 'rgba(255, 200, 50, 0.9)'; ctx.lineWidth = 15 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius), 0, Math.PI*2); ctx.stroke(); ctx.strokeStyle = 'rgba(217, 56, 30, 0.6)'; ctx.lineWidth = 30 * a; ctx.beginPath(); ctx.arc(safeNum(nv.x), safeNum(nv.y), safeNum(nv.radius * 0.9), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
@@ -1141,18 +1795,58 @@
                 for (const b of bombs) { const t = 1 - (b.life / b.maxLife); const bx = b.startX + (b.tX - b.startX) * t; const by = b.startY + (b.tY - b.startY) * t - Math.sin(t * Math.PI) * 110; ctx.fillStyle = THEME.main; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.text, safeNum(bx), safeNum(by)); ctx.globalAlpha = 0.08; ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.beginPath(); ctx.ellipse(safeNum(bx), safeNum(b.tY), Math.max(0.1, 18 * (1 - t)), Math.max(0.1, 6 * (1 - t)), 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
                 for (const bt of bulletTrails) { const a = bt.life / bt.maxLife; ctx.globalAlpha = a * 0.45; ctx.fillStyle = bt.isDark ? 'rgba(120,0,200,0.8)' : THEME.main; ctx.beginPath(); ctx.arc(safeNum(bt.x), safeNum(bt.y), safeNum(bt.r * a), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1;
                 for (const b of bullets) { if (b.isDark) { const fc = 4; for (let f = 0; f < fc; f++) { const fang = (gameTime * 7 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = b.radius + 5; ctx.globalAlpha = 0.55; ctx.fillStyle = 'rgba(120,0,200,0.8)'; ctx.beginPath(); ctx.arc(safeNum(b.x + Math.cos(fang) * fr), safeNum(b.y + Math.sin(fang) * fr), 3, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(80,0,160,0.9)'; } else { ctx.fillStyle = THEME.main; } ctx.beginPath(); ctx.arc(safeNum(b.x), safeNum(b.y), safeNum(b.radius), 0, Math.PI*2); ctx.fill(); if (b.isDark) { ctx.strokeStyle = 'rgba(180,100,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke(); } }
+                
+                for (const eb of enemyBullets) { ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(safeNum(eb.x), safeNum(eb.y), safeNum(eb.radius), 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.5; ctx.stroke(); }
+                
                 for (const c of chainEffects) { const a = c.life / c.maxLife; ctx.globalAlpha = a * 0.85; ctx.strokeStyle = 'rgba(100,0,220,0.95)'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(safeNum(c.path[0].x), safeNum(c.path[0].y)); for (let j = 1; j < c.path.length; j++) ctx.lineTo(safeNum(c.path[j].x), safeNum(c.path[j].y)); ctx.stroke(); ctx.globalAlpha = a * 0.95; ctx.strokeStyle = 'rgba(220,180,255,1)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(safeNum(c.path[0].x), safeNum(c.path[0].y)); for (let j = 1; j < c.path.length; j++) ctx.lineTo(safeNum(c.path[j].x), safeNum(c.path[j].y)); ctx.stroke(); ctx.globalAlpha = 1; }
                 
                 for (const dr of drones) { ctx.save(); let tx = player.x + Math.cos(dr.angle) * dr.orbitR; let ty = player.y + Math.sin(dr.angle) * dr.orbitR; ctx.translate(safeNum(tx), safeNum(ty)); ctx.rotate(gameTime * 5); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#d9381e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(-4,6); ctx.lineTo(-4,-6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+                
+                for (const fr of friendlyRings) { ctx.globalAlpha = fr.life/5.0 * 0.8; ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(safeNum(fr.x), safeNum(fr.y), fr.radius, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
+                
+                for (const mg of magicArrays) { 
+                    let progress = 1 - (mg.life / mg.maxLife);
+                    ctx.save(); ctx.translate(safeNum(mg.x), safeNum(mg.y)); ctx.rotate(gameTime * 4); ctx.strokeStyle = 'rgba(142,68,173,0.8)'; ctx.lineWidth = 3; 
+                    
+                    let pts = [];
+                    for(let i=0; i<6; i++) {
+                       let a = (i * 4 * Math.PI) / 5 - Math.PI/2;
+                       pts.push({x: Math.cos(a)*mg.radius, y: Math.sin(a)*mg.radius});
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(pts[0].x, pts[0].y);
+                    let totalLines = 5;
+                    let linesToDraw = Math.floor(progress * totalLines);
+                    let partialLine = (progress * totalLines) - linesToDraw;
+                    
+                    for(let i=0; i<linesToDraw; i++) { ctx.lineTo(pts[i+1].x, pts[i+1].y); }
+                    if(linesToDraw < totalLines) {
+                        let cur = pts[linesToDraw], nxt = pts[linesToDraw+1];
+                        ctx.lineTo(cur.x + (nxt.x - cur.x) * partialLine, cur.y + (nxt.y - cur.y) * partialLine);
+                    }
+                    ctx.stroke(); 
+                    ctx.restore(); 
+                }
+                
                 for (const t of trails) { ctx.globalAlpha = t.alpha; ctx.strokeStyle = THEME.main; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(safeNum(t.x), safeNum(t.y), player && !player.isDead ? player.radius - 2 : 12, 0, Math.PI*2); ctx.stroke(); } ctx.globalAlpha = 1;
                 for (const s of activeSingularities) { const a = s.life / s.maxLife; const r = 40 + Math.sin(gameTime * 5) * 8; ctx.globalAlpha = a * 0.5; ctx.strokeStyle = 'rgba(100,0,200,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(safeNum(s.x), safeNum(s.y), r, 0, Math.PI*2); ctx.stroke(); ctx.strokeStyle = 'rgba(180,100,255,0.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(safeNum(s.x), safeNum(s.y), r * 0.6, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
                 for (const it of items) { ctx.save(); ctx.translate(safeNum(it.x), safeNum(it.y)); ctx.rotate(safeNum(it.rot)); ctx.strokeStyle = 'rgba(100,0,200,0.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); for (let j = 0; j < 4; j++) { const ang = (j / 4) * Math.PI * 2; const r = 14 + Math.sin(gameTime * 4 + j) * 2; ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r); } ctx.closePath(); ctx.stroke(); ctx.fillStyle = 'rgba(80,0,160,0.25)'; ctx.fill(); ctx.restore(); }
                 
-                for (const orb of expOrbs) { ctx.globalAlpha = 0.3; ctx.fillStyle = THEME.xp; const shadowR = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x - (orb.vx || 0) * 0.02), safeNum(orb.y - (orb.vy || 0) * 0.02), shadowR * 0.8, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
-                for (const orb of expOrbs) { ctx.fillStyle = THEME.xp; const br = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x), safeNum(orb.y), br, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke(); }
+                for (const orb of expOrbs) { 
+                    let orbColor = THEME.xp; 
+                    if(orb.type === 'elite') orbColor = '#2ecc71'; 
+                    if(orb.type === 'special') orbColor = '#3498db'; 
+                    ctx.globalAlpha = 0.3; ctx.fillStyle = orbColor; const shadowR = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x - (orb.vx || 0) * 0.02), safeNum(orb.y - (orb.vy || 0) * 0.02), shadowR * 0.8, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; 
+                }
+                for (const orb of expOrbs) { 
+                    let orbColor = THEME.xp; 
+                    if(orb.type === 'elite') orbColor = '#2ecc71'; 
+                    if(orb.type === 'special') orbColor = '#3498db'; 
+                    ctx.fillStyle = orbColor; const br = Math.max(3, Math.min(10, 2 + Math.sqrt(orb.value) * 1.5)); ctx.beginPath(); ctx.arc(safeNum(orb.x), safeNum(orb.y), br, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke(); 
+                }
                 for (const p of shatterPieces) { const a = p.life / p.maxLife; ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.save(); ctx.translate(safeNum(p.x), safeNum(p.y)); ctx.rotate(safeNum(p.rot)); const scale = 0.3 + 0.7 * a; ctx.scale(scale, scale); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(safeNum(p.p1x), safeNum(p.p1y)); ctx.lineTo(safeNum(p.p2x), safeNum(p.p2y)); ctx.closePath(); ctx.fill(); ctx.restore(); } ctx.globalAlpha = 1;
 
-                // 激光绘制提升：保证激光不被其他特效挡住
                 for (const l of lasers) {
                     if(l.isMatrixBlade) { ctx.strokeStyle = 'rgba(217, 56, 30, 0.8)'; ctx.lineWidth = l.widthOffset * 30; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(safeNum(l.x), safeNum(l.y)); ctx.lineTo(safeNum(l.endX), safeNum(l.endY)); ctx.stroke(); continue; }
                     const a = l.life / l.maxLife; const cw = Math.pow(Math.max(0.01, Math.sin((l.life / l.maxLife) * Math.PI)), 0.4) * 100 * l.widthOffset;
@@ -1164,25 +1858,46 @@
 
                 for (let i = 0; i < enemies.length; i++) {
                     const e = enemies[i]; if (!isInView(e.x, e.y, 250)) continue; const baseAlpha = Math.max(0.35, 1 - (e.overlapCount || 0) * 0.18); ctx.globalAlpha = baseAlpha;
+                    
+                    if(e.isElite && e.shield > 0) { ctx.globalAlpha = baseAlpha * 0.6; ctx.fillStyle = 'rgba(46, 204, 113, 0.2)'; ctx.strokeStyle = 'rgba(46, 204, 113, 0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(safeNum(e.x), safeNum(e.y), safeNum(e.radius + 15), 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.globalAlpha = baseAlpha; }
+                    
+                    let eColor = THEME.main;
+                    if(e.sType === 'split') eColor = '#2ecc71';
+                    if(e.sType === 'heal') eColor = '#3498db';
+                    if(e.sType === 'shooter') eColor = '#e74c3c';
+
                     if (e.isBoss) { ctx.fillStyle = e.hitTimer > 0 ? 'rgba(255,50,50,0.9)' : 'rgba(30,10,30,0.9)'; ctx.strokeStyle = 'rgba(217,56,30,0.8)'; ctx.lineWidth = 4; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, true, safeNum(e.morphPhase)); ctx.fill(); ctx.stroke(); } 
                     else if (e.hitTimer > 0) { ctx.fillStyle = 'rgba(220,50,30,0.85)'; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, false, 0); ctx.fill(); } 
-                    else { ctx.fillStyle = THEME.main; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, false, 0); ctx.fill(); } ctx.globalAlpha = 1;
+                    else { ctx.fillStyle = eColor; drawEnemyPoly(safeNum(e.x), safeNum(e.y), safeNum(e.radius), e.sides, safeNum(e.angle), baseAlpha, false, 0); ctx.fill(); } ctx.globalAlpha = 1;
+                    
                     if (e.burnEffect) { const phase = e.burnEffect.sparkPhase || 0; for (let k = 0; k < 8; k++) { const sparkAngle = (k / 8) * Math.PI * 2 + phase; const r = e.radius * (0.9 + Math.sin(phase * 2 + k) * 0.2); const sx2 = e.x + Math.cos(sparkAngle) * r; const sy2 = e.y + Math.sin(sparkAngle) * r; const flicker = 0.5 + Math.sin(phase * 5 + k * 1.3) * 0.4; ctx.globalAlpha = flicker * 0.85; ctx.fillStyle = 'rgba(180,0,255,0.75)'; ctx.beginPath(); ctx.arc(safeNum(sx2), safeNum(sy2), 4 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(80,0,160,0.4)'; ctx.beginPath(); ctx.arc(safeNum(sx2), safeNum(sy2), 7 + Math.sin(phase * 4 + k) * 2, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 0.35 + Math.sin(phase * 3) * 0.15; ctx.strokeStyle = 'rgba(150,0,255,0.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(safeNum(e.x), safeNum(e.y), safeNum(e.radius + 3 + Math.sin(phase * 6) * 2), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
-                    if (!e.isBoss && e.hp < e.maxHp && e.hp > 0) { const bw = e.radius * 2; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 9), safeNum(bw), 3); ctx.fillStyle = '#d9381e'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 9), safeNum(bw * (e.hp / e.maxHp)), 3); }
+                    
+                    if(e.isElite && e.shield > 0) { const bw = e.radius * 2 + 10; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 20), safeNum(bw), 3); ctx.fillStyle = '#2ecc71'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 20), safeNum(bw * (e.shield / e.maxShield)), 3); }
+                    if (!e.isBoss && e.hp < e.maxHp && e.hp > 0) { const bw = e.radius * 2; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 12), safeNum(bw), 3); ctx.fillStyle = '#d9381e'; ctx.fillRect(safeNum(e.x - bw / 2), safeNum(e.y - e.radius - 12), safeNum(bw * (e.hp / e.maxHp)), 3); }
                 }
 
                 if (!player.isDead) {
                     const px = player.x, py = player.y, pr = player.radius; const isFlash = player.flashTimer > 0 && Math.floor(gameTime * 25) % 2 === 0;
+                    if (player.skills.astral_shield > 0 && player.hasAstralShield) {
+                        ctx.globalAlpha = 0.6; ctx.fillStyle = 'rgba(142,68,173,0.3)'; ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(px, py, pr + 15 + Math.sin(gameTime*10)*5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
+                    }
                     if (player.darksurgeDuration > 0 && player.darksurgeDuration !== Infinity) { const fc = 10; for (let f = 0; f < fc; f++) { const fang = (gameTime * 4 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 14 + Math.sin(gameTime * 8 + f) * 4; ctx.globalAlpha = 0.65; ctx.fillStyle = 'rgba(150,0,255,0.7)'; ctx.beginPath(); ctx.arc(safeNum(px + Math.cos(fang) * fr), safeNum(py + Math.sin(fang) * fr), 7, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1; } else if (player.darksurgeDuration === Infinity) { const fc = 12; for (let f = 0; f < fc; f++) { const fang = (gameTime * 5 + f * (Math.PI * 2 / fc)) % (Math.PI * 2); const fr = pr + 16 + Math.sin(gameTime * 10 + f) * 5; ctx.globalAlpha = 0.8; ctx.fillStyle = 'rgba(180,0,255,0.85)'; ctx.beginPath(); ctx.arc(safeNum(px + Math.cos(fang) * fr), safeNum(py + Math.sin(fang) * fr), 9, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1; }
                     ctx.strokeStyle = isFlash ? THEME.damage : (player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.9)' : THEME.main); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(safeNum(px), safeNum(py), safeNum(pr), 0, Math.PI*2); ctx.stroke();
                     ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(safeNum(px), safeNum(py), safeNum(pr * 0.65), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
                     ctx.save(); ctx.translate(safeNum(px), safeNum(py)); ctx.rotate(safeNum(gameTime * 0.6));
-                    let coreSize; if (coreSkillCharge > 0.1) { coreSize = pr * 0.38 * (1 + coreSkillCharge * 0.7); } else if (coreShootPulse > 0) { coreSize = pr * 0.38 * (1 + coreShootPulse * 0.6); } else { coreSize = pr * 0.38 * (0.88 + Math.sin(coreBreathPhase) * 0.1); } coreSize = Math.min(coreSize, pr * 0.72);
-                    const cColor = player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.85)' : THEME.damage; ctx.strokeStyle = cColor; ctx.lineWidth = 2; ctx.fillStyle = player.darksurgeDuration > 0 ? 'rgba(80,0,160,0.5)' : 'rgba(217,56,30,0.35)'; ctx.beginPath(); ctx.moveTo(0, -coreSize); ctx.lineTo(coreSize * 0.58, 0); ctx.lineTo(0, coreSize); ctx.lineTo(-coreSize * 0.58, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(0, 0, coreSize * 0.22, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                    
+                    if(player.weapon === 'magic_star') {
+                        let starScale = 1 + player.starPulse;
+                        ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 2; ctx.beginPath(); for(let i=0; i<5; i++) { let a = (i * 4 * Math.PI) / 5 - Math.PI/2; if(i===0) ctx.moveTo(Math.cos(a)*pr*0.6*starScale, Math.sin(a)*pr*0.6*starScale); else ctx.lineTo(Math.cos(a)*pr*0.6*starScale, Math.sin(a)*pr*0.6*starScale); } ctx.closePath(); ctx.stroke();
+                    } else {
+                        let coreSize; if (coreSkillCharge > 0.1) { coreSize = pr * 0.38 * (1 + coreSkillCharge * 0.7); } else if (coreShootPulse > 0) { coreSize = pr * 0.38 * (1 + coreShootPulse * 0.6); } else { coreSize = pr * 0.38 * (0.88 + Math.sin(coreBreathPhase) * 0.1); } coreSize = Math.min(coreSize, pr * 0.72);
+                        const cColor = player.darksurgeDuration > 0 ? 'rgba(120,0,220,0.85)' : THEME.damage; ctx.strokeStyle = cColor; ctx.lineWidth = 2; ctx.fillStyle = player.darksurgeDuration > 0 ? 'rgba(80,0,160,0.5)' : 'rgba(217,56,30,0.35)'; ctx.beginPath(); ctx.moveTo(0, -coreSize); ctx.lineTo(coreSize * 0.58, 0); ctx.lineTo(0, coreSize); ctx.lineTo(-coreSize * 0.58, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(0, 0, coreSize * 0.22, 0, Math.PI*2); ctx.fill(); 
+                    }
+                    ctx.restore();
                     ctx.save(); ctx.translate(safeNum(px), safeNum(py)); ctx.rotate(safeNum(player.aimAngle || 0)); ctx.fillStyle = THEME.main; ctx.beginPath(); ctx.moveTo(pr + 14, 0); ctx.lineTo(pr + 5, -5); ctx.lineTo(pr + 5, 5); ctx.closePath(); ctx.fill(); ctx.restore();
                 } 
 
-                // 最后绘制最上层爆炸与特效粒子
                 for (const p of particles) {
                     if (p.type === 'blast') { const a = p.life / p.maxLife; ctx.globalAlpha = a * 0.5; ctx.fillStyle = THEME.damage; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius), 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = THEME.damage; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * 1.1), 0, Math.PI*2); ctx.stroke(); } 
                     else if (p.type === 'pulse') { const a = p.life / p.maxLife; ctx.globalAlpha = a * 0.8; ctx.strokeStyle = p.color || THEME.main; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(safeNum(p.x), safeNum(p.y), safeNum(p.radius * (1 - a)), 0, Math.PI*2); ctx.stroke(); } 
