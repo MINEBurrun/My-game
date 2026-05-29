@@ -3,22 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
-<title>几何碰撞 · 暗能维度 v19.0.0</title>
+<title>几何碰撞 · 暗能维度 v20.0.0</title>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
+#main-menu .panel{max-width:980px;width:96%;padding:0;background:linear-gradient(160deg,rgba(36,28,21,0.97),rgba(50,38,28,0.97));border:1px solid var(--c-border-strong);border-radius:18px;height:auto;max-height:92vh;overflow:hidden}
+.menu-v3-wrap{display:grid;grid-template-columns:1fr 1.4fr;grid-template-rows:auto auto auto 1fr auto;grid-template-areas:"user user" "title title" "stats stats" "side main" "footer footer";gap:14px;padding:24px;min-height:480px}
+.menu-v3-userbar{grid-area:user;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.3);border-radius:10px;font-size:12px;font-weight:bold;color:var(--c-text-dim);border:1px solid var(--c-border)}
+.menu-v3-title{grid-area:title;text-align:center;padding:14px}
+.menu-v3-title .logo-title{font-size:42px;font-weight:900;letter-spacing:8px;background:linear-gradient(135deg,#f0e5d2,#e8b04c,#d97757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.menu-v3-title .logo-sub{font-size:13px;color:var(--c-accent-2);font-family:monospace;letter-spacing:8px}
+.menu-v3-stats{grid-area:stats;display:flex;gap:10px}
+.menu-v3-side{grid-area:side;display:flex;flex-direction:column;gap:8px;align-self:end}
+.side-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(36,28,21,0.85);border:1px solid var(--c-border);border-radius:10px;color:var(--c-main);font-weight:900;font-size:13px;letter-spacing:1px;cursor:pointer;text-align:left;transition:all .2s}
+.side-btn:hover{background:rgba(192,144,96,0.15);border-color:var(--c-accent-2);transform:translateX(4px)}
+.side-btn:active{transform:scale(0.97)}
+.side-btn .ico{font-size:22px;width:28px;text-align:center}
+.menu-v3-mainbtn{grid-area:main;display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.announce-mini{padding:10px 14px;background:rgba(232,176,76,0.08);border:1px solid rgba(232,176,76,0.3);border-radius:10px;text-align:left}
+.menu-main-v3{padding:24px 20px !important;font-size:22px !important;background:linear-gradient(135deg,#d97757,#c09060,#e8b04c) !important;box-shadow:0 12px 36px rgba(217,119,87,0.55) !important;letter-spacing:5px !important;animation:mainPulse 2s ease-in-out infinite}
+@keyframes mainPulse{0%,100%{box-shadow:0 12px 36px rgba(217,119,87,0.55)}50%{box-shadow:0 16px 48px rgba(232,176,76,0.75)}}
+.menu-v3-footer{grid-area:footer;text-align:center;font-size:10px;color:var(--c-text-dimmer);letter-spacing:4px}
+@media (max-width:600px){
+  .menu-v3-wrap{grid-template-columns:1fr;grid-template-areas:"user" "title" "stats" "side" "main" "footer";padding:16px;gap:10px}
+  .menu-v3-title .logo-title{font-size:28px;letter-spacing:5px}
+  .menu-main-v3{padding:18px 16px !important;font-size:18px !important}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .menu-v3-wrap{padding:16px;gap:10px;min-height:auto}
+  .menu-v3-title{padding:6px}
+  .menu-v3-title .logo-title{font-size:28px;letter-spacing:5px;margin-bottom:0}
+  .menu-v3-title .logo-sub{font-size:10px}
+  .side-btn{padding:8px 12px;font-size:12px}
+  .side-btn .ico{font-size:18px}
+  .menu-main-v3{padding:18px 16px !important;font-size:17px !important;letter-spacing:3px !important}
+  .announce-mini{padding:6px 10px}
+}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f;font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;position:fixed;color:#e8e6e0}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1410;font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;position:fixed;color:#f0e5d2}
 :root{
   --ui-scale:1;
-  --c-bg:#0a0a0f;--c-bg-soft:#14141d;--c-panel:rgba(20,20,29,0.92);
-  --c-border:rgba(140,120,200,0.3);--c-border-strong:rgba(192,132,252,0.5);
-  --c-main:#e8e6e0;--c-accent:#ff4d6d;--c-accent-2:#c084fc;
-  --c-gold:#fbbf24;--c-cyan:#22d3ee;--c-green:#4ade80;--c-blue:#60a5fa;
-  --c-text-dim:#9ca3af;--c-text-dimmer:#6b7280;
-  --c-active:#ff4d6d;--c-passive:#60a5fa;--c-stat:#4ade80;
+  --c-bg:#1a1410;--c-bg-soft:#241c15;--c-panel:rgba(36,28,21,0.92);
+  --c-border:rgba(180,140,90,0.32);--c-border-strong:rgba(212,176,120,0.55);
+  --c-main:#f0e5d2;--c-accent:#d97757;--c-accent-2:#c09060;
+  --c-gold:#e8b04c;--c-cyan:#88a890;--c-green:#8fb255;--c-blue:#7090b0;
+  --c-text-dim:#b0a088;--c-text-dimmer:#8c7c64;
+  --c-active:#d97757;--c-passive:#7090b0;--c-stat:#8fb255;
   --safe-l:env(safe-area-inset-left,0);--safe-r:env(safe-area-inset-right,0);
   --safe-t:env(safe-area-inset-top,0);--safe-b:env(safe-area-inset-bottom,0);
 }
+html,body{background:#1a1410;color:#f0e5d2}
 #game-container{position:relative;width:100%;height:100%}
 canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #bgCanvas{z-index:0;touch-action:none;pointer-events:none}
@@ -30,23 +63,23 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #fps-display{position:absolute;top:calc(10px + var(--safe-t));right:calc(14px + var(--safe-r));font-family:monospace;font-size:11px;font-weight:bold;color:rgba(232,230,224,0.45);z-index:100;pointer-events:none;letter-spacing:1px}
 #top-btns{position:absolute;top:calc(48px + var(--safe-t));right:calc(14px + var(--safe-r));display:flex;flex-direction:column;gap:8px;z-index:55;pointer-events:auto}
 .icon-btn{width:40px;height:40px;border-radius:10px;background:rgba(20,20,29,0.75);border:1px solid var(--c-border);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:all .2s;font-size:18px;color:var(--c-main);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
-.icon-btn:hover{background:rgba(192,132,252,0.18);border-color:var(--c-accent-2);transform:translateY(-2px)}
+.icon-btn:hover{background:rgba(192,144,96,0.18);border-color:var(--c-accent-2);transform:translateY(-2px)}
 .icon-btn:active{transform:scale(.9)}
 
 /* HUD */
 #hud-top{position:absolute;top:calc(14px + var(--safe-t));left:calc(14px + var(--safe-l));display:flex;flex-direction:column;gap:5px;pointer-events:none;opacity:0;transition:opacity .4s;background:rgba(20,20,29,0.78);padding:10px 14px;border-radius:12px;border:1px solid var(--c-border);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,0.4);width:240px}
 #hud-top.visible{opacity:1}
 .hud-header{display:flex;justify-content:space-between;align-items:flex-end}
-.hud-level{font-size:22px;font-weight:900;color:var(--c-main);font-style:italic;line-height:1;text-shadow:0 0 14px rgba(192,132,252,.7)}
+.hud-level{font-size:22px;font-weight:900;color:var(--c-main);font-style:italic;line-height:1;text-shadow:0 0 14px rgba(192,144,96,.7)}
 .hud-time{font-size:14px;font-weight:900;color:var(--c-accent);font-family:monospace;letter-spacing:1px}
 .hud-bar-label{display:flex;justify-content:space-between;font-size:9px;color:var(--c-text-dim);font-weight:bold;letter-spacing:1.5px;margin-bottom:2px;margin-top:4px}
 .hud-bar-bg{width:100%;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
 #hp-bar-fill{height:100%;background:linear-gradient(90deg,#ef4444,#ff6b8a);width:100%;transition:width .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 8px rgba(239,68,68,.6)}
-#xp-bar-fill{height:100%;background:linear-gradient(90deg,#a78bfa,#22d3ee);width:0%;transition:width .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 6px rgba(167,139,250,.5)}
+#xp-bar-fill{height:100%;background:linear-gradient(90deg,#c09060,#22d3ee);width:0%;transition:width .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 6px rgba(167,139,250,.5)}
 
 #score-display{position:absolute;top:calc(110px + var(--safe-t));right:calc(14px + var(--safe-r));font-size:11px;font-weight:900;color:var(--c-text-dim);letter-spacing:3px;opacity:0;transition:opacity .3s;text-align:right;pointer-events:none}
 #score-display.visible{opacity:1}
-#score-span{color:var(--c-accent);font-family:monospace;font-size:30px;display:inline-block;text-shadow:0 0 12px rgba(255,77,109,.7)}
+#score-span{color:var(--c-accent);font-family:monospace;font-size:30px;display:inline-block;text-shadow:0 0 12px rgba(217,119,87,.7)}
 #combo-display{font-size:14px;font-weight:900;color:#fb923c;font-style:italic;opacity:0;transform:translateX(20px);transition:all .2s ease-out;margin-top:4px;text-shadow:0 0 10px rgba(251,146,60,.7)}
 #combo-display.active{opacity:1;transform:translateX(0) scale(1.1)}
 #high-score-tip{position:absolute;top:calc(180px + var(--safe-t));right:calc(14px + var(--safe-r));font-size:12px;font-weight:900;color:var(--c-gold);background:rgba(20,20,29,0.85);padding:6px 12px;border-radius:6px;border:1px solid var(--c-gold);opacity:0;transform:translateX(40px);transition:all .4s;pointer-events:none;box-shadow:0 0 20px rgba(251,191,36,.4);text-align:right}
@@ -75,9 +108,9 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 
 #boss-ui{position:absolute;top:calc(12px + var(--safe-t));left:50%;transform:translateX(-50%);width:70%;max-width:600px;display:none;flex-direction:column;align-items:center;z-index:40;pointer-events:none;opacity:0;transition:opacity .5s;transform-origin:top center}
 #boss-ui.visible{display:flex;opacity:1}
-#boss-name{color:var(--c-accent);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:6px;margin-bottom:6px;text-shadow:0 0 12px rgba(255,77,109,.8)}
+#boss-name{color:var(--c-accent);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:6px;margin-bottom:6px;text-shadow:0 0 12px rgba(217,119,87,.8)}
 #boss-phase-tag{font-size:10px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#ef4444);color:#000;padding:2px 8px;border-radius:4px;margin-left:8px;letter-spacing:2px}
-#boss-hp-bg{width:100%;height:16px;background:rgba(0,0,0,0.75);border:2px solid var(--c-accent);border-radius:8px;overflow:hidden;position:relative;box-shadow:0 4px 16px rgba(255,77,109,.4)}
+#boss-hp-bg{width:100%;height:16px;background:rgba(0,0,0,0.75);border:2px solid var(--c-accent);border-radius:8px;overflow:hidden;position:relative;box-shadow:0 4px 16px rgba(217,119,87,.4)}
 #boss-hp-fill{width:100%;height:100%;background:linear-gradient(90deg,#fb923c,#ef4444);transition:width .2s ease-out;box-shadow:0 0 10px #ef4444}
 #boss-hp-text{position:absolute;top:0;left:0;width:100%;height:100%;text-align:center;color:#fff;font-size:11px;font-family:monospace;font-weight:bold;line-height:16px;text-shadow:0 1px 2px #000;z-index:2}
 
@@ -85,7 +118,7 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #skill-tracker{position:absolute;bottom:calc(14px + var(--safe-b));left:50%;transform:translateX(-50%);display:flex;flex-direction:row;flex-wrap:wrap-reverse;gap:6px;opacity:0;transition:opacity .3s;align-items:flex-end;justify-content:center;align-content:flex-end;z-index:50;pointer-events:auto;max-width:94vw;padding:4px 8px;transform-origin:bottom center}
 #skill-tracker.visible{opacity:1}
 .skill-card{position:relative;width:100px;height:78px;border-radius:11px;background:linear-gradient(160deg,rgba(20,20,29,0.92),rgba(30,15,40,0.95));border:2px solid var(--c-border);overflow:hidden;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:7px 9px;box-shadow:0 4px 14px rgba(0,0,0,0.4);transition:all .25s cubic-bezier(.34,1.56,.64,1)}
-.skill-card.cat-active{border-color:rgba(255,77,109,0.55);box-shadow:0 4px 14px rgba(255,77,109,0.18)}
+.skill-card.cat-active{border-color:rgba(217,119,87,0.55);box-shadow:0 4px 14px rgba(217,119,87,0.18)}
 .skill-card.cat-passive{border-color:rgba(96,165,250,0.55);box-shadow:0 4px 14px rgba(96,165,250,0.18)}
 .skill-card.cat-stat{border-color:rgba(74,222,128,0.55);box-shadow:0 4px 14px rgba(74,222,128,0.18)}
 .skill-card.ready{animation:cardReady 1.2s ease-in-out infinite}
@@ -100,11 +133,11 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 .skill-card-cd.ready-text{color:var(--c-gold);font-size:12px;letter-spacing:2px;animation:readyTxt 1s ease-in-out infinite}
 @keyframes readyTxt{0%,100%{opacity:1}50%{opacity:0.6}}
 .skill-card-cd-bar{position:absolute;bottom:0;left:0;height:4px;background:linear-gradient(90deg,var(--c-accent-2),var(--c-accent));width:0;transition:width 0.1s linear;border-radius:0 2px 2px 0;box-shadow:0 0 8px var(--c-accent-2)}
-.skill-card.cat-active .skill-card-cd-bar{background:linear-gradient(90deg,#ff4d6d,#ff8c8c)}
+.skill-card.cat-active .skill-card-cd-bar{background:linear-gradient(90deg,##d97757,#ff8c8c)}
 .skill-card.cat-passive .skill-card-cd-bar{background:linear-gradient(90deg,#60a5fa,#22d3ee)}
 .skill-card.cat-stat .skill-card-cd-bar{background:linear-gradient(90deg,#4ade80,#22d3ee)}
 .skill-card-tag{position:absolute;top:0;right:0;font-size:7px;font-weight:900;letter-spacing:1px;padding:2px 5px;border-bottom-left-radius:8px;color:#fff}
-.skill-card.cat-active .skill-card-tag{background:rgba(255,77,109,0.85)}
+.skill-card.cat-active .skill-card-tag{background:rgba(217,119,87,0.85)}
 .skill-card.cat-passive .skill-card-tag{background:rgba(96,165,250,0.85)}
 .skill-card.cat-stat .skill-card-tag{background:rgba(74,222,128,0.85)}
 .skill-card-passive-stat .skill-card-cd{display:none}
@@ -117,77 +150,95 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 
 /* 摇杆 */
 #joystick-base{position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(20,20,29,0.5);border:2px solid var(--c-border-strong);transform:translate(-50%,-50%);opacity:0;pointer-events:none;z-index:999;transition:opacity .1s;backdrop-filter:blur(4px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
-#joystick-thumb{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));box-shadow:0 4px 14px rgba(192,132,252,.6)}
+#joystick-thumb{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));box-shadow:0 4px 14px rgba(192,144,96,.6)}
 
-/* ★ v19 Overlay 通用 - 使用 CSS 变量实现整体缩放 */
+/* ★ v19/v20 Overlay 通用 - 使用 CSS 变量实现整体缩放 */
 .overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.7);display:flex;align-items:center;justify-content:center;z-index:200;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.25,1,.5,1),visibility .5s;backdrop-filter:blur(14px)}
 .overlay.active{opacity:1;visibility:visible;pointer-events:auto}
 .panel{position:relative;display:flex;flex-direction:column;gap:14px;background:var(--c-panel);border:1px solid var(--c-border-strong);padding:24px;width:92%;max-width:540px;transform:scale(calc(0.9 * var(--ui-scale,1))) translateY(20px);opacity:0;transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .4s ease-out;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,0.05);max-height:92vh;overflow-y:auto;border-radius:14px}
 .overlay.active .panel{transform:scale(var(--ui-scale,1)) translateY(0);opacity:1}
 .panel::-webkit-scrollbar{width:5px}
 .panel::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:3px}
-.section-title{color:var(--c-main);font-size:22px;font-weight:900;letter-spacing:4px;margin-bottom:8px;text-transform:uppercase;text-shadow:0 0 16px rgba(192,132,252,.5)}
+.section-title{color:var(--c-main);font-size:22px;font-weight:900;letter-spacing:4px;margin-bottom:8px;text-transform:uppercase;text-shadow:0 0 16px rgba(192,144,96,.5)}
 
-.primary-btn{background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;padding:13px 20px;font-size:15px;cursor:pointer;font-weight:900;letter-spacing:2px;transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:10px;box-shadow:0 6px 18px rgba(124,58,237,.45);position:relative;overflow:hidden}
-.primary-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(124,58,237,.6)}
+.primary-btn{background:linear-gradient(135deg,#a87a48,##a07a48);border:none;color:#fff;padding:13px 20px;font-size:15px;cursor:pointer;font-weight:900;letter-spacing:2px;transition:all .2s cubic-bezier(.34,1.56,.64,1);border-radius:10px;box-shadow:0 6px 18px rgba(168,122,72,.45);position:relative;overflow:hidden}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(168,122,72,.6)}
 .primary-btn:active{transform:scale(.96)}
 .primary-btn.locked{background:linear-gradient(135deg,#374151,#4b5563);cursor:not-allowed;color:#9ca3af;box-shadow:none}
 .secondary-btn{background:transparent;border:1px solid var(--c-border-strong);color:var(--c-main);padding:11px 20px;font-size:14px;cursor:pointer;font-weight:900;letter-spacing:1px;transition:all .2s;border-radius:10px}
-.secondary-btn:hover{background:rgba(192,132,252,0.1);border-color:var(--c-accent-2)}
+.secondary-btn:hover{background:rgba(192,144,96,0.1);border-color:var(--c-accent-2)}
 .secondary-btn:active{transform:scale(.96)}
 
 /* 主菜单 */
-#main-menu .panel{max-width:680px;padding:0;overflow:visible;background:linear-gradient(160deg,rgba(20,20,29,0.96),rgba(30,15,40,0.96));border:1px solid var(--c-border-strong);border-radius:22px;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,0.06),0 0 80px rgba(192,132,252,.1)}
+#main-menu .panel{max-width:680px;padding:0;overflow:visible;background:linear-gradient(160deg,rgba(20,20,29,0.96),rgba(30,15,40,0.96));border:1px solid var(--c-border-strong);border-radius:22px;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,0.06),0 0 80px rgba(192,144,96,.1)}
 .menu-content{padding:28px;display:flex;flex-direction:column;gap:20px}
 #user-status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(0,0,0,0.3);border-radius:12px;font-size:13px;font-weight:bold;color:var(--c-text-dim);border:1px solid var(--c-border)}
 #login-logout-btn{color:var(--c-accent);cursor:pointer;padding:5px 12px;border-radius:6px;transition:all .2s}
-#login-logout-btn:hover{background:rgba(255,77,109,.12)}
-.menu-header-v2{display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 24px;background:radial-gradient(ellipse at top,rgba(192,132,252,0.15),transparent 70%),linear-gradient(135deg,#1a1029,#0d0617);border-radius:18px;color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,0.06);position:relative;overflow:hidden;border:1px solid rgba(192,132,252,.2)}
-.menu-header-v2::before{content:'';position:absolute;top:-50%;left:-10%;width:120%;height:200%;background:radial-gradient(ellipse at center,rgba(192,132,252,.2),transparent 60%);animation:bgShimmer 6s ease-in-out infinite;pointer-events:none}
+#login-logout-btn:hover{background:rgba(217,119,87,.12)}
+.menu-header-v2{display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 24px;background:radial-gradient(ellipse at top,rgba(192,144,96,0.15),transparent 70%),linear-gradient(135deg,#1a1029,#0d0617);border-radius:18px;color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,0.06);position:relative;overflow:hidden;border:1px solid rgba(192,144,96,.2)}
+.menu-header-v2::before{content:'';position:absolute;top:-50%;left:-10%;width:120%;height:200%;background:radial-gradient(ellipse at center,rgba(192,144,96,.2),transparent 60%);animation:bgShimmer 6s ease-in-out infinite;pointer-events:none}
 @keyframes bgShimmer{0%,100%{transform:translateX(-10%) translateY(0) rotate(0)}50%{transform:translateX(10%) translateY(-5%) rotate(2deg)}}
 .menu-logo-v2{text-align:center;position:relative;z-index:1}
-.menu-logo-v2 .logo-title{font-size:44px;font-weight:900;letter-spacing:6px;line-height:1;background:linear-gradient(135deg,#fff,#c084fc,#ff4d6d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
-.menu-logo-v2 .logo-sub{font-size:14px;color:var(--c-accent-2);font-family:monospace;letter-spacing:10px;text-shadow:0 0 16px rgba(192,132,252,.7)}
+.menu-logo-v2 .logo-title{font-size:44px;font-weight:900;letter-spacing:6px;line-height:1;background:linear-gradient(135deg,#fff,#c09060,##d97757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.menu-logo-v2 .logo-sub{font-size:14px;color:var(--c-accent-2);font-family:monospace;letter-spacing:10px;text-shadow:0 0 16px rgba(192,144,96,.7)}
 .menu-stats-v2{display:flex;width:100%;gap:14px;position:relative;z-index:1;margin-top:4px}
-.menu-stat-card{flex:1;padding:14px 18px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(192,132,252,0.2);text-align:left}
+.menu-stat-card{flex:1;padding:14px 18px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(192,144,96,0.2);text-align:left}
 .menu-stat-card .label{font-size:11px;color:var(--c-text-dim);font-weight:bold;letter-spacing:2px;margin-bottom:6px}
 .menu-stat-card .val{color:var(--c-gold);font-family:monospace;font-size:24px;font-weight:900;text-shadow:0 0 12px rgba(251,191,36,.5);display:block}
-.menu-stat-card.purple .val{color:var(--c-accent-2);text-shadow:0 0 12px rgba(192,132,252,.5)}
-.announce-card{background:linear-gradient(135deg,rgba(192,132,252,.1),rgba(255,77,109,.06));border:1px solid rgba(192,132,252,.3);border-radius:14px;padding:16px 18px;text-align:left;position:relative}
-.announce-card::before{content:'NEW';position:absolute;top:-10px;right:14px;background:linear-gradient(135deg,#ff4d6d,#c084fc);color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:5px;letter-spacing:1.5px;box-shadow:0 2px 10px rgba(192,132,252,.5);animation:newPulse 2s ease-in-out infinite}
+.menu-stat-card.purple .val{color:var(--c-accent-2);text-shadow:0 0 12px rgba(192,144,96,.5)}
+.announce-card{background:linear-gradient(135deg,rgba(192,144,96,.1),rgba(217,119,87,.06));border:1px solid rgba(192,144,96,.3);border-radius:14px;padding:16px 18px;text-align:left;position:relative}
+.announce-card::before{content:'NEW';position:absolute;top:-10px;right:14px;background:linear-gradient(135deg,##d97757,#c09060);color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:5px;letter-spacing:1.5px;box-shadow:0 2px 10px rgba(192,144,96,.5);animation:newPulse 2s ease-in-out infinite}
 @keyframes newPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .announce-title{font-size:14px;font-weight:900;color:var(--c-main);margin-bottom:8px;letter-spacing:1px}
 .announce-body{font-size:11.5px;color:var(--c-text-dim);line-height:1.7;font-weight:bold;max-height:120px;overflow-y:auto;padding-right:6px}
 .announce-body::-webkit-scrollbar{width:4px}
-.announce-body::-webkit-scrollbar-thumb{background:rgba(192,132,252,.4);border-radius:2px}
+.announce-body::-webkit-scrollbar-thumb{background:rgba(192,144,96,.4);border-radius:2px}
 .announce-body li{margin-left:16px;color:var(--c-text-dim)}
 .announce-body b{color:var(--c-accent-2)}
 .menu-btn-grid{display:flex;flex-direction:column;gap:10px}
 .menu-btn-row{display:flex;gap:10px}
 .menu-btn-row .primary-btn{flex:1;font-size:13px;padding:14px 14px;letter-spacing:1px}
-.menu-main-btn{width:100%;padding:22px 20px;font-size:20px;background:linear-gradient(135deg,#ff4d6d,#c084fc);box-shadow:0 12px 32px rgba(255,77,109,.5);letter-spacing:3px}
-.menu-main-btn:hover{box-shadow:0 16px 42px rgba(255,77,109,.65)}
+.menu-main-btn{width:100%;padding:22px 20px;font-size:20px;background:linear-gradient(135deg,##d97757,#c09060);box-shadow:0 12px 32px rgba(217,119,87,.5);letter-spacing:3px}
+.menu-main-btn:hover{box-shadow:0 16px 42px rgba(217,119,87,.65)}
 
 /* 登录页 */
 #auth-screen .panel{max-width:440px;background:linear-gradient(160deg,rgba(20,20,29,0.96),rgba(30,15,40,0.96));border:1px solid var(--c-border-strong);border-radius:18px;padding:40px 32px;gap:16px}
-.auth-logo{font-size:34px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#fff,#c084fc,#ff4d6d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
+.auth-logo{font-size:34px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#fff,#c09060,##d97757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
 .auth-subtitle{font-size:12px;color:var(--c-text-dim);font-weight:bold;letter-spacing:3px;margin-bottom:10px}
-.auth-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,132,252,0.4),transparent);margin:8px 0;border:none}
+.auth-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,144,96,0.4),transparent);margin:8px 0;border:none}
 #auth-title{font-size:13px;color:var(--c-text-dim);margin-bottom:6px;font-weight:bold;letter-spacing:1px}
 .auth-input{padding:15px 16px;border:1px solid var(--c-border);border-radius:12px;font-size:14px;outline:none;font-family:monospace;width:100%;box-sizing:border-box;transition:.2s;background:rgba(0,0,0,0.3);color:var(--c-main)}
-.auth-input:focus{border-color:var(--c-accent-2);background:rgba(0,0,0,0.5);box-shadow:0 0 0 3px rgba(192,132,252,.15)}
+.auth-input:focus{border-color:var(--c-accent-2);background:rgba(0,0,0,0.5);box-shadow:0 0 0 3px rgba(192,144,96,.15)}
 .auth-input::placeholder{color:var(--c-text-dimmer)}
 .auth-toggle{font-size:13px;color:var(--c-text-dim);text-align:center;cursor:pointer;margin-top:6px;font-weight:bold;padding:10px;border-radius:8px;transition:all .2s}
-.auth-toggle:hover{color:var(--c-accent-2);background:rgba(192,132,252,.08)}
-#auth-error{color:var(--c-accent);font-size:12.5px;font-weight:bold;display:none;text-align:left;padding:10px 14px;background:rgba(255,77,109,.1);border-radius:8px;border:1px solid var(--c-accent);border-left-width:3px}
+.auth-toggle:hover{color:var(--c-accent-2);background:rgba(192,144,96,.08)}
+#auth-error{color:var(--c-accent);font-size:12.5px;font-weight:bold;display:none;text-align:left;padding:10px 14px;background:rgba(217,119,87,.1);border-radius:8px;border:1px solid var(--c-accent);border-left-width:3px}
 #auth-submit-btn{padding:16px 20px;font-size:15px;margin-top:8px}
 
 /* 准备页 */
-#prep-screen .panel{max-width:960px;width:96%;padding:0;background:linear-gradient(160deg,rgba(20,20,29,0.96),rgba(30,15,40,0.96));gap:0;overflow:hidden}
+#prep-screen .panel{max-width:1100px;width:97%;padding:0;background:linear-gradient(160deg,rgba(36,28,21,0.96),rgba(50,38,28,0.96));gap:0;overflow:hidden;max-height:96vh;display:flex;flex-direction:column}
+.prep-topbar{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--c-border);background:rgba(0,0,0,0.3);z-index:10}
+.prep-content-grid{flex:1;display:grid;grid-template-columns:1.1fr 1fr;gap:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.prep-content-grid::-webkit-scrollbar{width:6px}
+.prep-content-grid::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:3px}
+@media(max-width:760px){.prep-content-grid{grid-template-columns:1fr}}
+.prep-left-panel{padding:18px;border-right:1px solid var(--c-border);display:flex;flex-direction:column;gap:14px}
+@media(max-width:760px){.prep-left-panel{border-right:none;border-bottom:1px solid var(--c-border)}}
+#preview-box{height:200px}
+.prep-right-panel{padding:18px;display:flex;flex-direction:column;gap:12px}
+.prep-bottom-bar{flex-shrink:0;display:flex;gap:10px;padding:14px 20px;border-top:2px solid var(--c-border-strong);background:linear-gradient(180deg,rgba(36,28,21,0.95),rgba(26,20,16,1));z-index:10;box-shadow:0 -8px 24px rgba(0,0,0,0.5)}
+.prep-bottom-bar .secondary-btn{flex:1;padding:14px}
+.prep-bottom-bar .primary-btn{flex:2.5;padding:14px;font-size:16px;letter-spacing:3px;background:linear-gradient(135deg,#d97757,#c09060);box-shadow:0 6px 18px rgba(217,119,87,0.5)}
+@media (orientation:landscape) and (max-height:520px){
+  #prep-screen .panel{max-height:98vh}
+  #preview-box{height:140px}
+  .prep-left-panel,.prep-right-panel{padding:12px;gap:10px}
+  .prep-bottom-bar{padding:10px 16px}
+}
 .prep-topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--c-border);background:rgba(0,0,0,0.3)}
 .prep-topbar-left{display:flex;align-items:center;gap:14px}
-.prep-title-big{font-size:22px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#fff,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.prep-tp-badge{font-size:11px;color:var(--c-accent-2);font-family:monospace;letter-spacing:2px;background:rgba(192,132,252,0.12);padding:4px 10px;border-radius:6px;border:1px solid var(--c-border)}
+.prep-title-big{font-size:22px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#fff,#c09060);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.prep-tp-badge{font-size:11px;color:var(--c-accent-2);font-family:monospace;letter-spacing:2px;background:rgba(192,144,96,0.12);padding:4px 10px;border-radius:6px;border:1px solid var(--c-border)}
 .prep-content-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:0}
 @media(max-width:760px){.prep-content-grid{grid-template-columns:1fr}}
 .prep-left-panel{padding:22px;border-right:1px solid var(--c-border);display:flex;flex-direction:column;gap:18px}
@@ -195,25 +246,25 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #preview-box{border:1px solid var(--c-border-strong);border-radius:14px;background:rgba(0,0,0,0.4);position:relative;overflow:hidden;box-shadow:inset 0 2px 14px rgba(0,0,0,.4);height:240px}
 #preview-canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5}
 .preview-tag{position:absolute;top:10px;left:12px;font-size:9px;letter-spacing:3px;color:var(--c-text-dimmer);font-weight:bold;font-family:monospace;z-index:6;background:rgba(0,0,0,0.4);padding:3px 8px;border-radius:4px}
-.preview-weapon-name{position:absolute;bottom:12px;left:14px;font-size:14px;font-weight:900;color:var(--c-accent-2);text-shadow:0 0 10px rgba(192,132,252,0.7);letter-spacing:2px;z-index:6}
+.preview-weapon-name{position:absolute;bottom:12px;left:14px;font-size:14px;font-weight:900;color:var(--c-accent-2);text-shadow:0 0 10px rgba(192,144,96,0.7);letter-spacing:2px;z-index:6}
 .prep-section-block{background:rgba(0,0,0,0.3);border:1px solid var(--c-border);border-radius:12px;padding:14px}
 .prep-section-block-title{font-size:12px;font-weight:900;color:var(--c-accent-2);letter-spacing:2px;margin-bottom:10px;padding-left:8px;border-left:3px solid var(--c-accent-2);display:flex;justify-content:space-between;align-items:center}
 .prep-section-block-title span:last-child{color:var(--c-gold);font-family:monospace;font-size:11px}
 .weapon-list-v2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(max-width:480px){.weapon-list-v2{grid-template-columns:1fr}}
 .weapon-card-v2{position:relative;border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;background:rgba(0,0,0,0.4);cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:10px}
-.weapon-card-v2.active{border-color:var(--c-accent-2);background:rgba(192,132,252,.12);box-shadow:0 4px 14px rgba(192,132,252,.25);transform:translateY(-2px)}
+.weapon-card-v2.active{border-color:var(--c-accent-2);background:rgba(192,144,96,.12);box-shadow:0 4px 14px rgba(192,144,96,.25);transform:translateY(-2px)}
 .weapon-card-v2 .wci{font-size:28px;flex-shrink:0;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:8px}
 .weapon-card-v2 .wci-info{flex:1;text-align:left;min-width:0}
 .weapon-card-v2 .wci-name{font-size:12px;font-weight:900;color:var(--c-main);letter-spacing:1px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .weapon-card-v2 .wci-desc{font-size:10px;color:var(--c-text-dim);font-weight:bold}
-.weapon-card-v2 .info-btn-v2{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(255,77,109,0.85);color:#fff;border-radius:50%;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;z-index:8;border:none;line-height:1}
-.weapon-card-v2 .info-btn-v2:hover{background:#ff4d6d;transform:scale(1.15)}
+.weapon-card-v2 .info-btn-v2{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(217,119,87,0.85);color:#fff;border-radius:50%;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;z-index:8;border:none;line-height:1}
+.weapon-card-v2 .info-btn-v2:hover{background:##d97757;transform:scale(1.15)}
 .weapon-card-v2 .info-btn-v2:active{transform:scale(.85)}
 #diff-box-v2{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 @media(max-width:480px){#diff-box-v2{grid-template-columns:repeat(4,1fr)}}
 .diff-btn{padding:11px 4px;border:1px solid var(--c-border);border-radius:8px;background:rgba(0,0,0,0.3);font-weight:900;font-size:15px;cursor:pointer;transition:.2s;color:var(--c-main)}
-.diff-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;border-color:transparent;transform:scale(1.05);box-shadow:0 4px 12px rgba(192,132,252,.4)}
+.diff-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;border-color:transparent;transform:scale(1.05);box-shadow:0 4px 12px rgba(192,144,96,.4)}
 .diff-btn.locked{opacity:.4;cursor:not-allowed;background:rgba(0,0,0,0.5);color:var(--c-text-dimmer)}
 #diff-desc{font-size:11px;font-weight:bold;color:var(--c-text-dim);margin-top:8px;text-align:left;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:6px;border-left:3px solid var(--c-accent-2);line-height:1.5}
 .prep-right-panel{padding:22px;display:flex;flex-direction:column;gap:14px}
@@ -228,26 +279,26 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 /* 升级页 - 5卡随机 */
 #upgrade-overlay .panel{max-width:920px;width:96%}
 .upgrade-header{text-align:center;margin-bottom:6px}
-.upgrade-header .ttl{font-size:24px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#fff,#c084fc,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.upgrade-header .ttl{font-size:24px;font-weight:900;letter-spacing:5px;background:linear-gradient(135deg,#fff,#c09060,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
 .upgrade-header .sub{font-size:12px;color:var(--c-text-dim);font-weight:bold;letter-spacing:2px}
 .upgrade-cards-v2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0;max-height:55vh;overflow-y:auto;padding:4px;padding-right:8px}
 .upgrade-cards-v2::-webkit-scrollbar{width:5px}
 .upgrade-cards-v2::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:3px}
 .upg-card{position:relative;background:linear-gradient(160deg,rgba(30,20,45,0.9),rgba(20,15,30,0.95));border:2px solid var(--c-border);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:left;transition:all .3s cubic-bezier(.34,1.56,.64,1);overflow:hidden;opacity:0;transform:translateY(20px);min-height:170px;display:flex;flex-direction:column}
 .upg-card.show{opacity:1;transform:translateY(0)}
-.upg-card.cat-active{border-color:rgba(255,77,109,0.4)}
-.upg-card.cat-active:hover{border-color:#ff4d6d;box-shadow:0 8px 24px rgba(255,77,109,0.35);transform:translateY(-4px)}
+.upg-card.cat-active{border-color:rgba(217,119,87,0.4)}
+.upg-card.cat-active:hover{border-color:##d97757;box-shadow:0 8px 24px rgba(217,119,87,0.35);transform:translateY(-4px)}
 .upg-card.cat-passive{border-color:rgba(96,165,250,0.4)}
 .upg-card.cat-passive:hover{border-color:#60a5fa;box-shadow:0 8px 24px rgba(96,165,250,0.35);transform:translateY(-4px)}
 .upg-card.cat-stat{border-color:rgba(74,222,128,0.4)}
 .upg-card.cat-stat:hover{border-color:#4ade80;box-shadow:0 8px 24px rgba(74,222,128,0.35);transform:translateY(-4px)}
 .upg-card-tag{font-size:8px;font-weight:900;letter-spacing:1.5px;padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:8px;text-transform:uppercase;color:#fff;align-self:flex-start}
-.upg-card.cat-active .upg-card-tag{background:#ff4d6d}
+.upg-card.cat-active .upg-card-tag{background:##d97757}
 .upg-card.cat-passive .upg-card-tag{background:#60a5fa}
 .upg-card.cat-stat .upg-card-tag{background:#4ade80;color:#000}
-.upg-card-icon{font-size:32px;margin-bottom:6px;line-height:1;filter:drop-shadow(0 0 6px rgba(192,132,252,0.4))}
+.upg-card-icon{font-size:32px;margin-bottom:6px;line-height:1;filter:drop-shadow(0 0 6px rgba(192,144,96,0.4))}
 .upg-card-name{font-size:13px;font-weight:900;color:#fff;margin-bottom:4px;line-height:1.25}
-.upg-card-lv{display:inline-block;background:rgba(192,132,252,0.18);color:var(--c-accent-2);font-size:10px;font-weight:900;padding:1px 6px;border-radius:3px;margin-bottom:6px;font-family:monospace}
+.upg-card-lv{display:inline-block;background:rgba(192,144,96,0.18);color:var(--c-accent-2);font-size:10px;font-weight:900;padding:1px 6px;border-radius:3px;margin-bottom:6px;font-family:monospace}
 .upg-card-lv.max{background:rgba(251,191,36,0.2);color:var(--c-gold)}
 .upg-card-lv.new{background:rgba(74,222,128,0.2);color:var(--c-green)}
 .upg-card-desc{font-size:10.5px;color:var(--c-text-dim);line-height:1.5;font-weight:bold;flex:1}
@@ -262,21 +313,21 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #lb-wrapper{display:flex;align-items:stretch;height:600px;max-height:90vh;margin:0 auto;background:linear-gradient(160deg,rgba(20,20,29,0.96),rgba(30,15,40,0.96));border:1px solid var(--c-border-strong);border-radius:18px;overflow:hidden;box-shadow:0 22px 56px rgba(0,0,0,.5)}
 #lb-sidebar{width:140px;flex-shrink:0;background:rgba(0,0,0,0.3);padding:18px 10px;border-right:1px solid var(--c-border);display:flex;flex-direction:column;gap:6px;overflow-y:auto}
 .lb-tab-btn{padding:10px 12px;border:1px solid var(--c-border);background:transparent;border-radius:8px;color:var(--c-text-dim);font-size:13px;font-weight:900;cursor:pointer;transition:.2s;text-align:center;display:flex;justify-content:space-between;align-items:center;gap:6px}
-.lb-tab-btn:hover{background:rgba(192,132,252,0.08)}
-.lb-tab-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(192,132,252,0.4)}
+.lb-tab-btn:hover{background:rgba(192,144,96,0.08)}
+.lb-tab-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(192,144,96,0.4)}
 .lb-tab-btn .my-mark{font-size:9px;background:var(--c-gold);color:#000;padding:1px 5px;border-radius:8px;font-weight:900}
 #lb-main{flex:1;display:flex;flex-direction:column;padding:20px;min-width:260px}
 .lb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .lb-header .ttl{font-size:18px;font-weight:900;letter-spacing:3px;color:var(--c-main)}
 .lb-header .diff-tag{font-size:10px;font-weight:900;background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;padding:4px 10px;border-radius:6px;letter-spacing:2px}
-#my-rank-banner{padding:10px 14px;background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(192,132,252,0.1));border:1px solid var(--c-gold);border-radius:10px;font-size:12px;font-weight:bold;color:var(--c-gold);text-align:left;margin-bottom:10px;display:none}
+#my-rank-banner{padding:10px 14px;background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(192,144,96,0.1));border:1px solid var(--c-gold);border-radius:10px;font-size:12px;font-weight:bold;color:var(--c-gold);text-align:left;margin-bottom:10px;display:none}
 #my-rank-banner.show{display:block}
 #leaderboard-list{flex:1;list-style:none;font-size:13px;color:var(--c-main);overflow-y:auto;padding-right:5px;font-weight:bold;margin-bottom:10px}
 #leaderboard-list::-webkit-scrollbar{width:4px}
 #leaderboard-list::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:2px}
 .lb-row{display:flex;align-items:center;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:.2s;border-radius:6px;gap:10px}
-.lb-row:hover{background:rgba(192,132,252,.12);transform:translateX(2px)}
-.lb-row.selected{background:rgba(192,132,252,.18)}
+.lb-row:hover{background:rgba(192,144,96,.12);transform:translateX(2px)}
+.lb-row.selected{background:rgba(192,144,96,.18)}
 .lb-row.mine{background:linear-gradient(90deg,rgba(251,191,36,0.1),transparent);border-left:3px solid var(--c-gold)}
 .lb-row .rank{font-size:14px;font-weight:900;width:40px;text-align:center}
 .lb-row .rank.gold{color:#fbbf24}.lb-row .rank.silver{color:#d1d5db}.lb-row .rank.bronze{color:#d97706}
@@ -294,46 +345,6 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 .btn-group{display:flex;gap:10px;margin-top:5px}
 .btn-group .primary-btn,.btn-group .secondary-btn{flex:1}
 
-/* ★ v19 战绩 - 紧凑表格化 */
-#history-overlay .panel{max-width:820px;padding:20px}
-.hist-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-@media(max-width:560px){.hist-summary{grid-template-columns:repeat(2,1fr)}}
-.hist-sum-box{background:rgba(0,0,0,0.3);padding:10px 8px;border-radius:8px;border:1px solid var(--c-border);text-align:center}
-.hist-sum-box .lbl{font-size:9px;color:var(--c-text-dim);font-weight:bold;letter-spacing:1px;margin-bottom:3px}
-.hist-sum-box .val{font-size:16px;font-weight:900;font-family:monospace;color:var(--c-main)}
-.hist-sum-box.gold .val{color:var(--c-gold)}.hist-sum-box.purple .val{color:var(--c-accent-2)}.hist-sum-box.red .val{color:var(--c-accent)}
-.hist-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:6px;background:rgba(0,0,0,0.25);border-radius:8px}
-.hist-filter-btn{padding:4px 10px;font-size:10.5px;font-weight:900;border:1px solid var(--c-border);background:transparent;color:var(--c-text-dim);border-radius:6px;cursor:pointer;letter-spacing:1px;transition:.15s}
-.hist-filter-btn:hover{color:var(--c-main);border-color:var(--c-border-strong)}
-.hist-filter-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));color:#fff;border-color:transparent}
-.hist-cards{display:flex;flex-direction:column;gap:5px;max-height:55vh;overflow-y:auto;padding-right:5px}
-.hist-cards::-webkit-scrollbar{width:5px}
-.hist-cards::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:3px}
-.hist-card{background:rgba(0,0,0,0.3);border:1px solid var(--c-border);border-radius:8px;padding:0;cursor:pointer;transition:.15s;overflow:hidden}
-.hist-card:hover{border-color:var(--c-accent-2);background:rgba(192,132,252,0.05)}
-.hist-card.expanded{border-color:var(--c-accent-2)}
-.hist-card-head{display:flex;align-items:center;padding:8px 10px;gap:9px}
-.hist-diff{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
-.hist-diff.F{background:linear-gradient(135deg,#6b7280,#4b5563)}.hist-diff.E{background:linear-gradient(135deg,#22c55e,#16a34a)}
-.hist-diff.D{background:linear-gradient(135deg,#3b82f6,#2563eb)}.hist-diff.C{background:linear-gradient(135deg,#a855f7,#9333ea)}
-.hist-diff.B{background:linear-gradient(135deg,#ec4899,#db2777)}.hist-diff.A{background:linear-gradient(135deg,#f59e0b,#d97706)}
-.hist-diff.S{background:linear-gradient(135deg,#ef4444,#dc2626)}
-.hist-info{flex:1;text-align:left;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
-.hist-score{font-size:15px;font-weight:900;color:var(--c-accent);font-family:monospace;flex-shrink:0;min-width:64px}
-.hist-info .weapon-icon-sm{font-size:14px;flex-shrink:0}
-.hist-info .meta{font-size:10.5px;color:var(--c-text-dim);font-weight:bold;display:flex;gap:7px;flex:1;overflow:hidden}
-.hist-info .meta span{flex-shrink:0}
-.hist-info .meta .date-tag{color:var(--c-text-dimmer);font-size:9.5px;overflow:hidden;text-overflow:ellipsis}
-.hist-info .cloud-tag{font-size:9px;color:var(--c-green);background:rgba(74,222,128,0.15);padding:1px 4px;border-radius:3px;flex-shrink:0}
-.hist-arrow{font-size:14px;color:var(--c-text-dimmer);flex-shrink:0;transition:transform .2s}
-.hist-card.expanded .hist-arrow{transform:rotate(180deg)}
-.hist-card-detail{max-height:0;overflow:hidden;transition:max-height .3s ease-out;background:rgba(0,0,0,0.3)}
-.hist-card.expanded .hist-card-detail{max-height:280px}
-.hist-card-detail-inner{padding:10px 12px;border-top:1px dashed var(--c-border);font-size:11px;color:var(--c-text-dim);font-weight:bold;text-align:left;line-height:1.65;word-break:break-all}
-.hist-card-detail-inner b{color:var(--c-accent-2);font-weight:900;display:inline-block;min-width:54px}
-.hist-card-detail-row{padding:2px 0}
-.hist-empty{text-align:center;color:var(--c-text-dimmer);padding:30px;font-size:12px}
-
 /* 设置/背包/商店/弹窗 */
 #settings-overlay .panel{max-width:520px}
 .settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:rgba(0,0,0,0.3);border-radius:10px;margin-bottom:8px;border:1px solid var(--c-border);transition:all .2s;gap:12px}
@@ -342,13 +353,13 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 .settings-desc{font-size:10px;color:var(--c-text-dimmer);font-weight:bold;margin-top:3px;letter-spacing:.5px}
 .settings-control{display:flex;align-items:center;gap:8px}
 .set-tab-btn{padding:6px 12px;border:1px solid var(--c-border);background:transparent;border-radius:6px;color:var(--c-text-dim);font-size:11px;font-weight:900;cursor:pointer;transition:.2s;letter-spacing:1px}
-.set-tab-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));border-color:transparent;color:#fff;box-shadow:0 3px 10px rgba(192,132,252,.4)}
+.set-tab-btn.active{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));border-color:transparent;color:#fff;box-shadow:0 3px 10px rgba(192,144,96,.4)}
 .toggle-switch{width:46px;height:24px;background:rgba(0,0,0,0.5);border-radius:12px;position:relative;cursor:pointer;transition:background .25s;border:1px solid var(--c-border)}
 .toggle-switch.on{background:linear-gradient(135deg,var(--c-accent-2),var(--c-accent));border-color:transparent}
 .toggle-knob{position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .25s cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .toggle-switch.on .toggle-knob{left:24px}
 .bag-grid-slot{background:rgba(0,0,0,0.3);border:1px solid var(--c-border);border-radius:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;transition:.2s;position:relative;font-size:11px;font-weight:bold;color:var(--c-main);text-align:center}
-.bag-grid-slot:hover{border-color:var(--c-accent-2);background:rgba(192,132,252,.1)}
+.bag-grid-slot:hover{border-color:var(--c-accent-2);background:rgba(192,144,96,.1)}
 .bag-item-icon{font-size:24px;margin-bottom:2px}
 .bag-item-count{position:absolute;bottom:2px;right:5px;font-family:monospace;font-size:12px;color:var(--c-gold)}
 .shop-item{background:rgba(0,0,0,0.3);border:1px solid var(--c-border);border-radius:8px;padding:11px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -381,8 +392,8 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 #transition-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 .ts-text-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;opacity:0;transition:opacity .35s .25s;pointer-events:none}
 #transition-screen.phase-in .ts-text-wrap{opacity:1}
-.ts-text-main{font-family:monospace;font-size:32px;font-weight:900;letter-spacing:8px;color:#fff;text-shadow:0 0 20px var(--c-accent-2),0 0 40px var(--c-accent),0 4px 16px #000;margin-bottom:6px}
-.ts-text-sub{font-family:monospace;font-size:12px;font-weight:bold;letter-spacing:4px;color:var(--c-accent-2);text-shadow:0 0 12px rgba(192,132,252,0.7)}
+.ts-text-main{font-family:monospace;font-size:32px;font-weight:900;letter-spacing:8px;color:#f0e5d2;text-shadow:0 0 20px #c09060,0 0 40px #d97757,0 4px 16px #000;margin-bottom:6px}
+.ts-text-sub{font-family:monospace;font-size:12px;font-weight:bold;letter-spacing:4px;color:#c09060;text-shadow:0 0 12px rgba(192,144,96,0.7)}
 
 /* 横屏适配 */
 @media (orientation:landscape) and (max-height:520px){
@@ -418,6 +429,42 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
   .lb-tab-btn{padding:8px 6px;font-size:11px}
   #lb-main{padding:14px;min-width:200px}
 }
+
+/* ================== ★ 修复区：将原散落在 body 里的 CSS 放回 ================== */
+.hist-panel-v3{max-width:880px;width:96%;padding:18px;display:flex;flex-direction:column;max-height:92vh;gap:10px}
+.hist-v3-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--c-border);padding-bottom:8px}
+.hist-v3-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hv-stat{background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;border:1px solid var(--c-border);text-align:center}
+.hv-stat .lbl{font-size:9px;color:var(--c-text-dim);letter-spacing:1px;font-weight:bold;margin-bottom:3px}
+.hv-stat .val{font-size:18px;font-weight:900;font-family:monospace;color:var(--c-main)}
+.hv-stat.red .val{color:var(--c-accent)}
+.hv-stat.gold .val{color:var(--c-gold)}
+.hv-stat.purple .val{color:var(--c-accent-2)}
+.hist-v3-table-head{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,0.4);border-radius:8px 8px 0 0;font-size:10px;font-weight:900;color:var(--c-text-dim);letter-spacing:1.5px;border:1px solid var(--c-border);border-bottom:0}
+.hist-v3-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:rgba(0,0,0,0.2);border:1px solid var(--c-border);border-top:0;border-radius:0 0 8px 8px;min-height:120px}
+.hist-v3-list::-webkit-scrollbar{width:5px}
+.hist-v3-list::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:3px}
+.hist-v3-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(180,140,90,0.1);cursor:pointer;transition:.15s}
+.hist-v3-row:hover{background:rgba(192,144,96,0.08)}
+.hist-v3-row.expanded{background:rgba(192,144,96,0.12)}
+.hist-v3-row .hd{width:40px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#fff;flex-shrink:0}
+.hist-v3-row .hd.F{background:linear-gradient(135deg,#9c8770,#74614b)}.hist-v3-row .hd.E{background:linear-gradient(135deg,#8fb255,#6b8a3a)}
+.hist-v3-row .hd.D{background:linear-gradient(135deg,#7090b0,#506d8c)}.hist-v3-row .hd.C{background:linear-gradient(135deg,#a87aac,#7d5380)}
+.hist-v3-row .hd.B{background:linear-gradient(135deg,#c47a8a,#9a586a)}.hist-v3-row .hd.A{background:linear-gradient(135deg,#e8b04c,#b88830)}
+.hist-v3-row .hd.S{background:linear-gradient(135deg,#d97757,#a85535)}
+.hist-v3-row .sc{flex:1.2;font-size:14px;font-weight:900;color:var(--c-accent);font-family:monospace}
+.hist-v3-row .sc .wi{font-size:12px;margin-left:6px;color:var(--c-text-dim)}
+.hist-v3-row .tm{width:60px;font-size:11px;color:var(--c-text-dim);font-family:monospace}
+.hist-v3-row .kl{width:50px;font-size:11px;color:var(--c-text-dim);font-weight:bold}
+.hist-v3-row .lv{width:50px;font-size:11px;color:var(--c-accent-2);font-weight:bold}
+.hist-v3-row .dt{flex:1;font-size:10px;color:var(--c-text-dimmer);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-v3-detail{display:none;padding:10px 14px 14px 64px;font-size:11px;color:var(--c-text-dim);font-weight:bold;line-height:1.7;background:rgba(0,0,0,0.25);border-bottom:1px solid rgba(180,140,90,0.15)}
+.hist-v3-detail.show{display:block}
+.hist-v3-detail b{color:var(--c-accent-2);min-width:48px;display:inline-block;font-weight:900}
+.hist-empty{text-align:center;color:var(--c-text-dimmer);padding:40px;font-size:12px}
+@media(max-width:560px){.hist-v3-stats{grid-template-columns:repeat(2,1fr)} .hist-v3-row .lv{display:none}.hist-v3-table-head span:nth-child(5){display:none}}
+@media (orientation:landscape) and (max-height:520px){.hist-panel-v3{padding:12px;gap:6px}.hv-stat{padding:6px}.hv-stat .val{font-size:14px}}
+
 </style>
 </head><body>
 <div id="game-container">
@@ -490,59 +537,50 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 
     <!-- 主菜单 -->
     <div class="overlay" id="main-menu">
-      <div class="panel">
-        <div class="menu-content">
-          <div id="user-status-bar">
-            <span id="current-user-name">读取中...</span>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span class="icon-btn" id="open-settings-btn" style="width:30px;height:30px;font-size:15px;border-radius:7px">⚙</span>
-              <span id="login-logout-btn">注销</span>
-            </div>
-          </div>
-          <div class="menu-header-v2">
-            <div class="menu-logo-v2">
-              <div class="logo-title">几何碰撞</div>
-              <div class="logo-sub dynamic-subtitle">□◇○△☆▽◁</div>
-            </div>
-            <div class="menu-stats-v2">
-              <div class="menu-stat-card">
-                <div class="label">CORE 核心</div>
-                <span class="val" id="menu-cores">0</span>
-              </div>
-              <div class="menu-stat-card purple">
-                <div class="label">MAX 最高</div>
-                <span class="val" id="menu-max-score">0</span>
-              </div>
-            </div>
-          </div>
-          <div class="announce-card">
-            <div class="announce-title">📡 v19.0.0 · 智域重构</div>
-            <div class="announce-body">
-              <li>✨ 敌人新增 <b>墙壁避让 AI</b>，遇墙自动绕行</li>
-              <li>✨ 战绩页 <b>紧凑表格化</b> + 难度筛选</li>
-              <li>✨ 刷怪曲线全面重平衡（前期 -30%）</li>
-              <li>✨ 修复武器详情 / 排行榜详情 <b>点击无响应</b></li>
-              <li>✨ 修复 UI 缩放：现在 <b>所有页面</b>统一缩放</li>
-              <li>✨ 墙壁生成改为 <b>簇状布局</b>，预留通道</li>
-              <li>✨ 技能栏 <b>多行自动堆叠</b>，支持 15+ 技能</li>
-              <li>✨ 整体性能优化、卡死防护强化</li>
-            </div>
-          </div>
-          <div class="menu-btn-grid">
-            <button class="primary-btn menu-main-btn" id="start-prep-btn">▶ 开 始 出 击</button>
-            <div class="menu-btn-row">
-              <button class="primary-btn" id="bag-btn" style="background:linear-gradient(135deg,#8e44ad,#6d28d9)">🎒 背包</button>
-              <button class="primary-btn" id="shop-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🛒 商店</button>
-            </div>
-            <div class="menu-btn-row">
-              <button class="primary-btn" id="open-leaderboard-btn" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">🏆 排行榜</button>
-              <button class="primary-btn" id="local-stats-btn" style="background:linear-gradient(135deg,#64748b,#475569)">📊 战绩</button>
-            </div>
-          </div>
-          <div style="text-align:center;font-size:10px;color:var(--c-text-dimmer);font-weight:bold;letter-spacing:3px;margin-top:4px">VERSION 19.0.0 · NEXUS</div>
+  <div class="panel">
+    <div class="menu-v3-wrap">
+      <!-- 左上：用户信息 -->
+      <div class="menu-v3-userbar">
+        <span id="current-user-name">读取中...</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="icon-btn" id="open-settings-btn" style="width:32px;height:32px;font-size:15px">⚙</span>
+          <span id="login-logout-btn">注销</span>
         </div>
       </div>
+      
+      <!-- 标题 -->
+      <div class="menu-v3-title">
+        <div class="logo-title">几何碰撞</div>
+        <div class="logo-sub dynamic-subtitle">□◇○△☆▽◁</div>
+      </div>
+      
+      <!-- 状态卡 -->
+      <div class="menu-v3-stats">
+        <div class="menu-stat-card"><div class="label">CORE</div><span class="val" id="menu-cores">0</span></div>
+        <div class="menu-stat-card purple"><div class="label">MAX</div><span class="val" id="menu-max-score">0</span></div>
+      </div>
+      
+      <!-- 左侧次要按钮列 -->
+      <div class="menu-v3-side">
+        <button class="side-btn" id="bag-btn"><span class="ico">🎒</span><span>背包</span></button>
+        <button class="side-btn" id="shop-btn"><span class="ico">🛒</span><span>商店</span></button>
+        <button class="side-btn" id="open-leaderboard-btn"><span class="ico">🏆</span><span>排行</span></button>
+        <button class="side-btn" id="local-stats-btn"><span class="ico">📊</span><span>战绩</span></button>
+      </div>
+      
+      <!-- 右下：主开始按钮 -->
+      <div class="menu-v3-mainbtn">
+        <div class="announce-mini" id="announce-mini">
+          <div style="font-size:9px;color:var(--c-gold);letter-spacing:2px">v20.0.0 · NEXUS</div>
+          <div style="font-size:11px;color:var(--c-text-dim);margin-top:2px">米色调 · 智域重构</div>
+        </div>
+        <button class="primary-btn menu-main-v3" id="start-prep-btn">▶ 开 始 出 击</button>
+      </div>
+      
+      <div class="menu-v3-footer">v20.0.0 · TAP TO BEGIN</div>
     </div>
+  </div>
+</div>
 
     <!-- 设置 -->
     <div class="overlay" id="settings-overlay">
@@ -705,16 +743,16 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 
     <!-- ★ v19 战绩 - 紧凑表格 -->
     <div class="overlay" id="history-overlay">
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px dashed var(--c-border);padding-bottom:10px">
-          <div class="section-title" style="margin-bottom:0;font-size:18px">📊 个 人 战 绩</div>
-          <div style="font-size:10.5px;font-weight:bold;color:var(--c-text-dim)" id="hist-sync-tip">已与中央数据库同步</div>
+      <div class="panel hist-panel-v3">
+        <div class="hist-v3-head">
+          <div class="section-title" style="font-size:18px;margin-bottom:0">📊 个人战绩</div>
+          <div style="font-size:10px;color:var(--c-text-dim);font-weight:bold" id="hist-sync-tip">已与中央数据库同步</div>
         </div>
-        <div class="hist-summary">
-          <div class="hist-sum-box"><div class="lbl">总场次</div><div class="val" id="hs-total">0</div></div>
-          <div class="hist-sum-box red"><div class="lbl">最高分</div><div class="val" id="hs-max">0</div></div>
-          <div class="hist-sum-box gold"><div class="lbl">总击杀</div><div class="val" id="hs-kills">0</div></div>
-          <div class="hist-sum-box purple"><div class="lbl">总输出</div><div class="val" id="hs-dmg">0</div></div>
+        <div class="hist-v3-stats">
+          <div class="hv-stat"><div class="lbl">总场次</div><div class="val" id="hs-total">0</div></div>
+          <div class="hv-stat red"><div class="lbl">最高分</div><div class="val" id="hs-max">0</div></div>
+          <div class="hv-stat gold"><div class="lbl">总击杀</div><div class="val" id="hs-kills">0</div></div>
+          <div class="hv-stat purple"><div class="lbl">总输出</div><div class="val" id="hs-dmg">0</div></div>
         </div>
         <div class="hist-filter-bar" id="hist-filter-bar">
           <button class="hist-filter-btn active" data-f="ALL">全部</button>
@@ -726,8 +764,16 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
           <button class="hist-filter-btn" data-f="A">A</button>
           <button class="hist-filter-btn" data-f="S">S</button>
         </div>
-        <div class="hist-cards" id="hist-cards-box"></div>
-        <button class="primary-btn" id="close-local-stats-btn" style="width:100%;margin-top:10px">返 回 主 菜 单</button>
+        <div class="hist-v3-table-head">
+          <span style="width:40px;text-align:center">难度</span>
+          <span style="flex:1.2">分数</span>
+          <span style="width:60px">时长</span>
+          <span style="width:50px">击杀</span>
+          <span style="width:50px">等级</span>
+          <span style="flex:1;text-align:right">日期</span>
+        </div>
+        <div class="hist-v3-list" id="hist-cards-box"></div>
+        <button class="primary-btn" id="close-local-stats-btn" style="margin-top:8px">返 回 主 菜 单</button>
       </div>
     </div>
 
@@ -770,7 +816,7 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
     <div class="overlay" id="end-modal">
       <div class="panel">
         <div class="section-title" style="font-size:26px">⊙ 系 统 停 机</div>
-        <div id="end-newrecord-tip" style="display:none;background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(192,132,252,.15));border:1px solid var(--c-gold);border-radius:8px;padding:10px;font-size:13px;font-weight:900;color:var(--c-gold);letter-spacing:1px">🏆 突破历史最高分纪录！</div>
+        <div id="end-newrecord-tip" style="display:none;background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(192,144,96,.15));border:1px solid var(--c-gold);border-radius:8px;padding:10px;font-size:13px;font-weight:900;color:var(--c-gold);letter-spacing:1px">🏆 突破历史最高分纪录！</div>
         <div id="end-upload-tip" style="display:none;font-size:11px;color:var(--c-green);font-weight:bold;letter-spacing:1px">☁ 战绩已自动上传云端</div>
         <div class="stat-grid">
           <div class="stat-box"><div class="stat-label">存活时间</div><div class="stat-val" id="end-time">00:00</div></div>
@@ -806,11 +852,11 @@ const bgCanvas = document.getElementById('bgCanvas');
 const bgCtx = bgCanvas.getContext('2d');
 
 const THEME = {
-  bg: '#0a0a0f', bgSoft: '#14141d',
-  main: '#e8e6e0', accent: '#ff4d6d', accent2: '#c084fc',
-  gold: '#fbbf24', cyan: '#22d3ee', green: '#4ade80', blue: '#60a5fa',
-  textDim: '#9ca3af', textDimmer: '#6b7280',
-  grid: 'rgba(192,132,252,0.06)'
+  bg:'#1a1410',bgSoft:'#241c15',
+  main:'#f0e5d2',accent:'#d97757',accent2:'#c09060',
+  gold:'#e8b04c',cyan:'#88a890',green:'#8fb255',blue:'#7090b0',
+  textDim:'#b0a088',textDimmer:'#8c7c64',
+  grid:'rgba(212,176,120,0.06)'
 };
 
 let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
@@ -831,11 +877,11 @@ let player = null, playerDeadTimer = 0;
 
 // 对象池上限
 const POOL_LIMITS = {
-  particles: 600, textParticles: 80, shatterPieces: 200,
-  bullets: 500, enemyBullets: 200, lasers: 200,
-  potions: 80, directPotions: 40, potionPools: 30,
-  bulletTrails: 200, chainEffects: 30, expOrbs: 300,
-  energyBalls: 50, walls: 60
+  particles: 350, textParticles: 50, shatterPieces: 120,
+  bullets: 400, enemyBullets: 150, lasers: 150,
+  potions: 60, directPotions: 30, potionPools: 20,
+  bulletTrails: 120, chainEffects: 20, expOrbs: 250,
+  energyBalls: 35, walls: 50
 };
 function trimArray(arr, limit) { if (arr.length > limit) arr.splice(0, arr.length - limit); }
 
@@ -887,13 +933,13 @@ const SETTINGS = {
 };
 function loadSettings() {
   try {
-    const s = localStorage.getItem('geo_settings_v19') || localStorage.getItem('geo_settings_v18') || localStorage.getItem('geo_settings_v17');
+    const s = localStorage.getItem('geo_settings_v20') || localStorage.getItem('geo_settings_v19');
     if (s) Object.assign(SETTINGS, JSON.parse(s));
   } catch (e) {}
   applySettingsUI();
 }
 function saveSettings() {
-  try { localStorage.setItem('geo_settings_v19', JSON.stringify(SETTINGS)); } catch (e) {}
+  try { localStorage.setItem('geo_settings_v20', JSON.stringify(SETTINGS)); } catch (e) {}
 }
 function applySettingsUI() {
   document.querySelectorAll('#set-quality-tabs .set-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.q === SETTINGS.quality));
@@ -907,11 +953,9 @@ function applySettingsUI() {
   if (valEl) valEl.textContent = (SETTINGS.uiScale || 100) + '%';
   applyUIScale();
 }
-// ★ v19：UI 缩放通过 CSS 变量影响所有 .panel + 游戏 HUD
 function applyUIScale() {
   const s = (SETTINGS.uiScale || 100) / 100;
   document.documentElement.style.setProperty('--ui-scale', s);
-  // 游戏内 HUD（独立 transform）
   const targets = [
     { id: 'hud-top', origin: 'top left' },
     { id: 'score-display', origin: 'top right' },
@@ -930,13 +974,12 @@ function applyUIScale() {
   if (skillTracker) { skillTracker.style.transformOrigin = 'bottom center'; skillTracker.style.transform = `translateX(-50%) scale(${s})`; }
   const bossUi = document.getElementById('boss-ui');
   if (bossUi) { bossUi.style.transformOrigin = 'top center'; bossUi.style.transform = `translateX(-50%) scale(${s})`; }
-  // 主菜单等 overlay 通过 CSS 变量已自动缩放，但 active 状态需要刷新
   document.querySelectorAll('.overlay.active .panel').forEach(p => {
     p.style.transform = `scale(${s}) translateY(0)`;
   });
 }
 loadSettings();
-function maxParticles() { return SETTINGS.quality === 'low' ? 150 : (SETTINGS.quality === 'high' ? 600 : 350); }
+function maxParticles(){return SETTINGS.quality==='low'?100:(SETTINGS.quality==='high'?400:220);}
 
 document.getElementById('open-settings-btn').addEventListener('click', () => {
   applySettingsUI(); document.getElementById('settings-overlay').classList.add('active');
@@ -992,7 +1035,7 @@ function drawBgLoop(now) {
     bgLastTime = now;
     const W = window.innerWidth, H = window.innerHeight;
     const grad = bgCtx.createRadialGradient(W / 2, H / 2, 50, W / 2, H / 2, Math.max(W, H));
-    grad.addColorStop(0, '#16101f'); grad.addColorStop(0.5, '#0d0a14'); grad.addColorStop(1, '#06040a');
+    grad.addColorStop(0, '#241c15'); grad.addColorStop(0.5, '#1a1410'); grad.addColorStop(1, '#0f0a08');
     bgCtx.fillStyle = grad; bgCtx.fillRect(0, 0, W, H);
     if (!SETTINGS.bgFx) { bgParticles.length = 0; return; }
     const spawnRate = SETTINGS.quality === 'low' ? 0.08 : (SETTINGS.quality === 'high' ? 0.32 : 0.18);
@@ -1134,7 +1177,7 @@ function safeSetTimeout(fn, ms) {
   return setTimeout(() => { try { fn(); } catch (e) { console.warn('setTimeout err', e); } }, ms);
 }
 
-// ============ 过场动画（玻璃裂纹）============
+// ============ 过场动画（移除卡顿玻璃裂纹，更换为流畅米色面板淡入淡出）============
 const tsCanvas = document.getElementById('transition-canvas');
 const tsCtx = tsCanvas.getContext('2d');
 function resizeTsCanvas() {
@@ -1146,146 +1189,76 @@ function resizeTsCanvas() {
 resizeTsCanvas();
 window.addEventListener('resize', resizeTsCanvas);
 
-let glassCracks = [], glassShards = [];
-let tsPhase = 'idle', tsPhaseTimer = 0, tsCallback = null, tsAnimRunning = false;
+let tsAnimRunning = false, tsCallback = null, tsPhaseTimer = 0, tsPhase = 'idle';
 
-function generateCrack(x, y, angle, length, depth, list) {
-  if (depth <= 0 || length < 8) return;
-  const ex = x + Math.cos(angle) * length;
-  const ey = y + Math.sin(angle) * length;
-  list.push({ x1: x, y1: y, x2: ex, y2: ey, width: 1 + depth * 0.5, alpha: 0, age: 0, delay: (4 - depth) * 0.05 + Math.random() * 0.08 });
-  if (Math.random() < 0.85) generateCrack(ex, ey, angle + (Math.random() - 0.5) * 0.6, length * (0.7 + Math.random() * 0.2), depth - 1, list);
-  if (Math.random() < 0.7 && depth > 1) generateCrack(ex, ey, angle + (Math.random() < 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5), length * (0.5 + Math.random() * 0.3), depth - 1, list);
-}
-function startGlassTransition(callback) {
-  glassCracks = []; glassShards = [];
-  tsPhase = 'crack'; tsPhaseTimer = 0;
-  tsCallback = callback;
-  const W = window.innerWidth, H = window.innerHeight;
-  const origins = [{ x: W / 2, y: H / 2 }];
-  const extraOrigins = 2 + Math.floor(Math.random() * 2);
-  for (let i = 0; i < extraOrigins; i++) origins.push({ x: W * (0.25 + Math.random() * 0.5), y: H * (0.25 + Math.random() * 0.5) });
-  for (const o of origins) {
-    const branches = 7 + Math.floor(Math.random() * 4);
-    for (let i = 0; i < branches; i++) {
-      const baseAng = (i / branches) * Math.PI * 2 + Math.random() * 0.3;
-      generateCrack(o.x, o.y, baseAng, 50 + Math.random() * 80, 4, glassCracks);
-    }
-  }
-  for (let i = 0; i < 6; i++) {
-    const ang = Math.random() * Math.PI * 2;
-    generateCrack(W / 2 + Math.cos(ang) * 50, H / 2 + Math.sin(ang) * 50, ang, Math.max(W, H) * 0.7, 3, glassCracks);
-  }
-  if (!tsAnimRunning) { tsAnimRunning = true; requestAnimationFrame(tsLoop); }
-  playSound('glass_break');
+function startTransition(callback){
+  tsPhase = 'in'; tsPhaseTimer = 0; tsCallback = callback;
+  if(!tsAnimRunning){ tsAnimRunning = true; requestAnimationFrame(tsLoop); }
+  // 0.45s 后回调
   safeSetTimeout(() => {
-    if (tsAnimRunning) {
-      tsAnimRunning = false; tsPhase = 'done';
-      document.getElementById('transition-screen').classList.remove('active', 'phase-in');
-      tsCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      if (tsCallback) { try { tsCallback(); } catch (e) {} tsCallback = null; }
-    }
-  }, 1800);
+    if(tsCallback){ try{ tsCallback(); } catch(e){} tsCallback = null; }
+    tsPhase = 'out'; tsPhaseTimer = 0;
+  }, 450);
+  safeSetTimeout(() => {
+    tsAnimRunning = false; tsPhase = 'done';
+    document.getElementById('transition-screen').classList.remove('active', 'phase-in');
+    tsCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  }, 950);
 }
-function generateShards() {
-  glassShards = [];
-  const W = window.innerWidth, H = window.innerHeight;
-  const points = [];
-  const cnt = 18 + Math.floor(Math.random() * 8);
-  for (let i = 0; i < cnt; i++) points.push({ x: Math.random() * W, y: Math.random() * H });
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i];
-    const others = points.filter((_, k) => k !== i).map(o => ({ o, d: (o.x - p.x) ** 2 + (o.y - p.y) ** 2 })).sort((a, b) => a.d - b.d).slice(0, 3);
-    if (others.length >= 2) {
-      const cx = (p.x + others[0].o.x + others[1].o.x) / 3;
-      const cy = (p.y + others[0].o.y + others[1].o.y) / 3;
-      glassShards.push({
-        cx, cy, p1x: p.x - cx, p1y: p.y - cy,
-        p2x: others[0].o.x - cx, p2y: others[0].o.y - cy,
-        p3x: others[1].o.x - cx, p3y: others[1].o.y - cy,
-        vx: (Math.random() - 0.5) * 60, vy: 100 + Math.random() * 200,
-        rot: 0, spin: (Math.random() - 0.5) * 4, alpha: 1
-      });
-    }
-  }
-}
-function tsLoop(now) {
-  if (!tsAnimRunning) return;
+
+function tsLoop(now){
+  if(!tsAnimRunning) return;
   requestAnimationFrame(tsLoop);
-  try {
-    const dt = 1 / 60;
+  try{
+    const dt = 1 / 60; tsPhaseTimer += dt;
     const W = window.innerWidth, H = window.innerHeight;
     tsCtx.clearRect(0, 0, W, H);
-    if (tsPhase === 'crack') {
-      tsPhaseTimer += dt;
-      const bgA = Math.min(1, tsPhaseTimer * 1.5);
-      tsCtx.fillStyle = `rgba(10,6,16,${bgA * 0.95})`; tsCtx.fillRect(0, 0, W, H);
-      tsCtx.globalAlpha = bgA * 0.15;
-      tsCtx.strokeStyle = 'rgba(192,132,252,0.6)'; tsCtx.lineWidth = 1;
-      for (let x = 0; x < W; x += 40) { tsCtx.beginPath(); tsCtx.moveTo(x, 0); tsCtx.lineTo(x, H); tsCtx.stroke(); }
-      for (let y = 0; y < H; y += 40) { tsCtx.beginPath(); tsCtx.moveTo(0, y); tsCtx.lineTo(W, y); tsCtx.stroke(); }
-      tsCtx.globalAlpha = 1;
-      for (const c of glassCracks) {
-        if (tsPhaseTimer >= c.delay) {
-          c.age += dt; c.alpha = Math.min(1, c.age * 4);
-          const prog = Math.min(1, c.age * 2.5);
-          const ex = c.x1 + (c.x2 - c.x1) * prog, ey = c.y1 + (c.y2 - c.y1) * prog;
-          tsCtx.strokeStyle = `rgba(192,132,252,${c.alpha * 0.4})`; tsCtx.lineWidth = c.width + 4; tsCtx.lineCap = 'round';
-          tsCtx.beginPath(); tsCtx.moveTo(c.x1, c.y1); tsCtx.lineTo(ex, ey); tsCtx.stroke();
-          tsCtx.strokeStyle = `rgba(255,77,109,${c.alpha * 0.9})`; tsCtx.lineWidth = c.width + 1;
-          tsCtx.beginPath(); tsCtx.moveTo(c.x1, c.y1); tsCtx.lineTo(ex, ey); tsCtx.stroke();
-          tsCtx.strokeStyle = `rgba(255,255,255,${c.alpha})`; tsCtx.lineWidth = c.width * 0.6;
-          tsCtx.beginPath(); tsCtx.moveTo(c.x1, c.y1); tsCtx.lineTo(ex, ey); tsCtx.stroke();
-        }
+    // 双向扫光
+    let p;
+    if(tsPhase === 'in') p = Math.min(1, tsPhaseTimer / 0.45);
+    else if(tsPhase === 'out') p = Math.min(1, tsPhaseTimer / 0.5);
+    else return;
+    
+    // ease-in-out
+    const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    
+    if(tsPhase === 'in'){
+      // 米色面板从右滑入覆盖
+      const cover = W * eased;
+      tsCtx.fillStyle = 'rgba(26,20,16,0.96)';
+      tsCtx.fillRect(W - cover, 0, cover, H);
+      tsCtx.fillStyle = 'rgba(232,176,76,0.85)';
+      tsCtx.fillRect(W - cover, 0, 3, H);
+      tsCtx.fillStyle = 'rgba(217,119,87,0.6)';
+      tsCtx.fillRect(W - cover - 6, 0, 3, H);
+      // 中心装饰
+      if(eased > 0.3){
+        tsCtx.globalAlpha = (eased - 0.3) / 0.7;
+        tsCtx.fillStyle = '#f0e5d2';
+        tsCtx.font = 'bold 32px monospace';
+        tsCtx.textAlign = 'center'; tsCtx.textBaseline = 'middle';
+        tsCtx.fillText('◇  LOADING  ◇', W / 2, H / 2);
+        tsCtx.globalAlpha = 1;
       }
-      if (tsPhaseTimer < 0.25) {
-        const flashA = (0.25 - tsPhaseTimer) * 4;
-        const grd = tsCtx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
-        grd.addColorStop(0, `rgba(255,255,255,${flashA * 0.6})`);
-        grd.addColorStop(0.4, `rgba(192,132,252,${flashA * 0.3})`);
-        grd.addColorStop(1, 'rgba(0,0,0,0)');
-        tsCtx.fillStyle = grd; tsCtx.fillRect(0, 0, W, H);
-      }
-      if (tsPhaseTimer >= 0.65) {
-        if (tsCallback) { try { tsCallback(); } catch (e) {} tsCallback = null; }
-        tsPhase = 'shatter'; tsPhaseTimer = 0;
-        generateShards(); playSound('reroll');
-      }
-    } else if (tsPhase === 'shatter') {
-      tsPhaseTimer += dt;
-      const bgA = Math.max(0, 1 - tsPhaseTimer * 1.2);
-      tsCtx.fillStyle = `rgba(10,6,16,${bgA * 0.95})`; tsCtx.fillRect(0, 0, W, H);
-      for (const s of glassShards) {
-        s.vy += 600 * dt;
-        s.cx += s.vx * dt; s.cy += s.vy * dt;
-        s.rot += s.spin * dt;
-        s.alpha = Math.max(0, 1 - tsPhaseTimer * 1.1);
-        if (s.alpha <= 0) continue;
-        tsCtx.save();
-        tsCtx.translate(s.cx, s.cy); tsCtx.rotate(s.rot);
-        tsCtx.globalAlpha = s.alpha * 0.7;
-        tsCtx.fillStyle = 'rgba(40,25,55,0.85)';
-        tsCtx.strokeStyle = 'rgba(192,132,252,0.95)'; tsCtx.lineWidth = 1.5;
-        tsCtx.beginPath(); tsCtx.moveTo(s.p1x, s.p1y); tsCtx.lineTo(s.p2x, s.p2y); tsCtx.lineTo(s.p3x, s.p3y); tsCtx.closePath();
-        tsCtx.fill(); tsCtx.stroke();
-        tsCtx.globalAlpha = s.alpha * 0.5;
-        tsCtx.strokeStyle = 'rgba(255,255,255,0.9)'; tsCtx.lineWidth = 0.5;
-        tsCtx.beginPath(); tsCtx.moveTo(s.p1x * 0.5, s.p1y * 0.5); tsCtx.lineTo(s.p2x * 0.5, s.p2y * 0.5); tsCtx.stroke();
-        tsCtx.restore();
-      }
-      if (tsPhaseTimer >= 0.85) {
-        tsPhase = 'done';
-        document.getElementById('transition-screen').classList.remove('active', 'phase-in');
-        tsCtx.clearRect(0, 0, W, H);
-        tsAnimRunning = false;
+    } else {
+      // 退出：覆盖层向左收回
+      const cover = W * (1 - eased);
+      tsCtx.fillStyle = 'rgba(26,20,16,0.96)';
+      tsCtx.fillRect(0, 0, cover, H);
+      tsCtx.fillStyle = 'rgba(232,176,76,0.85)';
+      tsCtx.fillRect(cover - 3, 0, 3, H);
+      if(eased < 0.7){
+        tsCtx.globalAlpha = 1 - eased / 0.7;
+        tsCtx.fillStyle = '#f0e5d2';
+        tsCtx.font = 'bold 32px monospace';
+        tsCtx.textAlign = 'center'; tsCtx.textBaseline = 'middle';
+        tsCtx.fillText('◇  LOADING  ◇', cover / 2, H / 2);
+        tsCtx.globalAlpha = 1;
       }
     }
-  } catch (e) {
-    tsAnimRunning = false;
-    document.getElementById('transition-screen').classList.remove('active', 'phase-in');
-    console.warn('ts err', e);
-  }
+  }catch(e){ tsAnimRunning = false; console.warn('ts', e); }
 }
+
 function switchScreen(hideId, showId, txt1, txt2, callback) {
   const ts = document.getElementById('transition-screen');
   document.getElementById('ts-text-1').textContent = txt1 || 'SYS';
@@ -1293,13 +1266,15 @@ function switchScreen(hideId, showId, txt1, txt2, callback) {
   ts.classList.add('active');
   void ts.offsetWidth;
   ts.classList.add('phase-in');
-  startGlassTransition(() => {
+  startTransition(() => {
     if (hideId) { const el = document.getElementById(hideId); if (el) el.classList.remove('active'); }
     if (showId) { const el = document.getElementById(showId); if (el) el.classList.add('active'); }
     if (callback) callback();
     applyUIScale(); // ★ 切换后重新应用缩放
   });
-}// ============ 云端登录 ============
+}
+
+// ============ 云端登录 ============
 function translateAuthError(errMsg) {
   const msg = (errMsg || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return '账号或密码错误！';
@@ -1580,7 +1555,7 @@ const DIFF_CONFIG = {
   A:{req:100000,desc:'A级 · 深渊边缘。',mult:{hp:8,atk:5,def:45,spd:1.3,spawn:3},coreMult:4},
   S:{req:1000000,desc:'S级 · 维度主宰。',mult:{hp:15,atk:10,def:65,spd:1.5,spawn:4.5},coreMult:6}
 };
-const POTION_TYPES={fire:{color:'#ef4444',edge:'#fb923c'},poison:{color:'#4ade80',edge:'#22c55e'},ice:{color:'#60a5fa',edge:'#22d3ee'},thunder:{color:'#fbbf24',edge:'#fde047'},chaos:{color:'#c084fc',edge:'#ec4899'}};
+const POTION_TYPES={fire:{color:'#ef4444',edge:'#fb923c'},poison:{color:'#4ade80',edge:'#22c55e'},ice:{color:'#60a5fa',edge:'#22d3ee'},thunder:{color:'#fbbf24',edge:'#fde047'},chaos:{color:'#c09060',edge:'#ec4899'}};
 const POTION_KEYS=['fire','poison','ice','thunder','chaos'];
 const SKILL_NAMES={weapon_basic:'基础粒子炮',weapon_laser:'激光',weapon_magic:'星芒',weapon_chaos:'混沌投掷',skill_split:'分裂弹',expansion:'扩张',refinement:'精炼',gravity:'引力',drawSpeed:'加速',regen:'自愈',maxHpUp:'扩容',lifesteal:'吸血',bulletPower:'火力',fireRate:'射速',agility:'轻捷',isincos:'isincos射线',bomb:'X^x炸弹',downgrade:'降维',darksurge:'暗能连锁',darkburn:'暗能灼烧',darkmine:'暗爆地雷',kineticOverload:'动能过载',splitShot:'分裂弹',burstShot:'连射',scatter:'散射',orbitalStrike:'天基打击',photonRift:'光子裂隙',matrixBlade:'矩阵光刃',supernova:'超新星',laserDrone:'浮游伴星',overcharge:'增压激光',prism:'折射棱镜',photonEmber:'光子余烬',focusLens:'聚焦透镜',summon_ring:'唤灵光环',stellar_orbit:'星辰轨道',meteor_shower:'群星坠落',void_vortex:'虚空坍引',astral_shield:'星芒护体',rapid_draw:'极速铭刻',twin_stars:'多星索敌',starlight_echo:'星光余音',star_chain:'星辰连结',star_resonance:'星芒共振',boiling_cauldron:'沸腾大锅',rainbow_shower:'七彩雨幕',strong_extract:'强效萃取',tube_throw:'试管投射',final_brew:'终焉调和',multi_mix:'多色调配',fragile_glass:'易碎玻璃',residue_pool:'残留浸渍',precise_thrower:'精准投手',chemistry:'化学反应'};
 const WEAPON_INFO={
@@ -1643,9 +1618,7 @@ const ALL_UPGRADES=[
   {id:'chemistry',icon:'🧪',category:'passive',type:'chaos',name:'被动 · 化学反应',max:5,descs:['150','250','350+50%','550连锁','★ 900全屏']}
 ];
 function getSkillIcon(id){const u=ALL_UPGRADES.find(x=>x.id===id);return u?u.icon:'⬡';}
-function getSkillCategory(id){const u=ALL_UPGRADES.find(x=>x.id===id);return u?u.category:'stat';}
-
-// ============ 玩家初始化 ============
+function getSkillCategory(id){const u=ALL_UPGRADES.find(x=>x.id===id);return u?u.category:'stat';}// ============ 玩家初始化 ============
 function initPlayer(){
   const baseHp=1000+currentTalents.hp*50;
   const pDef=currentTalents.def*5;
@@ -1741,15 +1714,15 @@ function renderPreview(now){
     const pT=now/1000;
     prevCtx.save();prevCtx.clearRect(0,0,pc.width,pc.height);
     const bg=prevCtx.createRadialGradient(pc.width/2,pc.height/2,0,pc.width/2,pc.height/2,pc.width);
-    bg.addColorStop(0,'rgba(192,132,252,0.1)');bg.addColorStop(1,'rgba(10,10,15,0)');
+    bg.addColorStop(0,'rgba(192,144,96,0.1)');bg.addColorStop(1,'rgba(10,10,15,0)');
     prevCtx.fillStyle=bg;prevCtx.fillRect(0,0,pc.width,pc.height);
     const cx=pc.width/2,cy=pc.height/2;
     const aim=Math.sin(pT*2)*0.5-Math.PI/2;
     prevCtx.translate(cx,cy);prevCtx.scale(devicePixelRatio*1.6,devicePixelRatio*1.6);
-    prevCtx.strokeStyle='#c084fc';prevCtx.lineWidth=3;
+    prevCtx.strokeStyle='#c09060';prevCtx.lineWidth=3;
     prevCtx.beginPath();prevCtx.arc(0,0,14,0,Math.PI*2);prevCtx.stroke();
     prevCtx.save();prevCtx.rotate(aim);
-    prevCtx.fillStyle='#ff4d6d';
+    prevCtx.fillStyle='##d97757';
     prevCtx.beginPath();prevCtx.moveTo(18,0);prevCtx.lineTo(8,-6);prevCtx.lineTo(8,6);prevCtx.closePath();prevCtx.fill();
     prevCtx.restore();
     if(selectedWeapon==='chaos'){
@@ -1759,12 +1732,12 @@ function renderPreview(now){
       prevCtx.fillStyle=ig;prevCtx.beginPath();prevCtx.arc(0,0,12,0,Math.PI*2);prevCtx.fill();
     }else if(selectedWeapon==='laser'&&Math.floor(pT*2)%2===0){
       prevCtx.save();prevCtx.rotate(aim);
-      prevCtx.globalAlpha=0.6;prevCtx.strokeStyle='rgba(255,77,109,0.8)';prevCtx.lineWidth=15;prevCtx.lineCap='round';
+      prevCtx.globalAlpha=0.6;prevCtx.strokeStyle='rgba(217,119,87,0.8)';prevCtx.lineWidth=15;prevCtx.lineCap='round';
       prevCtx.beginPath();prevCtx.moveTo(0,0);prevCtx.lineTo(300,0);prevCtx.stroke();
       prevCtx.restore();
     }else if(selectedWeapon==='basic'){
       const bd=((pT*600)%200+20);
-      prevCtx.save();prevCtx.rotate(aim);prevCtx.fillStyle='#ff4d6d';
+      prevCtx.save();prevCtx.rotate(aim);prevCtx.fillStyle='##d97757';
       prevCtx.beginPath();prevCtx.arc(bd,0,4,0,Math.PI*2);prevCtx.fill();prevCtx.restore();
     }
     prevCtx.restore();
@@ -1805,7 +1778,7 @@ const WEAPON_LIST=[
   {wid:'chaos',icon:'🍯',name:'混沌鼎',short:'抛物线药水 · 万能'}
 ];
 
-// ★ v19 修复：武器详情按钮 - 使用全局函数 + onclick 绑定避免事件冒泡问题
+// ★ v19/v20 修复：武器详情按钮 - 使用全局函数 + onclick 绑定避免事件冒泡问题
 window.showWeaponInfo = function(wid){
   const w = WEAPON_LIST.find(x=>x.wid===wid);
   if(!w) return;
@@ -1823,7 +1796,7 @@ function renderWeaponList(){
     const card=document.createElement('div');
     card.className='weapon-card-v2'+(selectedWeapon===w.wid?' active':'');
     card.dataset.wid=w.wid;
-    const nameStyle=w.wid==='chaos'?'background:linear-gradient(135deg,#ef4444,#fbbf24,#4ade80,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent':'';
+    const nameStyle=w.wid==='chaos'?'background:linear-gradient(135deg,#ef4444,#fbbf24,#4ade80,#60a5fa,#c09060);-webkit-background-clip:text;-webkit-text-fill-color:transparent':'';
     card.innerHTML=`<div class="wci">${w.icon}</div><div class="wci-info"><div class="wci-name" style="${nameStyle}">${w.name}</div><div class="wci-desc">${w.short}</div></div><button type="button" class="info-btn-v2" onclick="event.stopPropagation();showWeaponInfo('${w.wid}');return false;">?</button>`;
     card.addEventListener('click',e=>{
       if(e.target.classList.contains('info-btn-v2'))return;
@@ -2571,7 +2544,7 @@ function damageEnemy(e,baseDmg,forceCrit=false,skillKey='weapon_basic',silent=fa
     e.isDead=true;
     spawnShatterPieces(e);
     if(player.weapon==='basic'&&e.burnEffect&&player.skills.darkburn>=3&&e.burnEffect.stacks>=[0,1,2,3,4,10][player.skills.darkburn]){
-      particles.push({x:e.x,y:e.y,type:'pulse',life:0.3,maxLife:0.3,radius:100,color:'rgba(192,132,252,0.85)'});
+      particles.push({x:e.x,y:e.y,type:'pulse',life:0.3,maxLife:0.3,radius:100,color:'rgba(192,144,96,0.85)'});
       for(const e2 of enemies)if(!e2.isDead&&(e2.x-e.x)**2+(e2.y-e.y)**2<10000)damageEnemy(e2,e.burnEffect.damage*3,false,'darkburn');
     }
     if(e.sType==='split'&&e.sides>3){
@@ -2611,7 +2584,7 @@ function damageEnemy(e,baseDmg,forceCrit=false,skillKey='weapon_basic',silent=fa
     const pc=e.isBoss?40:8;
     for(let k=0;k<pc;k++){
       let col='#e8e6e0';
-      if(e.isBoss)col='#ff4d6d';
+      if(e.isBoss)col='##d97757';
       else if(e.sType==='split')col='#4ade80';
       else if(e.sType==='heal')col='#60a5fa';
       else if(e.sType==='shooter')col='#ef4444';
@@ -2651,7 +2624,7 @@ function damagePlayer(amt){
     player.hasAstralShield=false;
     player.invincibleTimer=1;
     playSound('shield_break');
-    particles.push({x:player.x,y:player.y,type:'pulse',life:0.5,maxLife:0.5,radius:150,color:'rgba(192,132,252,0.8)'});
+    particles.push({x:player.x,y:player.y,type:'pulse',life:0.5,maxLife:0.5,radius:150,color:'rgba(192,144,96,0.8)'});
     const lv=player.skills.astral_shield;
     if(lv>=3){for(const e of enemies)if(!e.isDead&&(e.x-player.x)**2+(e.y-player.y)**2<40000){e.x+=(e.x-player.x)*0.5;e.y+=(e.y-player.y)*0.5;}}
     if(lv>=5){for(const e of enemies)if(!e.isDead)damageEnemy(e,player.baseAtk*10,false,'astral_shield');screenShake=SETTINGS.shake?20:0;}
@@ -2799,8 +2772,8 @@ function updateBossSystem(dt){
         avoidDir:{x:0,y:0},avoidUpdateT:0
       };
       enemies.push(boss);bossSystem.bossEntity=boss;
-      for(let k=0;k<60;k++)particles.push({x:boss.x,y:boss.y,vx:(Math.random()-0.5)*800,vy:(Math.random()-0.5)*800,life:1.2+Math.random()*0.6,maxLife:1.8,size:3+Math.random()*8,color:Math.random()<0.5?'#ff4d6d':'#c084fc'});
-      particles.push({x:boss.x,y:boss.y,type:'pulse',life:0.8,maxLife:0.8,radius:500,color:'rgba(255,77,109,0.85)'});
+      for(let k=0;k<60;k++)particles.push({x:boss.x,y:boss.y,vx:(Math.random()-0.5)*800,vy:(Math.random()-0.5)*800,life:1.2+Math.random()*0.6,maxLife:1.8,size:3+Math.random()*8,color:Math.random()<0.5?'##d97757':'#c09060'});
+      particles.push({x:boss.x,y:boss.y,type:'pulse',life:0.8,maxLife:0.8,radius:500,color:'rgba(217,119,87,0.85)'});
       triggerEvent('【深渊领主】已重组降临！[阶段 1]','boss',0);
       playSound('bossRoar');screenShake=SETTINGS.shake?40:0;
       const hpUI=document.getElementById('boss-ui');
@@ -2906,7 +2879,7 @@ function updateBossSystem(dt){
     }else if(b.phase==='dash'){
       b.x+=Math.cos(b.dashAngle)*b.speed*6*dt;
       b.y+=Math.sin(b.dashAngle)*b.speed*6*dt;
-      particles.push({x:b.x,y:b.y,type:'pulse',life:0.2,maxLife:0.2,radius:b.radius,color:'rgba(255,77,109,0.6)'});
+      particles.push({x:b.x,y:b.y,type:'pulse',life:0.2,maxLife:0.2,radius:b.radius,color:'rgba(217,119,87,0.6)'});
       if(b.phaseTimer<=0){b.phase='idle';b.phaseTimer=2;}
     }else if(b.phase==='warn_blackhole'){
       if(!b.bhTarget)b.bhTarget={x:player.x,y:player.y};
@@ -2986,7 +2959,7 @@ function updateSpecialEnemyAI(e,dt){
   }
 }
 
-// ============ 主动技能时器（沿用 v18 完整版） ============
+// ============ 主动技能时器 ============
 function checkActiveSkills(dt){
   if(!player||!player.skills)return;
   if(player.darkburnCd>0)player.darkburnCd-=dt;
@@ -3312,7 +3285,6 @@ document.querySelectorAll('#lb-sidebar .lb-tab-btn').forEach(btn=>{
   });
 });
 
-// ★ v19 修复：使用全局函数 + 内联 onclick 避免事件代理失效
 window.showLbDetail = function(idx){
   const list=document.getElementById('leaderboard-list');
   const item=list._currentData?.[idx];
@@ -3376,7 +3348,6 @@ function updateLeaderboardList(){
   if(myRank>0){banner.innerHTML=`📍 你在 [${currentLbTab}] 难度排名 <b style="color:var(--c-accent)">第 ${myRank} 位</b> · 分数 <b>${filt[myRank-1].score.toLocaleString()}</b>`;banner.classList.add('show');}
   else banner.classList.remove('show');
   list._currentData=filt;
-  // ★ v19 关键修复：用 onclick 内联绑定，并 stopPropagation
   list.innerHTML=filt.map((item,i)=>{
     const rank=i+1;
     let rk='';if(rank===1)rk='gold';else if(rank===2)rk='silver';else if(rank===3)rk='bronze';
@@ -3471,14 +3442,12 @@ document.querySelectorAll('#hist-filter-bar .hist-filter-btn').forEach(btn=>{
 function renderHistoryUI(){
   const box=document.getElementById('hist-cards-box');
   box.innerHTML='';
-  // 全局统计（不受筛选影响）
   let tg=matchHistory.length,mx=0,tk=0,td=0;
   for(const m of matchHistory){if(!m)continue;if(m.score>mx)mx=m.score;tk+=(m.kills||0)+(m.bosses||0);td+=(m.dmg||0);}
   document.getElementById('hs-total').textContent=tg;
   document.getElementById('hs-max').textContent=mx.toLocaleString();
   document.getElementById('hs-kills').textContent=tk.toLocaleString();
   document.getElementById('hs-dmg').textContent=Math.floor(td).toLocaleString();
-  // 筛选
   const filtered=currentHistFilter==='ALL'?matchHistory:matchHistory.filter(m=>m&&m.diff===currentHistFilter);
   if(filtered.length===0){
     box.innerHTML=`<div class="hist-empty">${tg===0?'暂无战斗数据 · 出击后将自动记录':`没有 ${currentHistFilter} 难度的战绩`}</div>`;
@@ -3492,36 +3461,22 @@ function renderHistoryUI(){
     else if(m.weapon==='chaos'){ws='混沌鼎';wi='🍯';}
     const diff=m.diff||'F';
     const tl=m.talents||{hp:0,atk:0,regen:0,spd:0,def:0};
-    const card=document.createElement('div');
-    card.className='hist-card';
     const skillsTxt=(m.skills||'无').replace(/\|/g,' · ');
-    // ★ 紧凑单行：[难度] [分数] [武器] [时长] [击杀] [日期] [箭头]
-    card.innerHTML=`
-      <div class="hist-card-head">
-        <div class="hist-diff ${diff}">${diff}</div>
-        <div class="hist-info">
-          <span class="hist-score">${(m.score||0).toLocaleString()}</span>
-          <span class="weapon-icon-sm">${wi}</span>
-          <span class="meta">
-            <span>⏱${formatTime(m.time||0)}</span>
-            <span>💀${(m.kills||0)+(m.bosses||0)}</span>
-            <span>Lv.${m.level||1}</span>
-            <span class="date-tag">${m.date||''}</span>
-          </span>
-          ${m.synced?'<span class="cloud-tag">☁</span>':''}
-        </div>
-        <div class="hist-arrow">▾</div>
-      </div>
-      <div class="hist-card-detail">
-        <div class="hist-card-detail-inner">
-          <div class="hist-card-detail-row"><b>武器</b>${ws}</div>
-          <div class="hist-card-detail-row"><b>总输出</b>${Math.floor(m.dmg||0).toLocaleString()}</div>
-          <div class="hist-card-detail-row"><b>潜能</b>HP:${tl.hp||0} · ATK:${tl.atk||0} · REG:${tl.regen||0} · SPD:${tl.spd||0} · DEF:${tl.def||0}</div>
-          <div class="hist-card-detail-row"><b>构型</b>${skillsTxt}</div>
-        </div>
-      </div>`;
-    card.onclick=()=>{card.classList.toggle('expanded');};
-    box.appendChild(card);
+    const row=document.createElement('div');
+    row.className='hist-v3-row';
+    row.innerHTML=`
+      <span class="hd ${diff}">${diff}</span>
+      <span class="sc">${(m.score||0).toLocaleString()} <span class="wi">${wi}</span></span>
+      <span class="tm">⏱${formatTime(m.time||0)}</span>
+      <span class="kl">💀${(m.kills||0)+(m.bosses||0)}</span>
+      <span class="lv">Lv.${m.level||1}</span>
+      <span class="dt">${m.date||''}</span>`;
+    const detail=document.createElement('div');
+    detail.className='hist-v3-detail';
+    detail.innerHTML=`<div><b>武器</b>${ws}</div><div><b>总输出</b>${Math.floor(m.dmg||0).toLocaleString()}</div><div><b>潜能</b>HP:${tl.hp||0} ATK:${tl.atk||0} REG:${tl.regen||0} SPD:${tl.spd||0} DEF:${tl.def||0}</div><div><b>构型</b>${skillsTxt}</div>`;
+    row.onclick=()=>{detail.classList.toggle('show');row.classList.toggle('expanded');};
+    box.appendChild(row);
+    box.appendChild(detail);
   });
 }
 
@@ -3936,7 +3891,7 @@ function loop(now){
             }
           }
           if(vx.life<=0){
-            particles.push({x:vx.x,y:vx.y,type:'pulse',radius:vx.radius,life:0.5,maxLife:0.5,color:'#c084fc'});
+            particles.push({x:vx.x,y:vx.y,type:'pulse',radius:vx.radius,life:0.5,maxLife:0.5,color:'#c09060'});
             for(const e of enemies)if(!e.isDead&&(e.x-vx.x)**2+(e.y-vx.y)**2<vx.radius*vx.radius)damageEnemy(e,vx.dmg,true,'void_vortex');
             playSound('bomb');screenShake=SETTINGS.shake?25:0;
           }else newVor.push(vx);
@@ -3977,7 +3932,7 @@ function loop(now){
           echo.life-=dt;echo.timer+=dt;
           if(echo.timer>=echo.interval){
             echo.timer=0;
-            particles.push({x:echo.x,y:echo.y,type:'pulse',life:0.2,maxLife:0.2,radius:echo.radius,color:'rgba(192,132,252,0.3)'});
+            particles.push({x:echo.x,y:echo.y,type:'pulse',life:0.2,maxLife:0.2,radius:echo.radius,color:'rgba(192,144,96,0.3)'});
             for(const e of enemies)if(!e.isDead&&(e.x-echo.x)**2+(e.y-echo.y)**2<echo.radius*echo.radius){
               damageEnemy(e,echo.dmg,false,'weapon_magic',true);
               if(echo.slow)e.hitTimer=Math.max(e.hitTimer,0.3);
@@ -4134,7 +4089,7 @@ function loop(now){
           b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
           if(b.life<=0||b.x<0||b.x>WORLD_W||b.y<0||b.y>WORLD_H)continue;
           if(checkWallCollision(b.x,b.y,b.radius)){
-            particles.push({x:b.x,y:b.y,vx:0,vy:0,life:0.2,maxLife:0.2,size:3,color:b.isDark?'#c084fc':'#ff4d6d'});
+            particles.push({x:b.x,y:b.y,vx:0,vy:0,life:0.2,maxLife:0.2,size:3,color:b.isDark?'#c09060':'##d97757'});
             continue;
           }
           let rm=false;
@@ -4296,13 +4251,13 @@ function loop(now){
         ctx.fillStyle=gr;ctx.beginPath();ctx.arc(0,0,vx.radius,0,Math.PI*2);ctx.fill();
         ctx.restore();
       }
-      for(const echo of starlightEchoes){const lr=echo.life/echo.maxLife;const gr=ctx.createRadialGradient(echo.x,echo.y,0,echo.x,echo.y,echo.radius);gr.addColorStop(0,`rgba(192,132,252,${0.22*lr})`);gr.addColorStop(1,'rgba(192,132,252,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(echo.x,echo.y,echo.radius,0,Math.PI*2);ctx.fill();}
+      for(const echo of starlightEchoes){const lr=echo.life/echo.maxLife;const gr=ctx.createRadialGradient(echo.x,echo.y,0,echo.x,echo.y,echo.radius);gr.addColorStop(0,`rgba(192,144,96,${0.22*lr})`);gr.addColorStop(1,'rgba(192,144,96,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(echo.x,echo.y,echo.radius,0,Math.PI*2);ctx.fill();}
       for(const mt of meteorShowers){const lr=1-mt.life/mt.maxLife;const gr=ctx.createRadialGradient(mt.x,mt.y,0,mt.x,mt.y,80);gr.addColorStop(0,`rgba(255,100,30,${0.4*lr})`);gr.addColorStop(1,'rgba(217,56,30,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(mt.x,mt.y,80,0,Math.PI*2);ctx.fill();}
       for(const s of orbitalStrikes){
         if(s.state==='warn'){
           ctx.globalAlpha=0.3+Math.sin(gameTime*8)*0.15;
           const gr=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.radius);
-          gr.addColorStop(0,'rgba(255,77,109,0.4)');gr.addColorStop(1,'rgba(255,77,109,0)');
+          gr.addColorStop(0,'rgba(217,119,87,0.4)');gr.addColorStop(1,'rgba(217,119,87,0)');
           ctx.fillStyle=gr;ctx.beginPath();ctx.arc(s.x,s.y,s.radius,0,Math.PI*2);ctx.fill();
           ctx.strokeStyle=THEME.accent;ctx.lineWidth=3;ctx.setLineDash([12,8]);ctx.lineDashOffset=-gameTime*50;
           ctx.beginPath();ctx.arc(s.x,s.y,s.radius,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
@@ -4350,7 +4305,7 @@ function loop(now){
         ctx.restore();
       }
       for(const b of bombs){const t=1-(b.life/b.maxLife);const bx=b.startX+(b.tX-b.startX)*t;const by=b.startY+(b.tY-b.startY)*t-Math.sin(t*Math.PI)*110;ctx.fillStyle=THEME.accent2;ctx.font='bold 15px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.text,bx,by);}
-      for(const bt of bulletTrails){const a=bt.life/bt.maxLife;ctx.globalAlpha=a*0.45;ctx.fillStyle=bt.isDark?'rgba(192,132,252,0.85)':THEME.accent;ctx.beginPath();ctx.arc(bt.x,bt.y,bt.r*a,0,Math.PI*2);ctx.fill();}
+      for(const bt of bulletTrails){const a=bt.life/bt.maxLife;ctx.globalAlpha=a*0.45;ctx.fillStyle=bt.isDark?'rgba(192,144,96,0.85)':THEME.accent;ctx.beginPath();ctx.arc(bt.x,bt.y,bt.r*a,0,Math.PI*2);ctx.fill();}
       ctx.globalAlpha=1;
       for(const b of bullets){
         if(b.isDark){const gr=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.radius*2);gr.addColorStop(0,'rgba(180,80,255,1)');gr.addColorStop(1,'rgba(80,20,120,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(b.x,b.y,b.radius*2,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(220,180,255,1)';}
@@ -4362,7 +4317,7 @@ function loop(now){
       for(const dr of drones){const tx=player.x+Math.cos(dr.angle)*dr.orbitR,ty=player.y+Math.sin(dr.angle)*dr.orbitR;ctx.save();ctx.translate(tx,ty);ctx.rotate(gameTime*5);ctx.fillStyle='#fff';ctx.strokeStyle=THEME.accent;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(-5,7);ctx.lineTo(-5,-7);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
       for(const fr of friendlyRings){const lr=fr.life/fr.maxLife;ctx.globalAlpha=lr*0.95;const gr=ctx.createRadialGradient(fr.x,fr.y,0,fr.x,fr.y,fr.radius*2);gr.addColorStop(0,`hsla(${fr.glowHue},85%,60%,0.6)`);gr.addColorStop(1,`hsla(${fr.glowHue},85%,60%,0)`);ctx.fillStyle=gr;ctx.beginPath();ctx.arc(fr.x,fr.y,fr.radius*2,0,Math.PI*2);ctx.fill();ctx.strokeStyle=`hsl(${fr.glowHue},90%,65%)`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(fr.x,fr.y,fr.radius,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;}
       for(const so of stellarOrbits){ctx.save();ctx.translate(so.x,so.y);ctx.rotate(gameTime*6);ctx.fillStyle='#fff';ctx.strokeStyle=`hsl(${so.starHue},90%,60%)`;ctx.lineWidth=2.5;ctx.beginPath();for(let i=0;i<10;i++){const a=(i/10)*Math.PI*2-Math.PI/2;const r=i%2===0?so.radius:so.radius*0.45;if(i===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
-      for(const mg of magicArrays){const pr=1-(mg.life/mg.maxLife);ctx.save();ctx.translate(mg.x,mg.y);ctx.rotate(gameTime*4);ctx.strokeStyle='rgba(192,132,252,1)';ctx.lineWidth=3.5;const pts=[];for(let i=0;i<6;i++){const a=(i*4*Math.PI)/5-Math.PI/2;pts.push({x:Math.cos(a)*mg.radius,y:Math.sin(a)*mg.radius});}ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);const ld=Math.floor(pr*5);for(let i=0;i<ld;i++)ctx.lineTo(pts[i+1].x,pts[i+1].y);ctx.stroke();ctx.restore();}
+      for(const mg of magicArrays){const pr=1-(mg.life/mg.maxLife);ctx.save();ctx.translate(mg.x,mg.y);ctx.rotate(gameTime*4);ctx.strokeStyle='rgba(192,144,96,1)';ctx.lineWidth=3.5;const pts=[];for(let i=0;i<6;i++){const a=(i*4*Math.PI)/5-Math.PI/2;pts.push({x:Math.cos(a)*mg.radius,y:Math.sin(a)*mg.radius});}ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);const ld=Math.floor(pr*5);for(let i=0;i<ld;i++)ctx.lineTo(pts[i+1].x,pts[i+1].y);ctx.stroke();ctx.restore();}
       // 药水
       for(const p of potions){
         const t=POTION_TYPES[p.type];
@@ -4388,13 +4343,13 @@ function loop(now){
       for(const t of trails){ctx.globalAlpha=t.alpha;ctx.strokeStyle=THEME.accent2;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(t.x,t.y,player&&!player.isDead?player.radius-2:12,0,Math.PI*2);ctx.stroke();}
       ctx.globalAlpha=1;
       for(const s of activeSingularities){const a=s.life/s.maxLife;const r=45+Math.sin(gameTime*5)*10;const gr=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,r);gr.addColorStop(0,`rgba(0,0,0,${a*0.6})`);gr.addColorStop(1,'rgba(80,0,200,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);ctx.fill();}
-      for(const it of items){ctx.save();ctx.translate(it.x,it.y);ctx.rotate(it.rot);ctx.strokeStyle='#c084fc';ctx.lineWidth=3;ctx.beginPath();for(let j=0;j<4;j++){const a=(j/4)*Math.PI*2;const r=14+Math.sin(gameTime*4+j)*2;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.stroke();ctx.restore();}
+      for(const it of items){ctx.save();ctx.translate(it.x,it.y);ctx.rotate(it.rot);ctx.strokeStyle='#c09060';ctx.lineWidth=3;ctx.beginPath();for(let j=0;j<4;j++){const a=(j/4)*Math.PI*2;const r=14+Math.sin(gameTime*4+j)*2;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.stroke();ctx.restore();}
       for(const orb of expOrbs){let oc=THEME.accent2;if(orb.type==='elite')oc='#4ade80';if(orb.type==='special')oc='#60a5fa';const br=clamp(2+Math.sqrt(orb.value)*1.5,3,10);ctx.fillStyle=oc;ctx.beginPath();ctx.arc(orb.x,orb.y,br,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=1.5;ctx.stroke();}
       for(const p of shatterPieces){const a=p.life/p.maxLife;ctx.globalAlpha=a;ctx.fillStyle=p.color;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);const sc=0.4+0.6*a;ctx.scale(sc,sc);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(p.p1x,p.p1y);ctx.lineTo(p.p2x,p.p2y);ctx.closePath();ctx.fill();ctx.restore();}
       ctx.globalAlpha=1;
       // 激光
       for(const l of lasers){
-        if(l.isMatrixBlade){ctx.save();ctx.strokeStyle='rgba(255,77,109,0.95)';ctx.lineWidth=Math.max(4,l.widthOffset*30);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(l.x,l.y);ctx.lineTo(l.endX,l.endY);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,0.95)';ctx.lineWidth=Math.max(1.5,l.widthOffset*10);ctx.beginPath();ctx.moveTo(l.x,l.y);ctx.lineTo(l.endX,l.endY);ctx.stroke();ctx.restore();continue;}
+        if(l.isMatrixBlade){ctx.save();ctx.strokeStyle='rgba(217,119,87,0.95)';ctx.lineWidth=Math.max(4,l.widthOffset*30);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(l.x,l.y);ctx.lineTo(l.endX,l.endY);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,0.95)';ctx.lineWidth=Math.max(1.5,l.widthOffset*10);ctx.beginPath();ctx.moveTo(l.x,l.y);ctx.lineTo(l.endX,l.endY);ctx.stroke();ctx.restore();continue;}
         const a=l.life/l.maxLife;
         const cw=Math.pow(Math.max(0.01,Math.sin((l.life/l.maxLife)*Math.PI)),0.4)*100*l.widthOffset;
         ctx.save();ctx.translate(l.x,l.y);ctx.rotate(l.angle);
@@ -4412,14 +4367,14 @@ function loop(now){
           ctx.lineWidth=Math.max(2,cw*0.25);
           ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(2000,0);ctx.stroke();
         }else{
-          ctx.globalAlpha=a*0.7;ctx.strokeStyle='rgba(255,77,109,0.85)';ctx.lineWidth=cw;ctx.lineCap='round';
+          ctx.globalAlpha=a*0.7;ctx.strokeStyle='rgba(217,119,87,0.85)';ctx.lineWidth=cw;ctx.lineCap='round';
           ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(2000,0);ctx.stroke();
         }
         ctx.restore();ctx.globalAlpha=1;
       }
       // 敌人
       for(const e of enemies){
-        if(!isInView(e.x,e.y,250))continue;
+        if(!isInView(e.x,e.y,80))continue;
         const bA=Math.max(0.4,1-(e.overlapCount||0)*0.18);
         ctx.globalAlpha=bA;
         if(e.isElite&&e.shield>0){ctx.globalAlpha=bA*0.7;ctx.strokeStyle='rgba(74,222,128,0.95)';ctx.lineWidth=3.5;ctx.setLineDash([6,4]);ctx.lineDashOffset=-gameTime*25;ctx.beginPath();ctx.arc(e.x,e.y,e.radius+15,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=bA;}
@@ -4434,7 +4389,7 @@ function loop(now){
           const sa=e.spawnAnimTimer>0?Math.max(0.2,1-e.spawnAnimTimer/1.5):1;
           ctx.globalAlpha=bA*sa;
           ctx.fillStyle=e.hitTimer>0?'rgba(255,80,80,0.95)':'rgba(30,10,40,0.95)';
-          ctx.strokeStyle=e.bossPhase===3?'#ec4899':'rgba(255,77,109,0.95)';
+          ctx.strokeStyle=e.bossPhase===3?'#ec4899':'rgba(217,119,87,0.95)';
           ctx.lineWidth=4.5;
           drawEnemyPoly(e.x,e.y,e.radius,e.sides,e.angle,true,e.morphPhase,e.sidesFloat);
           ctx.fill();ctx.stroke();
@@ -4464,7 +4419,7 @@ function loop(now){
       if(!player.isDead){
         const px=player.x,py=player.y,pr=player.radius;
         const iF=player.flashTimer>0&&Math.floor(gameTime*25)%2===0;
-        if(player.skills.astral_shield>0&&player.hasAstralShield){ctx.globalAlpha=0.65;ctx.strokeStyle='#c084fc';ctx.lineWidth=4;ctx.setLineDash([8,6]);ctx.lineDashOffset=-gameTime*30;ctx.beginPath();ctx.arc(px,py,pr+17+Math.sin(gameTime*10)*4,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+        if(player.skills.astral_shield>0&&player.hasAstralShield){ctx.globalAlpha=0.65;ctx.strokeStyle='#c09060';ctx.lineWidth=4;ctx.setLineDash([8,6]);ctx.lineDashOffset=-gameTime*30;ctx.beginPath();ctx.arc(px,py,pr+17+Math.sin(gameTime*10)*4,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
         if(player.darksurgeDuration>0){const fc=player.darksurgeDuration===Infinity?12:10;for(let f=0;f<fc;f++){const fa=(gameTime*4+f*(Math.PI*2/fc))%(Math.PI*2);const fr=pr+14+Math.sin(gameTime*8+f)*4;ctx.globalAlpha=0.85;ctx.fillStyle=`hsla(${280+Math.sin(gameTime*3+f)*20},95%,65%,0.95)`;ctx.beginPath();ctx.arc(px+Math.cos(fa)*fr,py+Math.sin(fa)*fr,8,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;}
         if(player.extractActive||player.overloadActive){
           ctx.globalAlpha=0.5+Math.sin(gameTime*8)*0.3;
@@ -4495,7 +4450,7 @@ function loop(now){
           let cs=pr*0.38*(0.88+Math.sin(coreBreathPhase)*0.1);
           if(coreShootPulse>0)cs=pr*0.38*(1+coreShootPulse*0.6);
           ctx.strokeStyle=player.darksurgeDuration>0?'rgba(180,100,255,1)':THEME.accent;ctx.lineWidth=2.5;
-          ctx.fillStyle='rgba(255,77,109,0.4)';
+          ctx.fillStyle='rgba(217,119,87,0.4)';
           ctx.beginPath();ctx.moveTo(0,-cs);ctx.lineTo(cs*0.58,0);ctx.lineTo(0,cs);ctx.lineTo(-cs*0.58,0);ctx.closePath();ctx.fill();ctx.stroke();
         }
         ctx.restore();
@@ -4506,7 +4461,7 @@ function loop(now){
       }
       // 粒子
       for(const p of particles){
-        if(p.type==='blast'){const a=p.life/p.maxLife;ctx.globalAlpha=a*0.7;const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.radius);gr.addColorStop(0,'rgba(255,255,255,0.6)');gr.addColorStop(0.4,`rgba(255,77,109,${a*0.6})`);gr.addColorStop(1,'rgba(255,77,109,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);ctx.fill();}
+        if(p.type==='blast'){const a=p.life/p.maxLife;ctx.globalAlpha=a*0.7;const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.radius);gr.addColorStop(0,'rgba(255,255,255,0.6)');gr.addColorStop(0.4,`rgba(217,119,87,${a*0.6})`);gr.addColorStop(1,'rgba(217,119,87,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);ctx.fill();}
         else if(p.type==='potion_blast'){const a=p.life/p.maxLife;ctx.globalAlpha=a*0.85;const gr=ctx.createRadialGradient(p.x,p.y,p.radius*0.4,p.x,p.y,p.radius);gr.addColorStop(0,p.color+'cc');gr.addColorStop(0.7,p.edge+'66');gr.addColorStop(1,p.color+'00');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);ctx.fill();}
         else if(p.type==='pulse'){const a=p.life/p.maxLife;ctx.globalAlpha=a*0.85;ctx.strokeStyle=p.color||THEME.accent2;ctx.lineWidth=5;ctx.beginPath();ctx.arc(p.x,p.y,p.radius*(1-a),0,Math.PI*2);ctx.stroke();}
         else{const a=p.life/p.maxLife;ctx.globalAlpha=a;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
@@ -4523,7 +4478,7 @@ function loop(now){
           const dX=clamp(bx,pad,VIEW_W-pad);
           const dY=clamp(by,pad,VIEW_H-pad);
           ctx.save();ctx.translate(dX,dY);ctx.rotate(ang);
-          ctx.fillStyle='rgba(255,77,109,0.95)';
+          ctx.fillStyle='rgba(217,119,87,0.95)';
           ctx.beginPath();ctx.moveTo(20,0);ctx.lineTo(-12,-13);ctx.lineTo(-6,0);ctx.lineTo(-12,13);ctx.closePath();ctx.fill();
           ctx.restore();
         }
@@ -4544,9 +4499,9 @@ function loop(now){
       }
       if(screenRedFlash>0){
         const rg=ctx.createRadialGradient(VIEW_W/2,VIEW_H/2,0,VIEW_W/2,VIEW_H/2,VIEW_W);
-        rg.addColorStop(0,'rgba(255,77,109,0)');
-        rg.addColorStop(0.7,`rgba(255,77,109,${screenRedFlash*0.25})`);
-        rg.addColorStop(1,`rgba(255,77,109,${screenRedFlash*0.5})`);
+        rg.addColorStop(0,'rgba(217,119,87,0)');
+        rg.addColorStop(0.7,`rgba(217,119,87,${screenRedFlash*0.25})`);
+        rg.addColorStop(1,`rgba(217,119,87,${screenRedFlash*0.5})`);
         ctx.fillStyle=rg;ctx.fillRect(0,0,VIEW_W,VIEW_H);
       }
     }
@@ -4558,7 +4513,6 @@ function loop(now){
   }
 }
 requestAnimationFrame(loop);
-
 </script>
 </body>
 </html>
